@@ -598,7 +598,8 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const data = {
       name: formData.get('name'),
       description: formData.get('description'),
@@ -619,7 +620,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       alert('Garment added successfully!');
       onGarmentAdded();
       setImage('');
-      e.currentTarget.reset();
+      form.reset();
     } else {
       const errText = await res.text();
       alert(`Failed to add garment: ${res.status} ${errText}`);
