@@ -156,7 +156,27 @@ export default function App() {
         alert(`Error: ${errorData.message || 'Failed to create customer'}`);
       }
     } catch (err) {
-      console.error('Error creating customer:', err);
+      alert('Network error. Please try again.');
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: Customer) => {
+    if (!window.confirm(`Are you sure you want to delete ${customer.company}? This cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/customers/${customer.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (selectedCustomer?.id === customer.id) {
+          setSelectedCustomer(null);
+          setCurrentDeck(null);
+        }
+        await fetchCustomers();
+      } else {
+        const errorData = await res.json();
+        alert(`Error: ${errorData.message || 'Failed to delete customer'}`);
+      }
+    } catch (err) {
+      console.error('Error deleting customer:', err);
       alert('Network error. Please try again.');
     }
   };
@@ -395,6 +415,7 @@ export default function App() {
             customers={customers}
             onAddCustomer={handleCreateCustomer}
             onSelectCustomer={(c) => { setSelectedCustomer(c); }}
+            onDeleteCustomer={handleDeleteCustomer}
             onViewDeck={(d) => { setCurrentDeck(d); setView('deck-view'); }}
             onCreateDeck={() => setIsNewDeckModalOpen(true)}
           />
@@ -709,10 +730,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   );
 }
 
-function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck, onCreateDeck }: {
+function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCustomer, onViewDeck, onCreateDeck }: {
   customers: Customer[],
   onAddCustomer: (e: React.FormEvent<HTMLFormElement>) => void,
   onSelectCustomer: (c: Customer) => void,
+  onDeleteCustomer: (c: Customer) => void,
   onViewDeck: (d: Deck) => void,
   onCreateDeck: (customerId: number) => void
 }) {
@@ -741,17 +763,28 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck,
 
           <div className="space-y-2">
             {customers.map(c => (
-              <button
-                key={c.id}
-                onClick={() => { setSelectedCustId(c.id); onSelectCustomer(c); }}
-                className={`w-full text-left p-4 rounded-xl transition-colors flex items-center justify-between group ${selectedCustId === c.id ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-50'}`}
-              >
-                <div>
-                  <p className="font-serif text-lg">{c.company}</p>
-                  <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{c.name}</p>
-                </div>
-                <ChevronRight size={16} className={selectedCustId === c.id ? 'text-white' : 'text-zinc-300'} />
-              </button>
+              <div key={c.id} className="relative group/card">
+                <button
+                  onClick={() => { setSelectedCustId(c.id); onSelectCustomer(c); }}
+                  className={`w-full text-left p-4 rounded-xl transition-all flex items-center justify-between group-hover/card:pr-12 ${selectedCustId === c.id ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-50'}`}
+                >
+                  <div>
+                    <p className="font-serif text-lg">{c.company}</p>
+                    <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{c.name}</p>
+                  </div>
+                  <ChevronRight size={16} className={selectedCustId === c.id ? 'text-white' : 'text-zinc-300'} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteCustomer(c);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 opacity-0 group-hover/card:opacity-100 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                  title="Delete Client"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             ))}
           </div>
         </div>

@@ -148,6 +148,16 @@ app.post("/api/customers", async (req, res) => {
   }
 });
 
+app.delete("/api/customers/:id", async (req, res) => {
+  try {
+    const docRef = doc(db, "customers", req.params.id);
+    await deleteDoc(docRef);
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete customer" });
+  }
+});
+
 app.get("/api/customers/:id/decks", async (req, res) => {
   try {
     const q = query(collection(db, "decks"), where("customer_id", "==", req.params.id));
