@@ -131,7 +131,8 @@ export default function App() {
 
   const handleCreateCustomer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const name = formData.get('name') as string;
     const company = formData.get('company') as string;
 
@@ -149,7 +150,7 @@ export default function App() {
 
       if (res.ok) {
         await fetchCustomers();
-        e.currentTarget.reset();
+        form.reset();
       } else {
         const errorData = await res.json();
         alert(`Error: ${errorData.message || 'Failed to create customer'}`);
