@@ -562,7 +562,30 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 800; // Compress image to fit well within limits
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          setImage(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -592,6 +615,9 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       onGarmentAdded();
       setImage('');
       e.currentTarget.reset();
+    } else {
+      const errText = await res.text();
+      alert(`Failed to add garment: ${res.status} ${errText}`);
     }
   };
 

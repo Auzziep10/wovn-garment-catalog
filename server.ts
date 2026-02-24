@@ -91,8 +91,8 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: "50mb" }));
 
-// Run seeding asynchronously instead of waiting so we don't block serverless startup
-seedDatabaseIfEmpty().catch(console.warn);
+// Seeding prevents Vercel from duplicating items on concurrent launches, commented out.
+// seedDatabaseIfEmpty().catch(console.warn);
 
 // API Routes
 app.get("/api/garments", async (req, res) => {
