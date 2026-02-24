@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useMeasure from 'react-use-measure';
-import { 
-  Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon, 
+import {
+  Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw,
   Grid, List, Edit2
@@ -59,7 +59,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('Athleisure');
   const [selectedGender, setSelectedGender] = useState<Gender>('Male');
   const [selectedType, setSelectedType] = useState<GarmentType>('Tops');
-  
+
   const [garments, setGarments] = useState<Garment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -121,7 +121,7 @@ export default function App() {
         const decks = await res.json();
         return decks.map((d: Deck) => ({ ...d, customer_name: c.company }));
       });
-      
+
       const decksResults = await Promise.all(decksPromises);
       setAllDecks(decksResults.flat());
     } catch (err) {
@@ -134,7 +134,7 @@ export default function App() {
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
     const company = formData.get('company') as string;
-    
+
     if (!name || !company) {
       alert('Please fill in both name and company');
       return;
@@ -146,7 +146,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, company })
       });
-      
+
       if (res.ok) {
         await fetchCustomers();
         e.currentTarget.reset();
@@ -162,31 +162,31 @@ export default function App() {
 
   const handleCreateDeck = async (customerId: number, name: string) => {
     if (!name || name.trim() === '') return;
-    
+
     try {
       const res = await fetch('/api/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customer_id: customerId, name: name.trim() })
       });
-      
+
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.message || 'Failed to create deck');
       }
 
       const data = await res.json();
-      
+
       const deckRes = await fetch(`/api/decks/${data.id}`);
       if (!deckRes.ok) {
         throw new Error('Failed to fetch new deck details');
       }
-      
+
       const deckData = await deckRes.json();
       setCurrentDeck(deckData);
       setIsNewDeckModalOpen(false);
       setView('deck-view');
-      fetchCustomers(); 
+      fetchCustomers();
     } catch (err) {
       console.error('Error creating deck:', err);
       alert('Failed to create deck. Please try again.');
@@ -195,31 +195,31 @@ export default function App() {
 
   const addToDeck = async (garment: Garment, deckId?: number, customImage?: string) => {
     const targetDeckId = deckId || currentDeck?.id;
-    
+
     if (!targetDeckId) {
       alert('Please select a client and deck first in the "Customers" tab.');
       setView('customers');
       return;
     }
-    
+
     try {
       const res = await fetch(`/api/decks/${targetDeckId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          garment_id: garment.id, 
-          mock_image: customImage || garment.image 
+        body: JSON.stringify({
+          garment_id: garment.id,
+          mock_image: customImage || garment.image
         })
       });
-      
+
       if (res.ok) {
         const deckRes = await fetch(`/api/decks/${targetDeckId}`);
         const deckData = await deckRes.json();
-        
+
         if (currentDeck?.id === targetDeckId) {
           setCurrentDeck(deckData);
         }
-        
+
         // Refresh all decks to update counts
         fetchCustomers();
 
@@ -239,7 +239,7 @@ export default function App() {
       setIsDeckSelectorOpen(false);
       setGarmentToAddToDeck(null);
       setPendingMockupImage(null);
-      
+
       if (view === 'mockup-studio') {
         setView('deck-view');
         // The deckData is already set in addToDeck if it's the current deck
@@ -257,19 +257,19 @@ export default function App() {
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div className="hidden md:flex items-center gap-6">
-              <button 
+              <button
                 onClick={() => setView('catalog')}
                 className={`nav-link ${view === 'catalog' ? 'text-zinc-900' : ''}`}
               >
                 Catalog
               </button>
-              <button 
+              <button
                 onClick={() => setView('admin')}
                 className={`nav-link ${view === 'admin' ? 'text-zinc-900' : ''}`}
               >
                 Garment
               </button>
-              <button 
+              <button
                 onClick={() => setView('customers')}
                 className={`nav-link ${view === 'customers' ? 'text-zinc-900' : ''}`}
               >
@@ -291,7 +291,7 @@ export default function App() {
               </div>
             )}
             <Search size={20} className="text-zinc-400 cursor-pointer hover:text-zinc-900 transition-colors" />
-            <div 
+            <div
               className="relative cursor-pointer group"
               onClick={() => { if (currentDeck) setView('deck-view'); else setView('customers'); }}
             >
@@ -310,14 +310,14 @@ export default function App() {
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
               className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60]"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -329,7 +329,7 @@ export default function App() {
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
                     {['Athleisure', 'Executive', 'Auto-Industry'].map((cat) => (
-                      <button 
+                      <button
                         key={cat}
                         onClick={() => { setSelectedCategory(cat as Category); setIsMenuOpen(false); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedCategory === cat ? 'italic underline underline-offset-8' : 'opacity-60'}`}
@@ -344,7 +344,7 @@ export default function App() {
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Gender</h3>
                   <div className="flex flex-col gap-4">
                     {['Male', 'Female', 'Accessories'].map((gen) => (
-                      <button 
+                      <button
                         key={gen}
                         onClick={() => { setSelectedGender(gen as Gender); setIsMenuOpen(false); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedGender === gen ? 'italic underline underline-offset-8' : 'opacity-60'}`}
@@ -359,7 +359,7 @@ export default function App() {
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Type</h3>
                   <div className="flex flex-col gap-4">
                     {['Tops', 'Bottom', 'Headwear'].map((t) => (
-                      <button 
+                      <button
                         key={t}
                         onClick={() => { setSelectedType(t as GarmentType); setIsMenuOpen(false); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedType === t ? 'italic underline underline-offset-8' : 'opacity-60'}`}
@@ -378,8 +378,8 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1">
         {view === 'catalog' && (
-          <CatalogView 
-            garments={garments} 
+          <CatalogView
+            garments={garments}
             category={selectedCategory}
             gender={selectedGender}
             type={selectedType}
@@ -390,8 +390,8 @@ export default function App() {
         )}
         {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} />}
         {view === 'customers' && (
-          <CustomersView 
-            customers={customers} 
+          <CustomersView
+            customers={customers}
             onAddCustomer={handleCreateCustomer}
             onSelectCustomer={(c) => { setSelectedCustomer(c); }}
             onViewDeck={(d) => { setCurrentDeck(d); setView('deck-view'); }}
@@ -399,8 +399,8 @@ export default function App() {
           />
         )}
         {view === 'deck-view' && currentDeck && (
-          <DeckPresentationView 
-            deck={currentDeck} 
+          <DeckPresentationView
+            deck={currentDeck}
             onBack={() => setView('customers')}
             onGarmentClick={(g, item) => {
               setSelectedGarment(g);
@@ -422,14 +422,14 @@ export default function App() {
           />
         )}
         {view === 'presentation' && currentDeck && (
-          <PresentationMode 
-            deck={currentDeck} 
-            onClose={() => setView('deck-view')} 
+          <PresentationMode
+            deck={currentDeck}
+            onClose={() => setView('deck-view')}
           />
         )}
         {view === 'mockup-studio' && selectedGarment && (
-          <MockupStudio 
-            garment={selectedGarment} 
+          <MockupStudio
+            garment={selectedGarment}
             deck={currentDeck}
             onBack={() => setView('catalog')}
             onSave={async (newImage) => {
@@ -458,18 +458,18 @@ export default function App() {
 
       <AnimatePresence>
         {isNewDeckModalOpen && selectedCustomer && (
-          <NewDeckModal 
+          <NewDeckModal
             onClose={() => setIsNewDeckModalOpen(false)}
             onConfirm={(name) => handleCreateDeck(selectedCustomer.id, name)}
           />
         )}
         {isDeckSelectorOpen && garmentToAddToDeck && (
-          <DeckSelectorModal 
+          <DeckSelectorModal
             decks={allDecks}
             garment={garmentToAddToDeck}
-            onClose={() => { 
-              setIsDeckSelectorOpen(false); 
-              setGarmentToAddToDeck(null); 
+            onClose={() => {
+              setIsDeckSelectorOpen(false);
+              setGarmentToAddToDeck(null);
               setPendingMockupImage(null);
             }}
             onSelect={(deck) => handleAddToDeckWithSelection(garmentToAddToDeck, deck, pendingMockupImage || undefined)}
@@ -480,10 +480,10 @@ export default function App() {
   );
 }
 
-function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck }: { 
-  garments: Garment[], 
-  category: string, 
-  gender: string, 
+function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck }: {
+  garments: Garment[],
+  category: string,
+  gender: string,
   type: string,
   currentDeck: Deck | null,
   onSelectGarment: (g: Garment) => void,
@@ -497,34 +497,34 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
           <h2 className="editorial-title">{type}</h2>
         </div>
         <p className="text-zinc-500 max-w-md text-sm leading-relaxed">
-          Our curated collection of high-performance garments designed for the modern professional. 
+          Our curated collection of high-performance garments designed for the modern professional.
           Each piece is selected for its quality, durability, and aesthetic appeal.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
         {garments.map((garment) => (
-          <motion.div 
+          <motion.div
             key={garment.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="group cursor-pointer"
           >
             <div className="aspect-[3/4] bg-zinc-100 mb-6 overflow-hidden relative">
-              <img 
-                src={garment.image} 
+              <img
+                src={garment.image}
                 alt={garment.name}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <div className="flex flex-col gap-2">
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); onAddToDeck(garment); }}
                     className="bg-white text-zinc-900 px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-900 hover:text-white transition-colors"
                   >
                     {currentDeck ? 'Add to Deck' : 'Select Deck'}
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); onSelectGarment(garment); }}
                     className="bg-zinc-900 text-white px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
                   >
@@ -543,7 +543,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
           </motion.div>
         ))}
       </div>
-      
+
       {garments.length === 0 && (
         <div className="py-32 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
           <ImageIcon className="mx-auto text-zinc-200 mb-4" size={48} />
@@ -598,14 +598,14 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <h2 className="editorial-title mb-12">Garment Management</h2>
-      
+
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="space-y-8">
           <div className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
             {image ? (
               <>
                 <img src={image} className="w-full h-full object-cover" />
-                <button 
+                <button
                   type="button"
                   onClick={() => setImage('')}
                   className="absolute top-4 right-4 bg-white/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -626,18 +626,18 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
         <div className="space-y-6">
           <div>
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
-            <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" placeholder="e.g. Camo Lightweight Puffer" />
+            <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue="Camo Lightweight Puffer" placeholder="e.g. Camo Lightweight Puffer" />
           </div>
 
           <div>
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Description</label>
-            <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" placeholder="Garment details..." />
+            <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue="A high-performance lightweight puffer jacket with a modern camo print. Perfect for transitional weather and outdoor activities." placeholder="Garment details..." />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Price (USD)</label>
-              <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" placeholder="219.00" />
+              <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue="219.00" placeholder="219.00" />
             </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Category</label>
@@ -677,8 +677,8 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   );
 }
 
-function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck, onCreateDeck }: { 
-  customers: Customer[], 
+function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck, onCreateDeck }: {
+  customers: Customer[],
   onAddCustomer: (e: React.FormEvent<HTMLFormElement>) => void,
   onSelectCustomer: (c: Customer) => void,
   onViewDeck: (d: Deck) => void,
@@ -709,7 +709,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck,
 
           <div className="space-y-2">
             {customers.map(c => (
-              <button 
+              <button
                 key={c.id}
                 onClick={() => { setSelectedCustId(c.id); onSelectCustomer(c); }}
                 className={`w-full text-left p-4 rounded-xl transition-colors flex items-center justify-between group ${selectedCustId === c.id ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-50'}`}
@@ -729,7 +729,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck,
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex items-center justify-between mb-12">
                 <h2 className="editorial-title">Presentation Decks</h2>
-                <button 
+                <button
                   onClick={() => {
                     if (selectedCustId !== null) {
                       onCreateDeck(selectedCustId);
@@ -745,7 +745,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck,
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {decks.map(d => (
-                  <div 
+                  <div
                     key={d.id}
                     className="group border border-zinc-100 rounded-3xl p-8 hover:border-zinc-900 transition-colors cursor-pointer"
                     onClick={() => onViewDeck(d)}
@@ -781,8 +781,8 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onViewDeck,
   );
 }
 
-function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemoveItem }: { 
-  deck: Deck, 
+function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemoveItem }: {
+  deck: Deck,
   onBack: () => void,
   onGarmentClick: (g: Garment, item: DeckItem) => void,
   onPresent: () => void,
@@ -841,13 +841,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 mr-4 bg-white border border-zinc-200 p-1 rounded-full shadow-sm">
-              <button 
+              <button
                 onClick={() => setDisplayMode('presentation')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
               >
                 <List size={14} /> Presentation
               </button>
-              <button 
+              <button
                 onClick={() => setDisplayMode('grid')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'grid' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
               >
@@ -857,7 +857,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             <button className="bg-white border border-zinc-200 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors">
               Share Link
             </button>
-            <button 
+            <button
               onClick={() => onPresent()}
               className="bg-zinc-900 text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
             >
@@ -869,7 +869,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
         {displayMode === 'presentation' ? (
           <div className="grid grid-cols-1 gap-32">
             {items.map((item, index) => (
-              <motion.div 
+              <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -878,27 +878,27 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
               >
                 <div className="flex-1 w-full">
                   <div className="aspect-[4/5] bg-white shadow-2xl rounded-[2rem] overflow-hidden relative group">
-                    <img 
-                      src={item.mock_image} 
+                    <img
+                      src={item.mock_image}
                       alt={item.garment_name}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-8 right-8 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                      <button 
+                      <button
                         onClick={() => handleMockupEdit(item)}
                         className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Mockup"
                       >
                         <Wand2 size={20} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Details"
                       >
                         <Edit2 size={20} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => onRemoveItem(item.id)}
                         className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors"
                         title="Remove from Deck"
@@ -933,7 +933,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {items.map((item, index) => (
-              <motion.div 
+              <motion.div
                 key={item.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -941,27 +941,27 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 className="group"
               >
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100">
-                  <img 
-                    src={item.mock_image} 
+                  <img
+                    src={item.mock_image}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleMockupEdit(item)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Mockup"
                       >
                         <Wand2 size={18} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Details"
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => onRemoveItem(item.id)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors"
                         title="Remove from Deck"
@@ -986,7 +986,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
       <AnimatePresence>
         {editingItem && (
-          <EditItemModal 
+          <EditItemModal
             item={editingItem}
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
@@ -997,10 +997,10 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   );
 }
 
-function EditItemModal({ item, onClose, onSave }: { 
-  item: DeckItem, 
-  onClose: () => void, 
-  onSave: (details: any) => void 
+function EditItemModal({ item, onClose, onSave }: {
+  item: DeckItem,
+  onClose: () => void,
+  onSave: (details: any) => void
 }) {
   const [name, setName] = useState(item.garment_name || '');
   const [description, setDescription] = useState(item.garment_description || '');
@@ -1008,14 +1008,14 @@ function EditItemModal({ item, onClose, onSave }: {
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
       onClick={onClose}
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -1039,11 +1039,11 @@ function EditItemModal({ item, onClose, onSave }: {
                 <img src={item.mock_image} className="w-full h-full object-cover" />
               </div>
             </div>
-            
+
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Display Name</label>
-                <input 
+                <input
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
@@ -1052,7 +1052,7 @@ function EditItemModal({ item, onClose, onSave }: {
 
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Price ($)</label>
-                <input 
+                <input
                   type="number"
                   value={price}
                   onChange={e => setPrice(e.target.value)}
@@ -1062,7 +1062,7 @@ function EditItemModal({ item, onClose, onSave }: {
 
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Size Spread (comma separated)</label>
-                <input 
+                <input
                   value={sizes}
                   onChange={e => setSizes(e.target.value)}
                   className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
@@ -1074,7 +1074,7 @@ function EditItemModal({ item, onClose, onSave }: {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Description</label>
-            <textarea 
+            <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
@@ -1084,13 +1084,13 @@ function EditItemModal({ item, onClose, onSave }: {
         </div>
 
         <div className="p-8 border-t border-zinc-100 flex gap-4">
-          <button 
+          <button
             onClick={onClose}
             className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={() => onSave({
               custom_name: name,
               custom_description: description,
@@ -1107,8 +1107,8 @@ function EditItemModal({ item, onClose, onSave }: {
   );
 }
 
-function MockupStudio({ garment, deck, onBack, onSave }: { 
-  garment: Garment, 
+function MockupStudio({ garment, deck, onBack, onSave }: {
+  garment: Garment,
   deck: Deck | null,
   onBack: () => void,
   onSave: (img: string) => void
@@ -1120,7 +1120,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
-  
+
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useMotionValue(0);
@@ -1153,12 +1153,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
       return;
     }
     setIsGenerating(true);
-    
+
     // Calculate relative position for the AI
     // x and y are offsets from the center (50%, 50%)
     const relX = ((x.get() + bounds.width / 2) / bounds.width) * 100;
     const relY = ((y.get() + bounds.height / 2) / bounds.height) * 100;
-    
+
     const placementContext = `The user has placed the logo at approximately ${relX.toFixed(0)}% from the left and ${relY.toFixed(0)}% from the top of the image. Scale is ${logoScale.toFixed(1)}x and rotation is ${logoRotation.toFixed(0)} degrees.`;
 
     try {
@@ -1174,7 +1174,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
   const handleSaveCurrentView = async () => {
     if (!logo) return;
-    
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -1207,15 +1207,15 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     // x and y are offsets from center
     const centerX = canvas.width / 2 + x.get() * scale;
     const centerY = canvas.height / 2 + y.get() * scale;
-    
+
     ctx.translate(centerX, centerY);
     ctx.rotate((logoRotation * Math.PI) / 180);
-    
+
     // Calculate logo dimensions respecting its own aspect ratio
     // The logo is in a 128x128 box (w-32 h-32) with object-contain in the UI
     const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
     let drawW, drawH;
-    
+
     if (logoAspectRatio > 1) {
       drawW = 128 * logoScale * scale;
       drawH = drawW / logoAspectRatio;
@@ -1223,7 +1223,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
       drawH = 128 * logoScale * scale;
       drawW = drawH * logoAspectRatio;
     }
-    
+
     ctx.drawImage(logoImg, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
 
@@ -1239,12 +1239,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         <div className="space-y-8">
-          <div 
+          <div
             ref={containerRef}
             className="aspect-[3/4] bg-zinc-50 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 cursor-crosshair"
           >
             <img src={resultImage || garment.image} className="w-full h-full object-contain pointer-events-none" />
-            
+
             {!resultImage && logo && (
               <motion.div
                 drag
@@ -1256,28 +1256,28 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               >
                 <div className="relative w-full h-full border-2 border-zinc-900/0 group-hover:border-zinc-900/50 transition-colors">
                   <img src={logo} className="w-full h-full object-contain drop-shadow-xl pointer-events-none" />
-                  
+
                   {/* Rotation Handle */}
-                  <div 
+                  <div
                     className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-zinc-200 rounded-full flex items-center justify-center cursor-alias opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       const startX = e.clientX;
                       const startY = e.clientY;
                       const startRotation = logoRotation;
-                      
+
                       const onMouseMove = (moveEvent: MouseEvent) => {
                         const dx = moveEvent.clientX - startX;
                         const dy = moveEvent.clientY - startY;
                         // Simple rotation logic based on horizontal movement for demo
                         setLogoRotation(startRotation + dx);
                       };
-                      
+
                       const onMouseUp = () => {
                         window.removeEventListener('mousemove', onMouseMove);
                         window.removeEventListener('mouseup', onMouseUp);
                       };
-                      
+
                       window.addEventListener('mousemove', onMouseMove);
                       window.addEventListener('mouseup', onMouseUp);
                     }}
@@ -1286,29 +1286,29 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   </div>
 
                   {/* Scale Handle */}
-                  <div 
+                  <div
                     className="absolute -bottom-2 -right-2 w-4 h-4 bg-zinc-900 border-2 border-white rounded-sm cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       const startX = e.clientX;
                       const startScale = logoScale;
-                      
+
                       const onMouseMove = (moveEvent: MouseEvent) => {
                         const dx = moveEvent.clientX - startX;
                         setLogoScale(Math.max(0.1, startScale + dx / 100));
                       };
-                      
+
                       const onMouseUp = () => {
                         window.removeEventListener('mousemove', onMouseMove);
                         window.removeEventListener('mouseup', onMouseUp);
                       };
-                      
+
                       window.addEventListener('mousemove', onMouseMove);
                       window.addEventListener('mouseup', onMouseUp);
                     }}
                   />
                 </div>
-                
+
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[8px] px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none whitespace-nowrap shadow-xl">
                   Drag to Position • Use Handles to Transform
                 </div>
@@ -1323,7 +1323,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               </div>
             )}
           </div>
-          
+
           {!resultImage && logo && (
             <div className="flex items-center gap-6 bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
               <div className="flex-1 space-y-4">
@@ -1331,12 +1331,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Scale</span>
                   <span className="text-[10px] font-mono text-zinc-900">{(logoScale * 100).toFixed(0)}%</span>
                 </div>
-                <input 
-                  type="range" 
-                  min="0.1" 
-                  max="4" 
-                  step="0.01" 
-                  value={logoScale} 
+                <input
+                  type="range"
+                  min="0.1"
+                  max="4"
+                  step="0.01"
+                  value={logoScale}
                   onChange={(e) => setLogoScale(parseFloat(e.target.value))}
                   className="w-full accent-zinc-900"
                 />
@@ -1349,12 +1349,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Rotation</span>
                   <span className="text-[10px] font-mono text-zinc-900">{logoRotation.toFixed(0)}°</span>
                 </div>
-                <input 
-                  type="range" 
-                  min="-180" 
-                  max="180" 
-                  step="1" 
-                  value={logoRotation} 
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="1"
+                  value={logoRotation}
                   onChange={(e) => setLogoRotation(parseFloat(e.target.value))}
                   className="w-full accent-zinc-900"
                 />
@@ -1368,7 +1368,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">Mockup Studio</p>
             <h2 className="editorial-title mb-4">Interactive Placement</h2>
             <p className="text-zinc-500 leading-relaxed">
-              Drag the logo to your desired position and adjust the scale. 
+              Drag the logo to your desired position and adjust the scale.
               Our AI will then "bake" it into the garment, matching perspective and lighting perfectly.
             </p>
           </div>
@@ -1393,7 +1393,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">2. Describe the Finish</h3>
-              <textarea 
+              <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="w-full bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
@@ -1404,7 +1404,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
             <div className="pt-8 border-t border-zinc-100 flex flex-col gap-4">
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !logo}
                   className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1412,7 +1412,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Re-bake Mockup' : 'Bake Mockup')}
                 </button>
                 {!resultImage && logo && (
-                  <button 
+                  <button
                     onClick={handleSaveCurrentView}
                     className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2"
                   >
@@ -1420,9 +1420,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   </button>
                 )}
               </div>
-              
+
               {resultImage && (
-                <button 
+                <button
                   onClick={() => onSave(resultImage)}
                   className="w-full bg-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2"
                 >
@@ -1437,21 +1437,21 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   );
 }
 
-function DeckSelectorModal({ decks, garment, onClose, onSelect }: { 
-  decks: (Deck & { customer_name: string })[], 
+function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
+  decks: (Deck & { customer_name: string })[],
   garment: Garment,
   onClose: () => void,
   onSelect: (deck: Deck) => void
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
       onClick={onClose}
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -1480,7 +1480,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
 
         <div className="flex-1 overflow-y-auto p-6 space-y-2">
           {decks.map(deck => (
-            <button 
+            <button
               key={deck.id}
               onClick={() => onSelect(deck)}
               className="w-full text-left p-4 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100 flex items-center justify-between group"
@@ -1510,7 +1510,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
     fetch(`/api/decks/${deck.id}`)
       .then(res => res.json())
       .then(data => setItems(data.items));
-    
+
     // Lock scroll
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
@@ -1524,7 +1524,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
   const currentItem = items[currentIndex];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -1540,7 +1540,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             <h3 className="font-serif text-xl">{deck.name}</h3>
           </div>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="p-4 hover:bg-zinc-50 rounded-full transition-colors"
         >
@@ -1549,7 +1549,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
       </div>
 
       <div className="flex-1 flex items-center justify-center relative px-20">
-        <button 
+        <button
           onClick={prev}
           className="absolute left-8 p-4 hover:bg-zinc-50 rounded-full transition-colors"
         >
@@ -1557,7 +1557,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
         </button>
 
         <AnimatePresence mode="wait">
-          <motion.div 
+          <motion.div
             key={currentIndex}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -1565,8 +1565,8 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             className="flex flex-col md:flex-row items-center gap-20 max-w-6xl w-full"
           >
             <div className="flex-1 aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl bg-zinc-50">
-              <img 
-                src={currentItem.mock_image} 
+              <img
+                src={currentItem.mock_image}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -1592,7 +1592,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
           </motion.div>
         </AnimatePresence>
 
-        <button 
+        <button
           onClick={next}
           className="absolute right-8 p-4 hover:bg-zinc-50 rounded-full transition-colors"
         >
@@ -1602,7 +1602,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
 
       <div className="p-8 flex justify-center gap-2">
         {items.map((_, i) => (
-          <div 
+          <div
             key={i}
             className={`h-1 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-12 bg-zinc-900' : 'w-2 bg-zinc-200'}`}
           />
@@ -1623,14 +1623,14 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
       onClick={onClose}
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -1650,7 +1650,7 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div>
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Deck Name</label>
-            <input 
+            <input
               autoFocus
               value={name}
               onChange={e => setName(e.target.value)}
@@ -1660,14 +1660,14 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
           </div>
 
           <div className="flex gap-3">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 py-4 text-xs uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               disabled={!name.trim()}
               className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
