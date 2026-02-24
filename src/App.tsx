@@ -582,7 +582,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
+          if (ctx) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+          }
           setImage(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.src = reader.result as string;
