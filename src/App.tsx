@@ -11,7 +11,7 @@ import { generateMockup } from './services/geminiService';
 
 export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry';
 export type Gender = 'Male' | 'Female' | 'Accessories';
-export type GarmentType = 'Tops' | 'Bottom' | 'Headwear';
+export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other';
 
 export interface Garment {
   id: number;
@@ -399,7 +399,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Type</h3>
                   <div className="flex flex-col gap-4">
-                    {['Tops', 'Bottom', 'Headwear'].map((t) => (
+                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other'].map((t) => (
                       <button
                         key={t}
                         onClick={() => { setSelectedType(t as GarmentType); setIsMenuOpen(false); setView('catalog'); }}
@@ -746,6 +746,9 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <option>Tops</option>
                 <option>Bottom</option>
                 <option>Headwear</option>
+                <option>Bags</option>
+                <option>Tumblers</option>
+                <option>Other</option>
               </select>
             </div>
           </div>
