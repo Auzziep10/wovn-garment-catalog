@@ -533,6 +533,8 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   onAddToDeck: (g: Garment) => void,
   onDeleteGarment: (g: Garment) => void
 }) {
+  const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
@@ -553,6 +555,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="group cursor-pointer"
+            onClick={() => setViewingGarment(garment)}
           >
             <div className="aspect-[3/4] bg-zinc-100 mb-6 overflow-hidden relative">
               <img
@@ -601,6 +604,66 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
           <p className="text-zinc-400 font-serif italic">No garments found in this category.</p>
         </div>
       )}
+
+      <AnimatePresence>
+        {viewingGarment && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+            onClick={() => setViewingGarment(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="md:w-1/2 bg-zinc-50 flex items-center justify-center p-12 min-h-[40vh]">
+                <img src={viewingGarment.image} alt={viewingGarment.name} className="w-full h-full object-contain" />
+              </div>
+              <div className="md:w-1/2 p-12 flex flex-col max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-end mb-4">
+                  <button onClick={() => setViewingGarment(null)} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
+                  <h2 className="font-serif text-5xl mb-6 leading-tight">{viewingGarment.name}</h2>
+                  <p className="text-3xl font-medium mb-8">${viewingGarment.price}</p>
+                  <p className="text-zinc-500 text-lg leading-relaxed mb-12 py-6 border-t border-zinc-100">
+                    {viewingGarment.description}
+                  </p>
+
+                  <div className="flex flex-col gap-4">
+                    <button
+                      onClick={() => {
+                        onAddToDeck(viewingGarment);
+                        setViewingGarment(null);
+                      }}
+                      className="w-full bg-zinc-900 text-white px-8 py-5 text-sm uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors rounded-full shadow-lg"
+                    >
+                      {currentDeck ? 'Add to Deck' : 'Select Deck'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSelectGarment(viewingGarment);
+                        setViewingGarment(null);
+                      }}
+                      className="w-full bg-white border border-zinc-200 text-zinc-900 px-8 py-5 text-sm uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors rounded-full"
+                    >
+                      Open in Mockup Studio
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
