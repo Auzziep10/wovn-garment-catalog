@@ -1005,13 +1005,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <div className="flex-1 space-y-8 max-w-lg">
                   <div className="space-y-4">
                     <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Item {index + 1}</p>
-                    <h3 className="font-serif text-5xl leading-tight">{item.garment_name}</h3>
+                    <h3 className="font-serif text-5xl leading-tight">{item.custom_name || item.garment_name}</h3>
                     <p className="text-zinc-500 text-lg leading-relaxed">
-                      {item.garment_description}
+                      {item.custom_description || item.garment_description}
                     </p>
                   </div>
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
-                    <p className="text-2xl font-medium">${item.garment_price}</p>
+                    <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p>
                     <div className="flex gap-2">
                       {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
                         <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
@@ -1065,8 +1065,8 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                     </div>
                   </div>
                 </div>
-                <h4 className="font-serif text-lg truncate">{item.garment_name}</h4>
-                <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.garment_price}</p>
+                <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
+                <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
               </motion.div>
             ))}
             {items.length === 0 && (
@@ -1096,9 +1096,9 @@ function EditItemModal({ item, onClose, onSave }: {
   onClose: () => void,
   onSave: (details: any) => void
 }) {
-  const [name, setName] = useState(item.garment_name || '');
-  const [description, setDescription] = useState(item.garment_description || '');
-  const [price, setPrice] = useState(item.garment_price?.toString() || '');
+  const [name, setName] = useState(item.custom_name || item.garment_name || '');
+  const [description, setDescription] = useState(item.custom_description || item.garment_description || '');
+  const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
 
   return (
@@ -1667,15 +1667,15 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             <div className="flex-1 space-y-8">
               <div className="space-y-4">
                 <p className="text-xs uppercase tracking-widest font-bold text-zinc-400">Item {currentIndex + 1} of {items.length}</p>
-                <h2 className="font-serif text-7xl leading-tight">{currentItem.garment_name}</h2>
+                <h2 className="font-serif text-7xl leading-tight">{currentItem.custom_name || currentItem.garment_name}</h2>
                 <p className="text-zinc-500 text-xl leading-relaxed">
-                  {currentItem.garment_description}
+                  {currentItem.custom_description || currentItem.garment_description}
                 </p>
               </div>
               <div className="pt-12 border-t border-zinc-100 flex items-center justify-between">
-                <p className="text-4xl font-medium">${currentItem.garment_price}</p>
+                <p className="text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
                 <div className="flex gap-3">
-                  {['XS', 'S', 'M', 'L', 'XL'].map(size => (
+                  {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
                     <span key={size} className="w-12 h-12 border border-zinc-200 rounded-full flex items-center justify-center text-xs font-bold text-zinc-400">
                       {size}
                     </span>
