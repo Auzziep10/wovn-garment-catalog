@@ -56,9 +56,9 @@ type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 
 
 export default function App() {
   const [view, setView] = useState<View>('catalog');
-  const [selectedCategory, setSelectedCategory] = useState<Category>('Athleisure');
-  const [selectedGender, setSelectedGender] = useState<Gender>('Male');
-  const [selectedType, setSelectedType] = useState<GarmentType>('Tops');
+  const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
+  const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
+  const [selectedType, setSelectedType] = useState<GarmentType | ''>('');
 
   const [garments, setGarments] = useState<Garment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -372,8 +372,8 @@ export default function App() {
                     {['Athleisure', 'Executive', 'Auto-Industry'].map((cat) => (
                       <button
                         key={cat}
-                        onClick={() => { setSelectedCategory(cat as Category); setIsMenuOpen(false); setView('catalog'); }}
-                        className={`text-left text-lg font-serif ${selectedCategory === cat ? 'italic underline underline-offset-8' : 'opacity-60'}`}
+                        onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setIsMenuOpen(false); setView('catalog'); }}
+                        className={`text-left text-lg font-serif ${selectedCategory === cat ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {cat}
                       </button>
@@ -387,8 +387,8 @@ export default function App() {
                     {['Male', 'Female', 'Accessories'].map((gen) => (
                       <button
                         key={gen}
-                        onClick={() => { setSelectedGender(gen as Gender); setIsMenuOpen(false); setView('catalog'); }}
-                        className={`text-left text-lg font-serif ${selectedGender === gen ? 'italic underline underline-offset-8' : 'opacity-60'}`}
+                        onClick={() => { setSelectedGender(selectedGender === gen ? '' : gen as Gender); setIsMenuOpen(false); setView('catalog'); }}
+                        className={`text-left text-lg font-serif ${selectedGender === gen ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {gen}
                       </button>
@@ -402,8 +402,8 @@ export default function App() {
                     {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other'].map((t) => (
                       <button
                         key={t}
-                        onClick={() => { setSelectedType(t as GarmentType); setIsMenuOpen(false); setView('catalog'); }}
-                        className={`text-left text-lg font-serif ${selectedType === t ? 'italic underline underline-offset-8' : 'opacity-60'}`}
+                        onClick={() => { setSelectedType(selectedType === t ? '' : t as GarmentType); setIsMenuOpen(false); setView('catalog'); }}
+                        className={`text-left text-lg font-serif ${selectedType === t ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {t}
                       </button>
@@ -539,8 +539,10 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-16 gap-4 md:gap-8">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">{category} / {gender}</p>
-          <h2 className="editorial-title">{type}</h2>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">
+            {[category, gender].filter(Boolean).join(' / ') || 'All Garments'}
+          </p>
+          <h2 className="editorial-title">{type || 'Collection'}</h2>
         </div>
         <p className="text-zinc-500 max-w-md text-sm leading-relaxed">
           Our curated collection of high-performance garments designed for the modern professional.
@@ -601,7 +603,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
       {garments.length === 0 && (
         <div className="py-32 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
           <ImageIcon className="mx-auto text-zinc-200 mb-4" size={48} />
-          <p className="text-zinc-400 font-serif italic">No garments found in this category.</p>
+          <p className="text-zinc-400 font-serif italic">No garments found matching your filters.</p>
         </div>
       )}
 
