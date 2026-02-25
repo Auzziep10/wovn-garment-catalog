@@ -558,7 +558,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
               <img
                 src={garment.image}
                 alt={garment.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <button
@@ -686,7 +686,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
           <div className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
             {image ? (
               <>
-                <img src={image} className="w-full h-full object-cover" />
+                <img src={image} className="w-full h-full object-contain p-4" />
                 <button
                   type="button"
                   onClick={() => setImage('')}
@@ -978,7 +978,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                     <img
                       src={item.mock_image}
                       alt={item.garment_name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-8"
                     />
                     <div className="absolute top-8 right-8 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
                       <button
@@ -1040,7 +1040,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100">
                   <img
                     src={item.mock_image}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="flex gap-2">
@@ -1132,8 +1132,8 @@ function EditItemModal({ item, onClose, onSave }: {
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <div className="aspect-[3/4] bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-100">
-                <img src={item.mock_image} className="w-full h-full object-cover" />
+              <div className="aspect-[3/4] bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4">
+                <img src={item.mock_image} className="w-full h-full object-contain" />
               </div>
             </div>
 
@@ -1566,8 +1566,8 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
         </div>
 
         <div className="p-4 bg-zinc-50 flex items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-zinc-100">
-            <img src={garment.image} className="w-full h-full object-cover" />
+          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-zinc-100 flex-shrink-0">
+            <img src={garment.image} className="w-full h-full object-contain p-1" />
           </div>
           <div>
             <p className="font-medium text-sm">{garment.name}</p>
@@ -1661,10 +1661,10 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             exit={{ opacity: 0, x: -20 }}
             className="flex flex-col md:flex-row items-center gap-20 max-w-6xl w-full"
           >
-            <div className="flex-1 aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl bg-zinc-50">
+            <div className="flex-1 aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl bg-zinc-50 flex items-center justify-center p-12">
               <img
                 src={currentItem.mock_image}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="flex-1 space-y-8">
