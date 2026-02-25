@@ -292,7 +292,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-zinc-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 -ml-2">
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -536,8 +536,8 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-16 gap-4 md:gap-8">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">{category} / {gender}</p>
           <h2 className="editorial-title">{type}</h2>
@@ -548,7 +548,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 md:gap-y-16">
         {garments.map((garment) => (
           <motion.div
             key={garment.id}
@@ -557,7 +557,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             className="group cursor-pointer"
             onClick={() => setViewingGarment(garment)}
           >
-            <div className="aspect-[3/4] bg-zinc-100 mb-6 overflow-hidden relative">
+            <div className="aspect-[3/4] bg-white mb-6 overflow-hidden relative">
               <img
                 src={garment.image}
                 alt={garment.name}
@@ -611,30 +611,30 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 md:p-6"
             onClick={() => setViewingGarment(null)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+              className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
               onClick={e => e.stopPropagation()}
             >
-              <div className="md:w-1/2 bg-zinc-50 flex items-center justify-center p-12 min-h-[40vh]">
+              <div className="md:w-1/2 bg-white flex flex-col items-center justify-center p-6 md:p-12 min-h-[30vh] md:min-h-[40vh]">
                 <img src={viewingGarment.image} alt={viewingGarment.name} className="w-full h-full object-contain" />
               </div>
-              <div className="md:w-1/2 p-12 flex flex-col max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-end mb-4">
+              <div className="md:w-1/2 p-6 md:p-12 flex flex-col max-h-[60vh] md:max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-end mb-2 md:mb-4">
                   <button onClick={() => setViewingGarment(null)} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
                     <X size={24} />
                   </button>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
-                  <h2 className="font-serif text-5xl mb-6 leading-tight">{viewingGarment.name}</h2>
-                  <p className="text-3xl font-medium mb-8">${viewingGarment.price}</p>
-                  <p className="text-zinc-500 text-lg leading-relaxed mb-12 py-6 border-t border-zinc-100">
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
+                  <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
+                  <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.price}</p>
+                  <p className="text-zinc-500 text-sm md:text-lg leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100">
                     {viewingGarment.description}
                   </p>
 
@@ -741,12 +741,12 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <h2 className="editorial-title mb-12">Garment Management</h2>
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <h2 className="editorial-title mb-8 md:mb-12">Garment Management</h2>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         <div className="space-y-8">
-          <div className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
+          <div className="aspect-[3/4] bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
             {image ? (
               <>
                 <img src={image} className="w-full h-full object-contain p-4" />
@@ -845,8 +845,8 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   }, [selectedCustId]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
         <div className="lg:col-span-1">
           <h2 className="editorial-title mb-8">Clients</h2>
           <form onSubmit={onAddCustomer} className="space-y-6 mb-12 p-6 bg-zinc-50 rounded-2xl">
@@ -903,14 +903,14 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {decks.map(d => (
                   <div
                     key={d.id}
-                    className="group border border-zinc-100 rounded-3xl p-8 hover:border-zinc-900 transition-colors cursor-pointer"
+                    className="group border border-zinc-100 rounded-[2rem] p-6 md:p-8 hover:border-zinc-900 transition-colors cursor-pointer"
                     onClick={() => onViewDeck(d)}
                   >
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-6 md:mb-8">
                       <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:text-white transition-colors">
                         <Presentation size={24} />
                       </div>
@@ -989,17 +989,17 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
           <ArrowLeft size={16} /> Back to Clients
         </button>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-20 gap-6 md:gap-8">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">Presentation Deck</p>
             <h2 className="editorial-title">{deck.name}</h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
             <div className="flex items-center gap-2 mr-4 bg-white border border-zinc-200 p-1 rounded-full shadow-sm">
               <button
                 onClick={() => setDisplayMode('presentation')}
@@ -1027,26 +1027,26 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
         </div>
 
         {displayMode === 'presentation' ? (
-          <div className="grid grid-cols-1 gap-32">
+          <div className="grid grid-cols-1 gap-16 md:gap-32">
             {items.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-16 items-center`}
+                className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 md:gap-16 items-center`}
               >
                 <div className="flex-1 w-full">
                   <div className="aspect-[4/5] bg-white shadow-2xl rounded-[2rem] overflow-hidden relative group">
                     <img
                       src={item.mock_image}
                       alt={item.garment_name}
-                      className="w-full h-full object-contain p-8"
+                      className="w-full h-full object-contain p-4 md:p-8"
                     />
-                    <div className="absolute top-8 right-8 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                    <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0">
                       <button
                         onClick={() => handleMockupEdit(item)}
-                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Mockup"
                       >
                         <Wand2 size={20} />
@@ -1071,14 +1071,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <div className="flex-1 space-y-8 max-w-lg">
                   <div className="space-y-4">
                     <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Item {index + 1}</p>
-                    <h3 className="font-serif text-5xl leading-tight">{item.custom_name || item.garment_name}</h3>
-                    <p className="text-zinc-500 text-lg leading-relaxed">
+                    <h3 className="font-serif text-3xl md:text-5xl leading-tight">{item.custom_name || item.garment_name}</h3>
+                    <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
                       {item.custom_description || item.garment_description}
                     </p>
                   </div>
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
                     <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
                         <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
                           {size}
@@ -1091,7 +1091,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
             {items.map((item, index) => (
               <motion.div
                 key={item.id}
@@ -1182,7 +1182,7 @@ function EditItemModal({ item, onClose, onSave }: {
         className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Client Customization</p>
             <h3 className="font-serif text-2xl">Edit Item Details</h3>
@@ -1192,10 +1192,10 @@ function EditItemModal({ item, onClose, onSave }: {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-6">
-              <div className="aspect-[3/4] bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4">
+              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4">
                 <img src={item.mock_image} className="w-full h-full object-contain" />
               </div>
             </div>
@@ -1243,7 +1243,7 @@ function EditItemModal({ item, onClose, onSave }: {
           </div>
         </div>
 
-        <div className="p-8 border-t border-zinc-100 flex gap-4">
+        <div className="p-6 md:p-8 border-t border-zinc-100 flex gap-4">
           <button
             onClick={onClose}
             className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
@@ -1392,16 +1392,16 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
         <div className="space-y-8">
           <div
             ref={containerRef}
-            className="aspect-[3/4] bg-zinc-50 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 cursor-crosshair"
+            className="aspect-[3/4] bg-white rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 cursor-crosshair"
           >
             <img src={resultImage || garment.image} className="w-full h-full object-contain pointer-events-none" />
 
@@ -1537,7 +1537,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
               <div className="flex items-center gap-6">
-                <div className="w-24 h-24 bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-24 bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden">
                   {logo ? (
                     <img src={logo} className="w-full h-full object-contain p-2" />
                   ) : (
@@ -1563,7 +1563,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             </section>
 
             <div className="pt-8 border-t border-zinc-100 flex flex-col gap-4">
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !logo}
@@ -1618,7 +1618,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
         className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Add to Deck</p>
             <h3 className="font-serif text-2xl">Select Destination</h3>
@@ -1638,7 +1638,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2">
           {decks.map(deck => (
             <button
               key={deck.id}
@@ -1690,7 +1690,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-white z-[100] flex flex-col"
     >
-      <div className="flex items-center justify-between p-8">
+      <div className="flex items-center justify-between p-4 md:p-8">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-serif">
             W
@@ -1708,12 +1708,12 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
         </button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center relative px-20">
+      <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-hidden">
         <button
           onClick={prev}
-          className="absolute left-8 p-4 hover:bg-zinc-50 rounded-full transition-colors"
+          className="absolute left-2 md:left-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
         >
-          <ArrowLeft size={32} />
+          <ArrowLeft size={24} className="md:w-8 md:h-8" />
         </button>
 
         <AnimatePresence mode="wait">
@@ -1722,27 +1722,27 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col md:flex-row items-center gap-20 max-w-6xl w-full"
+            className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
           >
-            <div className="flex-1 aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl bg-zinc-50 flex items-center justify-center p-12">
+            <div className="flex-1 aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] w-full max-w-sm md:max-w-none mx-auto overflow-hidden shadow-2xl bg-white flex items-center justify-center p-6 md:p-12">
               <img
                 src={currentItem.mock_image}
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="flex-1 space-y-8">
+            <div className="flex-1 space-y-4 md:space-y-8 w-full">
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-widest font-bold text-zinc-400">Item {currentIndex + 1} of {items.length}</p>
-                <h2 className="font-serif text-7xl leading-tight">{currentItem.custom_name || currentItem.garment_name}</h2>
-                <p className="text-zinc-500 text-xl leading-relaxed">
+                <p className="text-xs uppercase tracking-widest font-bold text-zinc-400 text-center md:text-left">Item {currentIndex + 1} of {items.length}</p>
+                <h2 className="font-serif text-4xl md:text-7xl leading-tight text-center md:text-left">{currentItem.custom_name || currentItem.garment_name}</h2>
+                <p className="text-zinc-500 text-base md:text-xl leading-relaxed text-center md:text-left">
                   {currentItem.custom_description || currentItem.garment_description}
                 </p>
               </div>
-              <div className="pt-12 border-t border-zinc-100 flex items-center justify-between">
-                <p className="text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
-                <div className="flex gap-3">
+              <div className="pt-8 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
                   {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                    <span key={size} className="w-12 h-12 border border-zinc-200 rounded-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                    <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
                       {size}
                     </span>
                   ))}
@@ -1754,9 +1754,9 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
 
         <button
           onClick={next}
-          className="absolute right-8 p-4 hover:bg-zinc-50 rounded-full transition-colors"
+          className="absolute right-2 md:right-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
         >
-          <ChevronRight size={32} />
+          <ChevronRight size={24} className="md:w-8 md:h-8" />
         </button>
       </div>
 
@@ -1797,7 +1797,7 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
         className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">New Presentation</p>
             <h3 className="font-serif text-2xl">Create Deck</h3>
@@ -1807,7 +1807,7 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
           <div>
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Deck Name</label>
             <input
