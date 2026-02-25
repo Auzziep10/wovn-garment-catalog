@@ -127,6 +127,16 @@ app.post("/api/garments", async (req, res) => {
   }
 });
 
+app.delete("/api/garments/:id", async (req, res) => {
+  try {
+    const docRef = doc(db, "garments", req.params.id);
+    await deleteDoc(docRef);
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete garment" });
+  }
+});
+
 app.get("/api/customers", async (req, res) => {
   try {
     const snapshot = await getDocs(collection(db, "customers"));

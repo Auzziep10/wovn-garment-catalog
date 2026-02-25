@@ -181,6 +181,26 @@ export default function App() {
     }
   };
 
+  const handleDeleteGarment = async (garment: Garment) => {
+    if (!window.confirm(`Are you sure you want to delete ${garment.name}? This cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/garments/${garment.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (selectedGarment?.id === garment.id) {
+          setSelectedGarment(null);
+        }
+        await fetchGarments();
+      } else {
+        const errorData = await res.json();
+        alert(`Error: ${errorData.message || 'Failed to delete garment'}`);
+      }
+    } catch (err) {
+      console.error('Error deleting garment:', err);
+      alert('Network error. Please try again.');
+    }
+  };
+
   const handleCreateDeck = async (customerId: number, name: string) => {
     if (!name || name.trim() === '') return;
 
@@ -407,6 +427,7 @@ export default function App() {
             currentDeck={currentDeck}
             onSelectGarment={(g) => { setSelectedGarment(g); setSelectedDeckItem(null); setView('mockup-studio'); }}
             onAddToDeck={(g) => { setGarmentToAddToDeck(g); setIsDeckSelectorOpen(true); }}
+            onDeleteGarment={handleDeleteGarment}
           />
         )}
         {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} />}
@@ -502,14 +523,15 @@ export default function App() {
   );
 }
 
-function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck }: {
+function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck, onDeleteGarment }: {
   garments: Garment[],
   category: string,
   gender: string,
   type: string,
   currentDeck: Deck | null,
   onSelectGarment: (g: Garment) => void,
-  onAddToDeck: (g: Garment) => void
+  onAddToDeck: (g: Garment) => void,
+  onDeleteGarment: (g: Garment) => void
 }) {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -539,6 +561,13 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDeleteGarment(garment); }}
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-red-50 hover:text-red-500 text-zinc-400 p-2 rounded-full transition-all"
+                  title="Delete Garment"
+                >
+                  <Trash2 size={16} />
+                </button>
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); onAddToDeck(garment); }}
