@@ -51,6 +51,9 @@ async function seedDatabaseIfEmpty() {
       const garmentIds = [];
       for (const g of sampleGarments) {
         (g as any).created_at = new Date().toISOString();
+        if (!(g as any).images) {
+          (g as any).images = [g.image];
+        }
         const docRef = await addDoc(garmentsRef, g);
         garmentIds.push({ id: docRef.id, image: g.image });
       }
@@ -120,10 +123,26 @@ app.post("/api/garments", async (req, res) => {
   try {
     const data = req.body;
     data.created_at = new Date().toISOString();
+    if (!data.images && data.image) {
+      data.images = [data.image];
+    } else if (!data.images) {
+      data.images = [];
+    }
     const docRef = await addDoc(collection(db, "garments"), data);
     res.json({ id: docRef.id });
   } catch (error) {
     res.status(500).json({ error: "Failed to add garment" });
+  }
+});
+
+app.put("/api/garments/:id", async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    const docRef = doc(db, "garments", req.params.id);
+    await updateDoc(docRef, updates);
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update garment" });
   }
 });
 

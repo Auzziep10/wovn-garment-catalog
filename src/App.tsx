@@ -22,6 +22,7 @@ export interface Garment {
   gender: Gender;
   type: GarmentType;
   image: string;
+  images?: string[];
 }
 
 export interface Customer {
@@ -534,6 +535,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   onDeleteGarment: (g: Garment) => void
 }) {
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
@@ -557,7 +559,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="group cursor-pointer"
-            onClick={() => setViewingGarment(garment)}
+            onClick={() => { setViewingGarment(garment); setActiveImageIndex(0); }}
           >
             <div className="aspect-[3/4] bg-white mb-6 overflow-hidden relative">
               <img
@@ -623,8 +625,19 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
               className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
               onClick={e => e.stopPropagation()}
             >
-              <div className="md:w-1/2 bg-white flex flex-col items-center justify-center p-6 md:p-12 min-h-[30vh] md:min-h-[40vh]">
-                <img src={viewingGarment.image} alt={viewingGarment.name} className="w-full h-full object-contain" />
+              <div className="md:w-1/2 bg-white flex flex-col p-6 md:p-12 min-h-[30vh] md:min-h-[40vh]">
+                <div className="flex-1 mb-6 relative min-h-[300px]">
+                  <img src={viewingGarment.images && viewingGarment.images.length > 0 ? viewingGarment.images[activeImageIndex] : viewingGarment.image} alt={viewingGarment.name} className="absolute inset-0 w-full h-full object-contain" />
+                </div>
+                {viewingGarment.images && viewingGarment.images.length > 1 && (
+                  <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+                    {viewingGarment.images.map((img, i) => (
+                      <button key={i} onClick={() => setActiveImageIndex(i)} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeImageIndex === i ? 'border-zinc-900 border-2' : 'border-zinc-200 hover:border-zinc-400'}`}>
+                        <img src={img} className="w-full h-full object-cover bg-zinc-50" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="md:w-1/2 p-6 md:p-12 flex flex-col max-h-[60vh] md:max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-end mb-2 md:mb-4">
@@ -671,7 +684,27 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
 }
 
 function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
-  const [image, setImage] = useState<string>('');
+  const [images, setImages] = useState<string[]>([]);
+  const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
+  const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
+
+  const fetchExisting = () => {
+    fetch('/api/garments').then(res => res.json()).then(setExistingGarments);
+  };
+
+  useEffect(() => {
+    fetchExisting();
+  }, []);
+
+  const handleEditClick = (g: Garment) => {
+    setEditingGarment(g);
+    setImages(g.images && g.images.length > 0 ? g.images : [g.image]);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingGarment(null);
+    setImages([]);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -703,7 +736,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
             ctx.fillRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
           }
-          setImage(canvas.toDataURL('image/jpeg', 0.8));
+          setImages(prev => [...prev, canvas.toDataURL('image/jpeg', 0.8)]);
         };
         img.src = reader.result as string;
       };
@@ -711,8 +744,16 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     }
   };
 
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (images.length === 0) {
+      alert('Please upload at least one image.');
+      return;
+    }
     const form = e.currentTarget;
     const formData = new FormData(form);
     const data = {
@@ -722,107 +763,156 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       category: formData.get('category'),
       gender: formData.get('gender'),
       type: formData.get('type'),
-      image: image
+      image: images[0],
+      images: images
     };
 
-    const res = await fetch('/api/garments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    if (res.ok) {
-      alert('Garment added successfully!');
-      onGarmentAdded();
-      setImage('');
-      form.reset();
+    if (editingGarment) {
+      const res = await fetch(`/api/garments/${editingGarment.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Garment updated successfully!');
+        onGarmentAdded();
+        fetchExisting();
+        handleCancelEdit();
+      } else {
+        const errText = await res.text();
+        alert(`Failed to update garment: ${res.status} ${errText}`);
+      }
     } else {
-      const errText = await res.text();
-      alert(`Failed to add garment: ${res.status} ${errText}`);
+      const res = await fetch('/api/garments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert('Garment added successfully!');
+        onGarmentAdded();
+        fetchExisting();
+        setImages([]);
+        form.reset();
+      } else {
+        const errText = await res.text();
+        alert(`Failed to add garment: ${res.status} ${errText}`);
+      }
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <h2 className="editorial-title mb-8 md:mb-12">Garment Management</h2>
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        <div className="space-y-8">
-          <div className="aspect-[3/4] bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
-            {image ? (
-              <>
-                <img src={image} className="w-full h-full object-contain p-4" />
-                <button
-                  type="button"
-                  onClick={() => setImage('')}
-                  className="absolute top-4 right-4 bg-white/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </>
-            ) : (
-              <label className="cursor-pointer text-center p-8">
-                <Upload className="mx-auto text-zinc-300 mb-4" size={32} />
-                <span className="text-sm text-zinc-500 font-medium">Upload Garment Photo</span>
-                <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-              </label>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
-            <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue="Camo Lightweight Puffer" placeholder="e.g. Camo Lightweight Puffer" />
-          </div>
-
-          <div>
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Description</label>
-            <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue="A high-performance lightweight puffer jacket with a modern camo print. Perfect for transitional weather and outdoor activities." placeholder="Garment details..." />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Price (USD)</label>
-              <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue="219.00" placeholder="219.00" />
-            </div>
-            <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Category</label>
-              <select name="category" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent">
-                <option>Athleisure</option>
-                <option>Executive</option>
-                <option>Auto-Industry</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
-              <select name="gender" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent">
-                <option>Male</option>
-                <option>Female</option>
-                <option>Accessories</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Type</label>
-              <select name="type" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent">
-                <option>Tops</option>
-                <option>Bottom</option>
-                <option>Headwear</option>
-                <option>Bags</option>
-                <option>Tumblers</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-
-          <button type="submit" className="w-full bg-zinc-900 text-white py-4 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors mt-8">
-            Add to Catalog
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className="flex justify-between items-center mb-8 md:mb-12">
+        <h2 className="editorial-title">{editingGarment ? 'Edit Garment' : 'New Garment'}</h2>
+        {editingGarment && (
+          <button type="button" onClick={handleCancelEdit} className="text-zinc-500 hover:text-zinc-900 transition-colors uppercase text-xs tracking-widest font-bold">
+            Cancel Edit
           </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+        <div className="lg:col-span-1 border-r border-zinc-100 pr-0 lg:pr-8">
+          <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Existing Library</h3>
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+            {existingGarments.map(g => (
+              <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 border border-zinc-200' : 'hover:bg-zinc-50'}`}>
+                <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
+                <div>
+                  <p className="font-serif text-sm truncate">{g.name}</p>
+                  <p className="text-[10px] uppercase text-zinc-500">{g.category}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </form>
+
+        <div className="lg:col-span-2">
+          <form key={editingGarment?.id || 'new'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            <div className="space-y-4">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 block">Garment Images</label>
+              <div className="grid grid-cols-2 gap-4">
+                {images.map((img, i) => (
+                  <div key={i} className="aspect-[3/4] bg-white border-2 border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
+                    <img src={img} className="w-full h-full object-contain p-2" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="absolute top-2 right-2 bg-white/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={16} className="text-red-500" />
+                    </button>
+                    {i === 0 && (
+                      <div className="absolute bottom-2 left-2 bg-zinc-900 text-white text-[8px] px-2 py-1 rounded uppercase tracking-widest">Main</div>
+                    )}
+                  </div>
+                ))}
+
+                <label className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl cursor-pointer hover:bg-zinc-100 transition-colors flex flex-col items-center justify-center p-4">
+                  <Upload className="mx-auto text-zinc-400 mb-2" size={24} />
+                  <span className="text-xs text-zinc-500 font-medium text-center">Add Photo</span>
+                  <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
+                <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Description</label>
+                <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.description || ""} placeholder="Garment details..." />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Price (USD)</label>
+                  <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.price || ""} placeholder="219.00" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Category</label>
+                  <select name="category" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.category || "Athleisure"}>
+                    <option>Athleisure</option>
+                    <option>Executive</option>
+                    <option>Auto-Industry</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
+                  <select name="gender" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.gender || "Male"}>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Accessories</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Type</label>
+                  <select name="type" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.type || "Tops"}>
+                    <option>Tops</option>
+                    <option>Bottom</option>
+                    <option>Headwear</option>
+                    <option>Bags</option>
+                    <option>Tumblers</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" className="w-full bg-zinc-900 text-white py-4 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors mt-8">
+                {editingGarment ? 'Save Changes' : 'Add to Catalog'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1275,6 +1365,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   onBack: () => void,
   onSave: (img: string) => void
 }) {
+  const [activeGarmentImage, setActiveGarmentImage] = useState<string>(
+    garment.images && garment.images.length > 0 ? garment.images[0] : garment.image
+  );
   const [logo, setLogo] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
@@ -1324,7 +1417,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     const placementContext = `The user has placed the logo at approximately ${relX.toFixed(0)}% from the left and ${relY.toFixed(0)}% from the top of the image. Scale is ${logoScale.toFixed(1)}x and rotation is ${logoRotation.toFixed(0)} degrees.`;
 
     try {
-      const mockup = await generateMockup(garment.image, logo, `${placementContext} ${prompt}`);
+      const mockup = await generateMockup(activeGarmentImage, logo, `${placementContext} ${prompt}`);
       setResultImage(mockup);
     } catch (err) {
       console.error(err);
@@ -1343,7 +1436,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
     const garmentImg = new Image();
     garmentImg.crossOrigin = "anonymous";
-    garmentImg.src = garment.image;
+    garmentImg.src = activeGarmentImage;
 
     await new Promise((resolve) => {
       garmentImg.onload = resolve;
@@ -1405,7 +1498,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             ref={containerRef}
             className="aspect-[3/4] bg-white rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 cursor-crosshair"
           >
-            <img src={resultImage || garment.image} className="w-full h-full object-contain pointer-events-none" />
+            <img src={resultImage || activeGarmentImage} className="w-full h-full object-contain pointer-events-none" />
 
             {!resultImage && logo && (
               <motion.div
@@ -1536,6 +1629,19 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
           </div>
 
           <div className="space-y-8">
+            {garment.images && garment.images.length > 1 && (
+              <section>
+                <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Garment Photo</h3>
+                <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+                  {garment.images.map((img, i) => (
+                    <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 border-2' : 'border-zinc-200 hover:border-zinc-400'}`}>
+                      <img src={img} className="w-full h-full object-cover bg-zinc-50" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
               <div className="flex items-center gap-6">

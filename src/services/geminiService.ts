@@ -1,6 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "dummy_key_to_prevent_crash" });
+const getEnv = (key: string) => {
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+    return (import.meta as any).env[key];
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
+const apiKey = getEnv('VITE_GEMINI_API_KEY') || getEnv('GEMINI_API_KEY') || "dummy_key_to_prevent_crash";
+const ai = new GoogleGenAI({ apiKey });
 
 async function toBase64(url: string): Promise<{ data: string; mimeType: string }> {
   const response = await fetch(url);
@@ -18,6 +29,7 @@ async function toBase64(url: string): Promise<{ data: string; mimeType: string }
 }
 
 export async function generateMockup(baseImage: string, logoBase64: string, prompt: string) {
+  // Nano Banana is the Gemini 2.5 Flash Image model
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
