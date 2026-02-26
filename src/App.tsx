@@ -1402,37 +1402,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     }
   };
 
-  const handleGenerate = async () => {
-    if (!logo) {
-      alert('Please upload a customer logo first');
-      return;
-    }
-    setIsGenerating(true);
-
-    // Calculate relative position for the AI
-    // x and y are offsets from the center (50%, 50%)
-    const relX = ((x.get() + bounds.width / 2) / bounds.width) * 100;
-    const relY = ((y.get() + bounds.height / 2) / bounds.height) * 100;
-
-    const placementContext = `The user has placed the logo at approximately ${relX.toFixed(0)}% from the left and ${relY.toFixed(0)}% from the top of the image. Scale is ${logoScale.toFixed(1)}x and rotation is ${logoRotation.toFixed(0)} degrees.`;
-
-    try {
-      const mockup = await generateMockup(activeGarmentImage, logo, `${placementContext} ${prompt}`);
-      setResultImage(mockup);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to generate mockup. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSaveCurrentView = async () => {
-    if (!logo) return;
+  const getCompositeImage = async (): Promise<string | null> => {
+    if (!logo) return null;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) return null;
 
     const garmentImg = new Image();
     garmentImg.crossOrigin = "anonymous";
@@ -1467,7 +1442,6 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     ctx.rotate((logoRotation * Math.PI) / 180);
 
     // Calculate logo dimensions respecting its own aspect ratio
-    // The logo is in a 128x128 box (w-32 h-32) with object-contain in the UI
     const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
     let drawW, drawH;
 
@@ -1482,8 +1456,35 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     ctx.drawImage(logoImg, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
 
-    const dataUrl = canvas.toDataURL('image/png');
-    onSave(dataUrl);
+    return canvas.toDataURL('image/png');
+  };
+
+  const handleGenerate = async () => {
+    if (!logo) {
+      alert('Please upload a customer logo first');
+      return;
+    }
+    setIsGenerating(true);
+
+    try {
+      const compositeImage = await getCompositeImage();
+      if (!compositeImage) throw new Error("Could not generate composite image");
+
+      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt);
+      setResultImage(mockup);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate mockup. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveCurrentView = async () => {
+    const dataUrl = await getCompositeImage();
+    if (dataUrl) {
+      onSave(dataUrl);
+    }
   };
 
   return (

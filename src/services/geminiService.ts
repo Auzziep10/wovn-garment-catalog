@@ -39,7 +39,7 @@ async function toBase64(url: string): Promise<{ data: string; mimeType: string }
   });
 }
 
-export async function generateMockup(baseImage: string, logoBase64: string, prompt: string) {
+export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string) {
   // Nano Banana is the Gemini 2.5 Flash Image model
   const model = "gemini-2.5-flash-image";
 
@@ -56,9 +56,9 @@ export async function generateMockup(baseImage: string, logoBase64: string, prom
     if (match) baseMimeType = match[1];
   }
 
-  const logoData = logoBase64.split(",")[1] || logoBase64;
-  const logoMatch = logoBase64.match(/^data:(image\/[a-z]+);base64,/);
-  const logoMimeType = logoMatch ? logoMatch[1] : "image/png";
+  const compositeData = compositeImageBase64.split(",")[1] || compositeImageBase64;
+  const compositeMatch = compositeImageBase64.match(/^data:(image\/[a-z]+);base64,/);
+  const compositeMimeType = compositeMatch ? compositeMatch[1] : "image/png";
 
   const modelObj = getGenerativeModel(ai, {
     model,
@@ -76,8 +76,9 @@ export async function generateMockup(baseImage: string, logoBase64: string, prom
 CRITICAL CONSTRAINTS:
 1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.
 2. BACKGROUND: Keep the background from the first image identical.
-3. LOGO INTEGRATION: Take the logo from the second image and place it realistically on the garment.
-4. PLACEMENT: Follow the user's specific placement coordinates and finish description provided below. The logo should follow the fabric's lighting, shadows, and texture at that specific location.
+3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as an overlay. Please update the first image to incorporate this logo realistically into the fabric.
+4. EXACT MATCH: The logo in the final image MUST exactly match the size, rotation, and exact placement coordinates shown in the second image.
+5. FINISH: Follow the fabric's lighting, shadows, and texture perfectly at that specific location.
 
 USER PLACEMENT & FINISH INSTRUCTIONS:
 ${prompt}`
@@ -90,8 +91,8 @@ ${prompt}`
     },
     {
       inlineData: {
-        data: logoData,
-        mimeType: logoMimeType,
+        data: compositeData,
+        mimeType: compositeMimeType,
       }
     }
   ]);
