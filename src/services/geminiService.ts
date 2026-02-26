@@ -76,8 +76,8 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
 CRITICAL CONSTRAINTS:
 1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.
 2. BACKGROUND: Keep the background from the first image identical.
-3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as an overlay. Please update the first image to incorporate this logo realistically into the fabric.
-4. EXACT MATCH: The logo in the final image MUST exactly match the size, rotation, and exact placement coordinates shown in the second image.
+3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as a flat overlay. Please update the first image to incorporate this logo realistically into the fabric.
+4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment (e.g. curving around a sleeve, bending over a hat, or sinking into fabric folds) at that exact location.
 5. FINISH: Follow the fabric's lighting, shadows, and texture perfectly at that specific location.
 
 USER PLACEMENT & FINISH INSTRUCTIONS:

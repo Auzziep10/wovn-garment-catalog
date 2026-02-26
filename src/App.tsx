@@ -1371,7 +1371,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   const [logo, setLogo] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
-  const [prompt, setPrompt] = useState('Place the logo realistically on the garment with a high-quality finish.');
+  const [prompt, setPrompt] = useState('Place the logo realistically. Wrap it securely along the sleeve, hat curve, or fabric folds matching the angles as needed.');
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
