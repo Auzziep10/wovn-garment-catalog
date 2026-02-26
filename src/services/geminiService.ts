@@ -1,4 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+import { initializeApp } from "firebase/app";
+import { getAI, getGenerativeModel } from "firebase/ai";
 
 const getEnv = (key: string) => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
@@ -10,8 +11,18 @@ const getEnv = (key: string) => {
   return undefined;
 };
 
-const apiKey = getEnv('VITE_GEMINI_API_KEY') || getEnv('GEMINI_API_KEY') || "dummy_key_to_prevent_crash";
-const ai = new GoogleGenAI({ apiKey });
+// Initialize Firebase App for the frontend
+const firebaseConfig = {
+  apiKey: getEnv('VITE_FIREBASE_API_KEY'),
+  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnv('VITE_FIREBASE_APP_ID')
+};
+
+const app = initializeApp(firebaseConfig);
+const ai = getAI(app);
 
 async function toBase64(url: string): Promise<{ data: string; mimeType: string }> {
   const response = await fetch(url);
@@ -49,47 +60,53 @@ export async function generateMockup(baseImage: string, logoBase64: string, prom
   const logoMatch = logoBase64.match(/^data:(image\/[a-z]+);base64,/);
   const logoMimeType = logoMatch ? logoMatch[1] : "image/png";
 
-  // We send both images and a prompt to the model
-  const response = await ai.models.generateContent({
+  const modelObj = getGenerativeModel(ai, {
     model,
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            data: baseImageData,
-            mimeType: baseMimeType,
-          },
-        },
-        {
-          inlineData: {
-            data: logoData,
-            mimeType: logoMimeType,
-          },
-        },
-        {
-          text: `TASK: Create a professional product mockup.
-          
-          CRITICAL CONSTRAINTS:
-          1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.
-          2. BACKGROUND: Keep the background from the first image identical.
-          3. LOGO INTEGRATION: Take the logo from the second image and place it realistically on the garment.
-          4. PLACEMENT: Follow the user's specific placement coordinates and finish description provided below. The logo should follow the fabric's lighting, shadows, and texture at that specific location.
-          
-          USER PLACEMENT & FINISH INSTRUCTIONS:
-          ${prompt}`,
-        },
-      ],
-    },
-    config: {
-      imageConfig: {
-        aspectRatio: "3:4" // Most apparel photography is portrait
-      }
+    generationConfig: {
+      // @ts-ignore
+      imageConfig: { aspectRatio: "3:4" }
     }
   });
 
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+  // We send both images and a prompt to the model
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Create a professional product mockup.
+          
+CRITICAL CONSTRAINTS:
+1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.
+2. BACKGROUND: Keep the background from the first image identical.
+3. LOGO INTEGRATION: Take the logo from the second image and place it realistically on the garment.
+4. PLACEMENT: Follow the user's specific placement coordinates and finish description provided below. The logo should follow the fabric's lighting, shadows, and texture at that specific location.
+
+USER PLACEMENT & FINISH INSTRUCTIONS:
+${prompt}`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    },
+    {
+      inlineData: {
+        data: logoData,
+        mimeType: logoMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
     }
   }
 
