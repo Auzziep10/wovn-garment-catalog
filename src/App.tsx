@@ -748,6 +748,17 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleSetMainImage = (index: number) => {
+    setImages(prev => {
+      if (index === 0) return prev;
+      const newImages = [...prev];
+      const temp = newImages[0];
+      newImages[0] = newImages[index];
+      newImages[index] = temp;
+      return newImages;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (images.length === 0) {
@@ -844,8 +855,16 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                     >
                       <Trash2 size={16} className="text-red-500" />
                     </button>
-                    {i === 0 && (
-                      <div className="absolute bottom-2 left-2 bg-zinc-900 text-white text-[8px] px-2 py-1 rounded uppercase tracking-widest">Main</div>
+                    {i === 0 ? (
+                      <div className="absolute bottom-2 left-2 bg-zinc-900 text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest z-10 shadow-md">Main</div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSetMainImage(i)}
+                        className="absolute bottom-2 left-2 bg-white border border-zinc-200 text-zinc-900 text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-zinc-50 shadow-md"
+                      >
+                        Set Main
+                      </button>
                     )}
                   </div>
                 ))}
