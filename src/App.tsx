@@ -1680,10 +1680,17 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 >
                   <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Re-bake Mockup' : 'Bake Mockup')}
                 </button>
-                {!resultImage && logo && (
+                {resultImage ? (
+                  <button
+                    onClick={() => setResultImage('')}
+                    className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
+                  >
+                    <Edit2 size={16} /> Adjust Placement
+                  </button>
+                ) : logo && (
                   <button
                     onClick={handleSaveCurrentView}
-                    className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
                   >
                     <Save size={16} /> Quick Save
                   </button>
