@@ -536,6 +536,14 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
 }) {
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
+
+  const displayedGarments = [...garments];
+  if (sortOrder === 'asc') {
+    displayedGarments.sort((a, b) => a.price - b.price);
+  } else if (sortOrder === 'desc') {
+    displayedGarments.sort((a, b) => b.price - a.price);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
@@ -546,14 +554,28 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
           </p>
           <h2 className="editorial-title">{type || 'Collection'}</h2>
         </div>
-        <p className="text-zinc-500 max-w-md text-sm leading-relaxed">
-          Our curated collection of high-performance garments designed for the modern professional.
-          Each piece is selected for its quality, durability, and aesthetic appeal.
-        </p>
+        <div className="flex flex-col md:items-end gap-4">
+          <p className="text-zinc-500 max-w-md text-sm leading-relaxed md:text-right">
+            Our curated collection of high-performance garments designed for the modern professional.
+            Each piece is selected for its quality, durability, and aesthetic appeal.
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as any)}
+              className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+            >
+              <option value="default">Default</option>
+              <option value="asc">Price: Low to High</option>
+              <option value="desc">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 md:gap-y-16">
-        {garments.map((garment) => (
+        {displayedGarments.map((garment) => (
           <motion.div
             key={garment.id}
             initial={{ opacity: 0, y: 20 }}
