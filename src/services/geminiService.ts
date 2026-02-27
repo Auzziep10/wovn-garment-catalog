@@ -103,7 +103,7 @@ ${prompt}`
   if (candidates && candidates.length > 0) {
     for (const part of candidates[0].content?.parts || []) {
       if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
       }
       if (part.text && part.text.startsWith('iVBORw0KGgo')) {
         return `data:image/png;base64,${part.text}`;

@@ -55,6 +55,43 @@ export interface DeckItem {
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation';
 
+const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
+  // If it's already under ~800KB (base64 length < 1M), return as-is
+  if (base64Str.length < 1000000) return base64Str;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+
+      const maxDim = 1024;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = (height / width) * maxDim;
+          width = maxDim;
+        } else {
+          width = (width / height) * maxDim;
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Use white background for transparent PNGs before converting to JPEG
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+      }
+      // Compress to JPEG to dramatically reduce size
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = base64Str;
+  });
+};
+
 export default function App() {
   const [view, setView] = useState<View>('catalog');
   const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
@@ -477,23 +514,32 @@ export default function App() {
             deck={currentDeck}
             onBack={() => setView('catalog')}
             onSave={async (newImage) => {
-              if (selectedDeckItem) {
-                const res = await fetch(`/api/deck-items/${selectedDeckItem.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ mock_image: newImage })
-                });
-                if (res.ok) {
-                  const deckRes = await fetch(`/api/decks/${currentDeck!.id}`);
-                  const deckData = await deckRes.json();
-                  setCurrentDeck(deckData);
-                  alert('Mockup saved to deck!');
-                  setView('deck-view');
+              try {
+                const compressedImage = await compressImageIfNeeded(newImage);
+                if (selectedDeckItem) {
+                  const res = await fetch(`/api/deck-items/${selectedDeckItem.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mock_image: compressedImage })
+                  });
+                  if (res.ok) {
+                    const deckRes = await fetch(`/api/decks/${currentDeck!.id}`);
+                    const deckData = await deckRes.json();
+                    setCurrentDeck(deckData);
+                    alert('Mockup saved to deck!');
+                    setView('deck-view');
+                  } else {
+                    const errMsg = await res.text();
+                    alert(`Failed to save mockup: ${res.status} ${errMsg}`);
+                  }
+                } else {
+                  setPendingMockupImage(compressedImage);
+                  setGarmentToAddToDeck(selectedGarment);
+                  setIsDeckSelectorOpen(true);
                 }
-              } else {
-                setPendingMockupImage(newImage);
-                setGarmentToAddToDeck(selectedGarment);
-                setIsDeckSelectorOpen(true);
+              } catch (err) {
+                console.error(err);
+                alert('An error occurred while saving the mockup.');
               }
             }}
           />
