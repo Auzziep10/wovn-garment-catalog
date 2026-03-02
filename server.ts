@@ -177,6 +177,17 @@ app.post("/api/customers", async (req, res) => {
   }
 });
 
+app.put("/api/customers/:id", async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    const docRef = doc(db, "customers", req.params.id);
+    await updateDoc(docRef, updates);
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update customer" });
+  }
+});
+
 app.delete("/api/customers/:id", async (req, res) => {
   try {
     const docRef = doc(db, "customers", req.params.id);

@@ -175,8 +175,8 @@ export default function App() {
     const name = formData.get('name') as string;
     const company = formData.get('company') as string;
 
-    if (!name || !company) {
-      alert('Please fill in both name and company');
+    if (!company) {
+      alert('Please fill in company name');
       return;
     }
 
@@ -193,6 +193,24 @@ export default function App() {
       } else {
         const errorData = await res.json();
         alert(`Error: ${errorData.message || 'Failed to create customer'}`);
+      }
+    } catch (err) {
+      alert('Network error. Please try again.');
+    }
+  };
+
+  const handleUpdateCustomer = async (id: number, name: string, company: string) => {
+    try {
+      const res = await fetch(`/api/customers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, company })
+      });
+      if (res.ok) {
+        await fetchCustomers();
+      } else {
+        const errorData = await res.json();
+        alert(`Error: ${errorData.message || 'Failed to update customer'}`);
       }
     } catch (err) {
       alert('Network error. Please try again.');
@@ -478,6 +496,7 @@ export default function App() {
             onDeleteCustomer={handleDeleteCustomer}
             onViewDeck={(d) => { setCurrentDeck(d); setView('deck-view'); }}
             onCreateDeck={() => setIsNewDeckModalOpen(true)}
+            onUpdateCustomer={handleUpdateCustomer}
           />
         )}
         {view === 'deck-view' && currentDeck && (
@@ -1018,16 +1037,18 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   );
 }
 
-function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCustomer, onViewDeck, onCreateDeck }: {
+function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCustomer, onViewDeck, onCreateDeck, onUpdateCustomer }: {
   customers: Customer[],
   onAddCustomer: (e: React.FormEvent<HTMLFormElement>) => void,
   onSelectCustomer: (c: Customer) => void,
   onDeleteCustomer: (c: Customer) => void,
   onViewDeck: (d: Deck) => void,
-  onCreateDeck: (customerId: number) => void
+  onCreateDeck: (customerId: number) => void,
+  onUpdateCustomer: (id: number, name: string, company: string) => void
 }) {
   const [selectedCustId, setSelectedCustId] = useState<number | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     if (selectedCustId) {
@@ -1044,7 +1065,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
           <h2 className="editorial-title mb-8">Clients</h2>
           <form onSubmit={onAddCustomer} className="space-y-6 mb-12 p-6 bg-zinc-50 rounded-2xl">
             <h3 className="text-xs uppercase tracking-widest font-bold mb-4">New Customer</h3>
-            <input name="name" required placeholder="Contact Name" className="w-full bg-transparent border-b border-zinc-200 py-2 outline-none focus:border-zinc-900" />
+            <input name="name" placeholder="Contact Name (Optional)" className="w-full bg-transparent border-b border-zinc-200 py-2 outline-none focus:border-zinc-900" />
             <input name="company" required placeholder="Company Name" className="w-full bg-transparent border-b border-zinc-200 py-2 outline-none focus:border-zinc-900" />
             <button type="submit" className="w-full bg-zinc-900 text-white py-3 text-[10px] uppercase tracking-widest font-bold">Add Client</button>
           </form>
@@ -1058,7 +1079,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 >
                   <div>
                     <p className="font-serif text-lg">{c.company}</p>
-                    <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{c.name}</p>
+                    <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{c.name || <span className="italic opacity-50">No contact name</span>}</p>
                   </div>
                   <ChevronRight size={16} className={selectedCustId === c.id ? 'text-white' : 'text-zinc-300'} />
                 </button>
@@ -1080,8 +1101,22 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
         <div className="lg:col-span-2">
           {selectedCustId ? (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center justify-between mb-12">
-                <h2 className="editorial-title">Presentation Decks</h2>
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="editorial-title">{customers.find(c => c.id === selectedCustId)?.company}</h2>
+                    <button
+                      onClick={() => setEditingCustomer(customers.find(c => c.id === selectedCustId) || null)}
+                      className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 rounded-full transition-colors"
+                      title="Edit Client Profile"
+                    >
+                      <Edit2 size={24} />
+                    </button>
+                  </div>
+                  <p className="text-zinc-500 mt-2 text-lg">
+                    Contact: {customers.find(c => c.id === selectedCustId)?.name ? <span className="font-medium text-zinc-900">{customers.find(c => c.id === selectedCustId)?.name}</span> : <span className="italic text-zinc-400">Not provided</span>}
+                  </p>
+                </div>
                 <button
                   onClick={() => {
                     if (selectedCustId !== null) {
@@ -1130,7 +1165,92 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {editingCustomer && (
+          <EditCustomerModal
+            customer={editingCustomer}
+            onClose={() => setEditingCustomer(null)}
+            onSave={(name, company) => {
+              onUpdateCustomer(editingCustomer.id, name, company);
+              setEditingCustomer(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function EditCustomerModal({ customer, onClose, onSave }: {
+  customer: Customer,
+  onClose: () => void,
+  onSave: (name: string, company: string) => void
+}) {
+  const [name, setName] = useState(customer.name || '');
+  const [company, setCompany] = useState(customer.company || '');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Client Profile</p>
+            <h3 className="font-serif text-2xl">Edit Client</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 md:p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Company Name</label>
+            <input
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Contact Name (Optional)</label>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+              placeholder="Add contact name later..."
+            />
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8 border-t border-zinc-100 flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSave(name, company)}
+            className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+          >
+            Save Changes
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
