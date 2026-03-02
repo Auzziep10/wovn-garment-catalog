@@ -787,6 +787,14 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const [images, setImages] = useState<string[]>([]);
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
+  const [librarySortBy, setLibrarySortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
+
+  const sortedGarments = [...existingGarments].sort((a, b) => {
+    if (librarySortBy === 'category') return (a.category || '').localeCompare(b.category || '');
+    if (librarySortBy === 'gender') return (a.gender || '').localeCompare(b.gender || '');
+    if (librarySortBy === 'type') return (a.type || '').localeCompare(b.type || '');
+    return 0;
+  });
 
   const fetchExisting = () => {
     fetch('/api/garments').then(res => res.json()).then(setExistingGarments);
@@ -927,9 +935,21 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
         <div className="lg:col-span-1 border-r border-zinc-100 pr-0 lg:pr-8">
-          <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Existing Library</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs uppercase tracking-widest font-bold">Existing Library</h3>
+            <select
+              value={librarySortBy}
+              onChange={(e) => setLibrarySortBy(e.target.value as any)}
+              className="bg-transparent border-b border-zinc-200 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 w-24"
+            >
+              <option value="default">Default</option>
+              <option value="category">Category</option>
+              <option value="gender">Gender</option>
+              <option value="type">Type</option>
+            </select>
+          </div>
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-            {existingGarments.map(g => (
+            {sortedGarments.map(g => (
               <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 border border-zinc-200' : 'hover:bg-zinc-50'}`}>
                 <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
                 <div>
