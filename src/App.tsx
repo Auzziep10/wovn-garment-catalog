@@ -1076,7 +1076,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
           </form>
 
           <div className="space-y-2">
-            {customers.map(c => (
+            {[...customers].sort((a, b) => a.company.localeCompare(b.company)).map(c => (
               <div key={c.id} className="relative group/card">
                 <button
                   onClick={() => { setSelectedCustId(c.id); onSelectCustomer(c); }}
