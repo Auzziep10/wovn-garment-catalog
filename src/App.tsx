@@ -1269,6 +1269,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('presentation');
   const [editingItem, setEditingItem] = useState<DeckItem | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -1438,13 +1439,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                     <img
                       src={item.mock_image}
                       alt={item.garment_name}
-                      className="w-full h-full object-contain p-4 md:p-8"
+                      onClick={() => setZoomedImage(item.mock_image)}
+                      className="w-full h-full object-contain p-4 md:p-8 cursor-zoom-in"
                     />
-                    <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0">
+                    <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0 pointer-events-none">
                       {item.garment_id !== null && item.garment_id !== undefined && (
                         <button
                           onClick={() => handleMockupEdit(item)}
-                          className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                          className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
                           title="Edit Mockup"
                         >
                           <Wand2 size={20} />
@@ -1452,14 +1454,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       )}
                       <button
                         onClick={() => setEditingItem(item)}
-                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
                         title="Edit Details"
                       >
                         <Edit2 size={20} />
                       </button>
                       <button
                         onClick={() => onRemoveItem(item.id)}
-                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors"
+                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors pointer-events-auto"
                         title="Remove from Deck"
                       >
                         <Trash2 size={20} />
@@ -1470,7 +1472,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index > 0 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'up')}
-                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
                               title="Move Up"
                             >
                               <ArrowUp size={20} />
@@ -1479,7 +1481,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index < displayedItems.length - 1 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'down')}
-                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
                               title="Move Down"
                             >
                               <ArrowDown size={20} />
@@ -1525,10 +1527,11 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100">
                   <img
                     src={item.mock_image}
-                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                    onClick={() => setZoomedImage(item.mock_image)}
+                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                    <div className="flex gap-2 pointer-events-auto">
                       {item.garment_id !== null && item.garment_id !== undefined && (
                         <button
                           onClick={() => handleMockupEdit(item)}
@@ -1598,6 +1601,29 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
           />
+        )}
+        {zoomedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 z-[120] flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={zoomedImage}
+              className="w-full h-full object-contain"
+            />
+            <button
+              className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X size={32} />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
