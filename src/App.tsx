@@ -1613,6 +1613,24 @@ function EditItemModal({ item, onClose, onSave }: {
   const [description, setDescription] = useState(item.custom_description || item.garment_description || '');
   const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
+  const [mockImage, setMockImage] = useState(item.mock_image);
+
+  const handleImageReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Str = reader.result as string;
+        try {
+          const compressed = await compressImageIfNeeded(base64Str);
+          setMockImage(compressed);
+        } catch (err) {
+          alert('Failed to process image.');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <motion.div
@@ -1642,8 +1660,14 @@ function EditItemModal({ item, onClose, onSave }: {
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-6">
-              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4">
-                <img src={item.mock_image} className="w-full h-full object-contain" />
+              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4 relative group">
+                <img src={mockImage} className="w-full h-full object-contain" />
+                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <div className="bg-white text-zinc-900 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
+                    <Upload size={14} /> Replace Photo
+                  </div>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
+                </label>
               </div>
             </div>
 
@@ -1702,7 +1726,8 @@ function EditItemModal({ item, onClose, onSave }: {
               custom_name: name,
               custom_description: description,
               custom_price: parseFloat(price),
-              custom_sizes: sizes
+              custom_sizes: sizes,
+              mock_image: mockImage
             })}
             className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
           >
