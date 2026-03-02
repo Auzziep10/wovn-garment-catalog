@@ -788,13 +788,23 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
   const [librarySortBy, setLibrarySortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
+  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [filterGender, setFilterGender] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('');
 
-  const sortedGarments = [...existingGarments].sort((a, b) => {
-    if (librarySortBy === 'category') return (a.category || '').localeCompare(b.category || '');
-    if (librarySortBy === 'gender') return (a.gender || '').localeCompare(b.gender || '');
-    if (librarySortBy === 'type') return (a.type || '').localeCompare(b.type || '');
-    return 0;
-  });
+  const filteredAndSortedGarments = [...existingGarments]
+    .filter(g => {
+      if (filterCategory && g.category !== filterCategory) return false;
+      if (filterGender && g.gender !== filterGender) return false;
+      if (filterType && g.type !== filterType) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (librarySortBy === 'category') return (a.category || '').localeCompare(b.category || '');
+      if (librarySortBy === 'gender') return (a.gender || '').localeCompare(b.gender || '');
+      if (librarySortBy === 'type') return (a.type || '').localeCompare(b.type || '');
+      return 0;
+    });
 
   const fetchExisting = () => {
     fetch('/api/garments').then(res => res.json()).then(setExistingGarments);
@@ -935,21 +945,46 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
         <div className="lg:col-span-1 border-r border-zinc-100 pr-0 lg:pr-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs uppercase tracking-widest font-bold">Existing Library</h3>
-            <select
-              value={librarySortBy}
-              onChange={(e) => setLibrarySortBy(e.target.value as any)}
-              className="bg-transparent border-b border-zinc-200 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 w-24"
-            >
-              <option value="default">Default</option>
-              <option value="category">Category</option>
-              <option value="gender">Gender</option>
-              <option value="type">Type</option>
-            </select>
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs uppercase tracking-widest font-bold">Existing Library</h3>
+              <select
+                value={librarySortBy}
+                onChange={(e) => setLibrarySortBy(e.target.value as any)}
+                className="bg-transparent border-b border-zinc-200 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 w-24"
+              >
+                <option value="default">Sort: Default</option>
+                <option value="category">Sort: Category</option>
+                <option value="gender">Sort: Gender</option>
+                <option value="type">Sort: Type</option>
+              </select>
+            </div>
+            <div className="flex gap-2 text-[9px] uppercase font-bold text-zinc-500">
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+                <option value="">All Categories</option>
+                <option value="Athleisure">Athleisure</option>
+                <option value="Executive">Executive</option>
+                <option value="Auto-Industry">Auto-Industry</option>
+              </select>
+              <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Accessories">Accessories</option>
+              </select>
+              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+                <option value="">All Types</option>
+                <option value="Tops">Tops</option>
+                <option value="Bottom">Bottom</option>
+                <option value="Headwear">Headwear</option>
+                <option value="Bags">Bags</option>
+                <option value="Tumblers">Tumblers</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-            {sortedGarments.map(g => (
+            {filteredAndSortedGarments.map(g => (
               <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 border border-zinc-200' : 'hover:bg-zinc-50'}`}>
                 <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
                 <div>
