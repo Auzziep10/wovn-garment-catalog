@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore, collection, getDocs, addDoc, doc, getDoc,
-  updateDoc, deleteDoc, query, where
+  updateDoc, deleteDoc, query, where, writeBatch
 } from "firebase/firestore";
 import dotenv from "dotenv";
 
@@ -252,9 +252,15 @@ app.get("/api/decks/:id", async (req, res) => {
         garment_name: itemData.custom_name || (garmentData ? garmentData.name : "Unknown"),
         garment_description: itemData.custom_description || (garmentData ? garmentData.description : ""),
         garment_price: itemData.custom_price || (garmentData ? garmentData.price : 0),
-        original_image: garmentData ? garmentData.image : null
+        original_image: garmentData ? garmentData.image : null,
+        category: garmentData ? garmentData.category : null,
+        gender: garmentData ? garmentData.gender : null,
+        type: garmentData ? garmentData.type : null,
+        order_index: itemData.order_index || 0
       });
     }
+
+    items.sort((a, b) => a.order_index - b.order_index);
 
     res.json({ ...deckData, items });
   } catch (error) {
@@ -265,17 +271,35 @@ app.get("/api/decks/:id", async (req, res) => {
 
 app.post("/api/decks/:id/items", async (req, res) => {
   try {
-    const { garment_id, mock_image } = req.body;
+    const { garment_id, mock_image, order_index } = req.body;
     const itemData = {
       deck_id: req.params.id,
       garment_id,
       mock_image,
+      order_index: order_index || 0,
       created_at: new Date().toISOString()
     };
     const docRef = await addDoc(collection(db, "deck_items"), itemData);
     res.json({ id: docRef.id });
   } catch (error) {
     res.status(500).json({ error: "Failed to add deck item" });
+  }
+});
+
+app.put("/api/decks/:id/reorder", async (req, res) => {
+  try {
+    const { items: reorderedItems } = req.body;
+    const batch = writeBatch(db);
+    for (const item of reorderedItems) {
+      if (item.id) {
+        const docRef = doc(db, "deck_items", item.id);
+        batch.update(docRef, { order_index: item.order_index });
+      }
+    }
+    await batch.commit();
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to reorder items" });
   }
 });
 

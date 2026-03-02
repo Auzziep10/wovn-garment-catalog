@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw,
-  Grid, List, Edit2
+  Grid, List, Edit2, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup } from './services/geminiService';
@@ -52,6 +52,10 @@ export interface DeckItem {
   custom_description?: string;
   custom_price?: number;
   custom_sizes?: string;
+  order_index?: number;
+  category?: string;
+  gender?: string;
+  type?: string;
 }
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation';
@@ -306,7 +310,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           garment_id: garment.id,
-          mock_image: customImage || garment.image
+          mock_image: customImage || garment.image,
+          order_index: currentDeck?.items?.length || 0
         })
       });
 
@@ -1275,6 +1280,40 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
     fetchItems();
   }, [deck.id]);
 
+  const [sortBy, setSortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
+
+  const displayedItems = [...items].sort((a, b) => {
+    if (sortBy === 'default') return (a.order_index || 0) - (b.order_index || 0);
+    if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '');
+    if (sortBy === 'gender') return (a.gender || '').localeCompare(b.gender || '');
+    if (sortBy === 'type') return (a.type || '').localeCompare(b.type || '');
+    return 0;
+  });
+
+  const handleMoveItem = async (itemId: number, direction: 'up' | 'down') => {
+    if (sortBy !== 'default') return;
+    const currentIndex = items.findIndex(i => i.id === itemId);
+    if (currentIndex < 0) return;
+
+    const newItems = [...items];
+    if (direction === 'up' && currentIndex > 0) {
+      [newItems[currentIndex - 1], newItems[currentIndex]] = [newItems[currentIndex], newItems[currentIndex - 1]];
+    } else if (direction === 'down' && currentIndex < newItems.length - 1) {
+      [newItems[currentIndex + 1], newItems[currentIndex]] = [newItems[currentIndex], newItems[currentIndex + 1]];
+    } else {
+      return;
+    }
+
+    newItems.forEach((item, idx) => item.order_index = idx);
+    setItems(newItems);
+
+    await fetch(`/api/decks/${deck.id}/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
+    });
+  };
+
   const handleMockupEdit = (item: DeckItem) => {
     onGarmentClick({
       id: item.garment_id,
@@ -1282,9 +1321,9 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
       description: item.garment_description!,
       price: item.garment_price!,
       image: item.original_image!,
-      category: 'Athleisure', // Fallback
-      gender: 'Male',
-      type: 'Tops'
+      category: (item.category as Category) || 'Athleisure',
+      gender: (item.gender as Gender) || 'Male',
+      type: (item.type as GarmentType) || 'Tops'
     }, item);
   };
 
@@ -1313,6 +1352,19 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             <h2 className="editorial-title">{deck.name}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+            <div className="flex items-center gap-2 mr-4">
+              <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+              >
+                <option value="default">Custom Order</option>
+                <option value="category">Category</option>
+                <option value="gender">Gender</option>
+                <option value="type">Type</option>
+              </select>
+            </div>
             <div className="flex items-center gap-2 mr-4 bg-white border border-zinc-200 p-1 rounded-full shadow-sm">
               <button
                 onClick={() => setDisplayMode('presentation')}
@@ -1341,7 +1393,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
         {displayMode === 'presentation' ? (
           <div className="grid grid-cols-1 gap-16 md:gap-32">
-            {items.map((item, index) => (
+            {displayedItems.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 40 }}
@@ -1378,6 +1430,29 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       >
                         <Trash2 size={20} />
                       </button>
+
+                      {sortBy === 'default' && (
+                        <>
+                          {index > 0 && (
+                            <button
+                              onClick={() => handleMoveItem(item.id, 'up')}
+                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              title="Move Up"
+                            >
+                              <ArrowUp size={20} />
+                            </button>
+                          )}
+                          {index < displayedItems.length - 1 && (
+                            <button
+                              onClick={() => handleMoveItem(item.id, 'down')}
+                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              title="Move Down"
+                            >
+                              <ArrowDown size={20} />
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1405,7 +1480,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {items.map((item, index) => (
+            {displayedItems.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -1441,6 +1516,29 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       >
                         <Trash2 size={18} />
                       </button>
+
+                      {sortBy === 'default' && (
+                        <>
+                          {index > 0 && (
+                            <button
+                              onClick={() => handleMoveItem(item.id, 'up')}
+                              className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              title="Move Up"
+                            >
+                              <ArrowUp size={18} />
+                            </button>
+                          )}
+                          {index < displayedItems.length - 1 && (
+                            <button
+                              onClick={() => handleMoveItem(item.id, 'down')}
+                              className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              title="Move Down"
+                            >
+                              <ArrowDown size={18} />
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
