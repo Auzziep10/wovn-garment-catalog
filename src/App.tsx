@@ -23,6 +23,7 @@ export interface Garment {
   type: GarmentType;
   image: string;
   images?: string[];
+  supplier_link?: string;
 }
 
 export interface Customer {
@@ -717,6 +718,13 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
                   <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
                   <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.price}</p>
+
+                  {viewingGarment.supplier_link && (
+                    <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-6 border-b border-zinc-200 hover:border-zinc-900 pb-1">
+                      Procurement Source ↗
+                    </a>
+                  )}
+
                   <p className="text-zinc-500 text-sm md:text-lg leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100">
                     {viewingGarment.description}
                   </p>
@@ -842,6 +850,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       category: formData.get('category'),
       gender: formData.get('gender'),
       type: formData.get('type'),
+      supplier_link: formData.get('supplier_link'),
       image: images[0],
       images: images
     };
@@ -949,6 +958,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
               <div>
                 <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
                 <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Supplier Link (Optional)</label>
+                <input name="supplier_link" type="url" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
               </div>
 
               <div>
