@@ -42,7 +42,7 @@ export interface Deck {
 export interface DeckItem {
   id: number;
   deck_id: number;
-  garment_id: number;
+  garment_id?: number | null;
   mock_image: string;
   garment_name?: string;
   garment_description?: string;
@@ -1339,6 +1339,34 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
     }
   };
 
+  const handleUploadExternal = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Str = reader.result as string;
+        try {
+          const compressed = await compressImageIfNeeded(base64Str);
+          const res = await fetch(`/api/decks/${deck.id}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              garment_id: null,
+              mock_image: compressed,
+              order_index: items.length
+            })
+          });
+          if (res.ok) {
+            fetchItems();
+          }
+        } catch (err) {
+          alert('Failed to upload custom item.');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50/50">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
@@ -1379,6 +1407,10 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <Grid size={14} /> Grid
               </button>
             </div>
+            <label className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors cursor-pointer flex items-center gap-2">
+              <Upload size={14} /> Custom Item
+              <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
+            </label>
             <button className="bg-white border border-zinc-200 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors">
               Share Link
             </button>
@@ -1409,13 +1441,15 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       className="w-full h-full object-contain p-4 md:p-8"
                     />
                     <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0">
-                      <button
-                        onClick={() => handleMockupEdit(item)}
-                        className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
-                        title="Edit Mockup"
-                      >
-                        <Wand2 size={20} />
-                      </button>
+                      {item.garment_id !== null && item.garment_id !== undefined && (
+                        <button
+                          onClick={() => handleMockupEdit(item)}
+                          className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                          title="Edit Mockup"
+                        >
+                          <Wand2 size={20} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
@@ -1495,13 +1529,15 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleMockupEdit(item)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
-                        title="Edit Mockup"
-                      >
-                        <Wand2 size={18} />
-                      </button>
+                      {item.garment_id !== null && item.garment_id !== undefined && (
+                        <button
+                          onClick={() => handleMockupEdit(item)}
+                          className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                          title="Edit Mockup"
+                        >
+                          <Wand2 size={18} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
