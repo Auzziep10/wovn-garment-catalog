@@ -276,8 +276,7 @@ app.get("/api/decks/:id", async (req, res) => {
     const itemsQ = query(collection(db, "deck_items"), where("deck_id", "==", req.params.id));
     const itemsSnap = await getDocs(itemsQ);
 
-    const items = [];
-    for (const itemDoc of itemsSnap.docs) {
+    const items = await Promise.all(itemsSnap.docs.map(async (itemDoc) => {
       const itemData: any = { id: itemDoc.id, ...itemDoc.data() };
 
       // Fetch corresponding garment for each item to match the previous SQL JOIN
@@ -290,7 +289,7 @@ app.get("/api/decks/:id", async (req, res) => {
         }
       }
 
-      items.push({
+      return {
         ...itemData,
         garment_name: itemData.custom_name || (garmentData ? garmentData.name : "Unknown"),
         garment_description: itemData.custom_description || (garmentData ? garmentData.description : ""),
@@ -301,8 +300,8 @@ app.get("/api/decks/:id", async (req, res) => {
         type: garmentData ? garmentData.type : null,
         supplier_link: garmentData ? garmentData.supplier_link : null,
         order_index: itemData.order_index || 0
-      });
-    }
+      };
+    }));
 
     items.sort((a, b) => a.order_index - b.order_index);
 
