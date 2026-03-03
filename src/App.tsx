@@ -2301,6 +2301,16 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
   onClose: () => void,
   onSelect: (deck: Deck) => void
 }) {
+  const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
+
+  const groupedDecks = decks.reduce((acc, deck) => {
+    if (!acc[deck.customer_name]) acc[deck.customer_name] = [];
+    acc[deck.customer_name].push(deck);
+    return acc;
+  }, {} as Record<string, typeof decks>);
+
+  const sortedCompanies = Object.keys(groupedDecks).sort((a, b) => a.localeCompare(b));
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -2326,7 +2336,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
           </button>
         </div>
 
-        <div className="p-4 bg-zinc-50 flex items-center gap-4">
+        <div className="p-4 bg-zinc-50 flex items-center gap-4 border-b border-zinc-100">
           <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-zinc-100 flex-shrink-0">
             <img src={garment.image} className="w-full h-full object-contain p-1" />
           </div>
@@ -2336,19 +2346,50 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2">
-          {decks.map(deck => (
-            <button
-              key={deck.id}
-              onClick={() => onSelect(deck)}
-              className="w-full text-left p-4 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100 flex items-center justify-between group"
-            >
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">{deck.customer_name}</p>
-                <p className="font-serif text-lg">{deck.name}</p>
-              </div>
-              <Plus size={16} className="text-zinc-300 group-hover:text-zinc-900 transition-colors" />
-            </button>
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+          {sortedCompanies.map(company => (
+            <div key={company} className="border border-zinc-100 rounded-3xl overflow-hidden shadow-sm">
+              <button
+                onClick={() => setExpandedCompany(expandedCompany === company ? null : company)}
+                className="w-full text-left p-6 bg-white hover:bg-zinc-50 transition-colors flex items-center justify-between"
+              >
+                <div className="flex flex-col">
+                  <h4 className="font-serif text-2xl font-bold">{company}</h4>
+                </div>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50">
+                  {expandedCompany === company ? (
+                    <X size={16} className="text-zinc-600" />
+                  ) : (
+                    <Plus size={16} className="text-zinc-600" />
+                  )}
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedCompany === company && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="overflow-hidden bg-zinc-50/50"
+                  >
+                    <div className="p-4 space-y-2 border-t border-zinc-100">
+                      {groupedDecks[company].map(deck => (
+                        <button
+                          key={deck.id}
+                          onClick={() => onSelect(deck)}
+                          className="w-full text-left p-4 rounded-xl bg-white hover:border-zinc-300 border border-zinc-100 shadow-sm transition-all flex items-center justify-between group"
+                        >
+                          <span className="text-base font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">{deck.name}</span>
+                          <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            Select <ChevronRight size={12} />
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ))}
           {decks.length === 0 && (
             <div className="py-12 text-center">
