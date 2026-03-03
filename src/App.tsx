@@ -58,6 +58,7 @@ export interface DeckItem {
   custom_description?: string;
   custom_price?: number;
   custom_sizes?: string;
+  variations?: string[];
   order_index?: number;
   category?: string;
   gender?: string;
@@ -540,14 +541,20 @@ export default function App() {
             garment={selectedGarment}
             deck={currentDeck}
             onBack={() => setView('catalog')}
-            onSave={async (newImage) => {
+            onSave={async (newImage, isVariation) => {
               try {
                 const compressedImage = await compressImageIfNeeded(newImage);
                 if (selectedDeckItem) {
+                  const updates: any = {};
+                  if (isVariation) {
+                    updates.variations = [...(selectedDeckItem.variations || []), compressedImage];
+                  } else {
+                    updates.mock_image = compressedImage;
+                  }
                   const res = await fetch(`/api/deck-items/${selectedDeckItem.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mock_image: compressedImage })
+                    body: JSON.stringify(updates)
                   });
                   if (res.ok) {
                     const deckRes = await fetch(`/api/decks/${currentDeck!.id}`);
@@ -1440,6 +1447,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('presentation');
   const [editingItem, setEditingItem] = useState<DeckItem | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -1607,9 +1615,9 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <div className="flex-1 w-full">
                   <div className="aspect-[4/5] bg-white shadow-2xl rounded-[2rem] overflow-hidden relative group">
                     <img
-                      src={item.mock_image}
+                      src={activeVariations[item.id] || item.mock_image}
                       alt={item.garment_name}
-                      onClick={() => setZoomedImage(item.mock_image)}
+                      onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
                       className="w-full h-full object-contain p-4 md:p-8 cursor-zoom-in"
                     />
                     <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0 pointer-events-none">
@@ -1680,6 +1688,30 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       ))}
                     </div>
                   </div>
+
+                  {item.variations && item.variations.length > 0 && (
+                    <div className="pt-8 border-t border-zinc-200">
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-4">View Variation</p>
+                      <div className="flex gap-2 lg:gap-3 flex-wrap">
+                        <button
+                          onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
+                          className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
+                        >
+                          <img src={item.mock_image} className="w-full h-full object-contain" />
+                        </button>
+                        {item.variations.map((v, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
+                            className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
+                          >
+                            <img src={v} className="w-full h-full object-contain" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </motion.div>
             ))}
@@ -1696,8 +1728,8 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
               >
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100">
                   <img
-                    src={item.mock_image}
-                    onClick={() => setZoomedImage(item.mock_image)}
+                    src={activeVariations[item.id] || item.mock_image}
+                    onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
                     className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
@@ -1751,6 +1783,27 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                     </div>
                   </div>
                 </div>
+
+                {item.variations && item.variations.length > 0 && (
+                  <div className="flex gap-1.5 mb-3 px-1 overflow-x-auto hide-scrollbar">
+                    <button
+                      onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
+                      className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
+                    >
+                      <img src={item.mock_image} className="w-full h-full object-contain" />
+                    </button>
+                    {item.variations.map((v, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
+                        className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
+                      >
+                        <img src={v} className="w-full h-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
@@ -1768,8 +1821,9 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
               </div>
             )}
           </div>
-        )}
-      </div>
+        )
+        }
+      </div >
 
       <AnimatePresence>
         {editingItem && (
@@ -1803,7 +1857,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 }
 
@@ -1817,6 +1871,7 @@ function EditItemModal({ item, onClose, onSave }: {
   const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
+  const [variations, setVariations] = useState<string[]>(item.variations || []);
 
   const handleImageReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1829,6 +1884,23 @@ function EditItemModal({ item, onClose, onSave }: {
           setMockImage(compressed);
         } catch (err) {
           alert('Failed to process image.');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddVariation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Str = reader.result as string;
+        try {
+          const compressed = await compressImageIfNeeded(base64Str);
+          setVariations([...variations, compressed]);
+        } catch (err) {
+          alert('Failed to process variation image.');
         }
       };
       reader.readAsDataURL(file);
@@ -1867,10 +1939,42 @@ function EditItemModal({ item, onClose, onSave }: {
                 <img src={mockImage} className="w-full h-full object-contain" />
                 <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                   <div className="bg-white text-zinc-900 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
-                    <Upload size={14} /> Replace Photo
+                    <Upload size={14} /> Replace Main Photo
                   </div>
                   <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
                 </label>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Variations (Colors/Mockups)</p>
+                <div className="flex flex-wrap gap-2">
+                  {variations.map((v, i) => (
+                    <div key={i} className="w-16 h-16 border border-zinc-200 rounded-xl overflow-hidden relative group">
+                      <img src={v} className="w-full h-full object-contain p-1" />
+                      <button
+                        title="Remove Variation"
+                        onClick={() => setVariations(variations.filter((_, index) => index !== i))}
+                        className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      <button
+                        title="Set as Main Image"
+                        onClick={() => {
+                          setMockImage(v);
+                          setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
+                        }}
+                        className="absolute top-0 right-0 p-1 bg-zinc-900 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl text-[8px] uppercase font-bold tracking-widest"
+                      >
+                        Main
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center cursor-pointer hover:border-zinc-900 transition-colors text-zinc-400 hover:text-zinc-900" title="Add Variation">
+                    <Plus size={16} />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -1930,7 +2034,8 @@ function EditItemModal({ item, onClose, onSave }: {
               custom_description: description,
               custom_price: parseFloat(price),
               custom_sizes: sizes,
-              mock_image: mockImage
+              mock_image: mockImage,
+              variations: variations
             })}
             className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
           >
@@ -1946,7 +2051,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   garment: Garment,
   deck: Deck | null,
   onBack: () => void,
-  onSave: (img: string) => void
+  onSave: (img: string, isVariation?: boolean) => void
 }) {
   const [activeGarmentImage, setActiveGarmentImage] = useState<string>(
     garment.images && garment.images.length > 0 ? garment.images[0] : garment.image
@@ -2310,12 +2415,20 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               </div>
 
               {resultImage && (
-                <button
-                  onClick={() => onSave(resultImage)}
-                  className="w-full bg-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2"
-                >
-                  <Save size={16} /> Save Baked Mockup to Deck
-                </button>
+                <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-2">
+                  <button
+                    onClick={() => onSave(resultImage)}
+                    className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Save size={16} /> Update Main Mockup
+                  </button>
+                  <button
+                    onClick={() => onSave(resultImage, true)}
+                    className="flex-1 bg-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} /> Add as Variation
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -2434,6 +2547,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
 function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }) {
   const [items, setItems] = useState<DeckItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetch(`/api/decks/${deck.id}`)
@@ -2493,11 +2607,33 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             exit={{ opacity: 0, x: -20 }}
             className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
           >
-            <div className="flex-1 aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] w-full max-w-sm md:max-w-none mx-auto overflow-hidden shadow-2xl bg-white flex items-center justify-center p-6 md:p-12">
-              <img
-                src={currentItem.mock_image}
-                className="w-full h-full object-contain"
-              />
+            <div className="flex flex-col flex-1 w-full max-w-sm md:max-w-none mx-auto gap-4">
+              <div className="aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white flex items-center justify-center p-6 md:p-12">
+                <img
+                  src={activeVariations[currentItem.id] || currentItem.mock_image}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {currentItem.variations && currentItem.variations.length > 0 && (
+                <div className="flex gap-2 lg:gap-3 flex-wrap justify-center">
+                  <button
+                    onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: currentItem.mock_image }))}
+                    className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[currentItem.id] || activeVariations[currentItem.id] === currentItem.mock_image) ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                  >
+                    <img src={currentItem.mock_image} className="w-full h-full object-contain" />
+                  </button>
+                  {currentItem.variations.map((v, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
+                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                    >
+                      <img src={v} className="w-full h-full object-contain" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex-1 space-y-4 md:space-y-8 w-full">
               <div className="space-y-4">
