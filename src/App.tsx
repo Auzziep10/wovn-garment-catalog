@@ -1118,12 +1118,13 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 
   useEffect(() => {
     if (selectedCustId) {
-      fetch(`/api/customers/${selectedCustId}/decks`)
-        .then(res => res.json())
-        .then(setDecks);
-      fetch(`/api/customers/${selectedCustId}/assets`)
-        .then(res => res.json())
-        .then(setAssets);
+      Promise.all([
+        fetch(`/api/customers/${selectedCustId}/decks`).then(res => res.json()),
+        fetch(`/api/customers/${selectedCustId}/assets`).then(res => res.json())
+      ]).then(([decksData, assetsData]) => {
+        setDecks(decksData);
+        setAssets(assetsData);
+      });
     }
   }, [selectedCustId]);
 
