@@ -370,13 +370,7 @@ export default function App() {
                 onClick={() => setView('catalog')}
                 className={`nav-link ${view === 'catalog' ? 'text-zinc-900' : ''}`}
               >
-                Catalog
-              </button>
-              <button
-                onClick={() => setView('admin')}
-                className={`nav-link ${view === 'admin' ? 'text-zinc-900' : ''}`}
-              >
-                Garment
+                Collection
               </button>
               <button
                 onClick={() => setView('customers')}
@@ -496,6 +490,7 @@ export default function App() {
             onSelectGarment={(g) => { setSelectedGarment(g); setSelectedDeckItem(null); setView('mockup-studio'); }}
             onAddToDeck={(g) => { setGarmentToAddToDeck(g); setIsDeckSelectorOpen(true); }}
             onDeleteGarment={handleDeleteGarment}
+            onAddGarment={() => setView('admin')}
           />
         )}
         {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} />}
@@ -601,7 +596,7 @@ export default function App() {
   );
 }
 
-function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck, onDeleteGarment }: {
+function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck, onDeleteGarment, onAddGarment }: {
   garments: Garment[],
   category: string,
   gender: string,
@@ -609,7 +604,8 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   currentDeck: Deck | null,
   onSelectGarment: (g: Garment) => void,
   onAddToDeck: (g: Garment) => void,
-  onDeleteGarment: (g: Garment) => void
+  onDeleteGarment: (g: Garment) => void,
+  onAddGarment: () => void
 }) {
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -636,17 +632,25 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             Our curated collection of high-performance garments designed for the modern professional.
             Each piece is selected for its quality, durability, and aesthetic appeal.
           </p>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
-              className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onAddGarment}
+              className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 transition-colors shadow-sm"
             >
-              <option value="default">Default</option>
-              <option value="asc">Price: Low to High</option>
-              <option value="desc">Price: High to Low</option>
-            </select>
+              + Garment
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as any)}
+                className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+              >
+                <option value="default">Default</option>
+                <option value="asc">Price: Low to High</option>
+                <option value="desc">Price: High to Low</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -680,12 +684,6 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                     className="bg-white text-zinc-900 px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-900 hover:text-white transition-colors"
                   >
                     {currentDeck ? 'Add to Deck' : 'Select Deck'}
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onSelectGarment(garment); }}
-                    className="bg-zinc-900 text-white px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
-                  >
-                    Mockup Studio
                   </button>
                 </div>
               </div>
