@@ -288,6 +288,7 @@ app.get("/api/decks/:id", async (req, res) => {
         category: garmentData ? garmentData.category : null,
         gender: garmentData ? garmentData.gender : null,
         type: garmentData ? garmentData.type : null,
+        supplier_link: garmentData ? garmentData.supplier_link : null,
         order_index: itemData.order_index || 0
       });
     }

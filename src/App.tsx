@@ -62,6 +62,7 @@ export interface DeckItem {
   category?: string;
   gender?: string;
   type?: string;
+  supplier_link?: string | null;
 }
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation';
@@ -1641,12 +1642,19 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   </div>
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
                     <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                        <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
-                          {size}
-                        </span>
-                      ))}
+                    <div className="flex items-center gap-6">
+                      {item.supplier_link && (
+                        <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 border-b border-transparent hover:border-zinc-900 transition-all">
+                          Procurement Link
+                        </a>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
+                          <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
+                            {size}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1721,7 +1729,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   </div>
                 </div>
                 <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
-                <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
+                  {item.supplier_link && (
+                    <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 border-b border-transparent hover:border-zinc-900 transition-colors" onClick={(e) => e.stopPropagation()}>
+                      Link
+                    </a>
+                  )}
+                </div>
               </motion.div>
             ))}
             {items.length === 0 && (
@@ -2430,12 +2445,19 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
               </div>
               <div className="pt-8 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-6">
                 <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
-                <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
-                  {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                    <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
-                      {size}
-                    </span>
-                  ))}
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  {currentItem.supplier_link && (
+                    <a href={currentItem.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 border-b border-transparent hover:border-zinc-900 transition-all">
+                      Procurement Link
+                    </a>
+                  )}
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
+                    {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
+                      <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
+                        {size}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
