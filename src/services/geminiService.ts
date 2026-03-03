@@ -62,10 +62,12 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
 
   const modelObj = getGenerativeModel(ai, {
     model,
-    generationConfig: {
-      // @ts-ignore
-      imageConfig: { aspectRatio: "3:4" }
-    }
+    // Note: Do not specify aspectRatio here so it exactly inherits 
+    // the source dimension aspect ratio and prevents off-centering/cropping
+    // generationConfig: {
+    //   // @ts-ignore
+    //   imageConfig: { aspectRatio: "3:4" }
+    // }
   });
 
   // We send both images and a prompt to the model
