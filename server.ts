@@ -252,6 +252,17 @@ app.post("/api/decks", async (req, res) => {
   }
 });
 
+app.put("/api/decks/:id", async (req, res) => {
+  try {
+    const { name } = req.body;
+    const deckRef = doc(db, "decks", req.params.id);
+    await updateDoc(deckRef, { name });
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update deck" });
+  }
+});
+
 app.get("/api/decks/:id", async (req, res) => {
   try {
     const deckRef = doc(db, "decks", req.params.id);

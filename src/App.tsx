@@ -575,7 +575,7 @@ export default function App() {
 
       <AnimatePresence>
         {isNewDeckModalOpen && selectedCustomer && (
-          <NewDeckModal
+          <DeckModal
             onClose={() => setIsNewDeckModalOpen(false)}
             onConfirm={(name) => handleCreateDeck(selectedCustomer.id, name)}
           />
@@ -1115,6 +1115,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [decks, setDecks] = useState<Deck[]>([]);
   const [assets, setAssets] = useState<CustomerAsset[]>([]);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
 
   useEffect(() => {
@@ -1165,6 +1166,25 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       }
     } catch (err) {
       alert('Failed to delete asset');
+    }
+  };
+
+  const handleRenameDeck = async (newName: string) => {
+    if (!editingDeck) return;
+    try {
+      const res = await fetch(`/api/decks/${editingDeck.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+      if (res.ok) {
+        setDecks(prev => prev.map(d => d.id === editingDeck.id ? { ...d, name: newName } : d));
+        setEditingDeck(null);
+      } else {
+        alert('Failed to rename deck');
+      }
+    } catch {
+      alert('Network error. Please try again.');
     }
   };
 
@@ -1252,7 +1272,19 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                       <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:text-white transition-colors">
                         <Presentation size={24} />
                       </div>
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Presentation</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Presentation</p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingDeck(d);
+                          }}
+                          className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                          title="Rename Presentation"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     <h3 className="font-serif text-2xl mb-2">{d.name}</h3>
                     <p className="text-zinc-500 text-sm">Curated garment selection for client review.</p>
@@ -1302,10 +1334,10 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               </div>
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center py-24">
-              <Users className="text-zinc-100 mb-6" size={80} />
-              <h3 className="font-serif text-3xl text-zinc-300 mb-2">Select a Client</h3>
-              <p className="text-zinc-400">Choose a client from the list to manage their presentation decks.</p>
+            <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 rounded-[2rem] bg-zinc-50/50">
+              <Users className="text-zinc-300 mb-6" size={48} />
+              <h3 className="editorial-title text-3xl mb-2 text-zinc-400">Select a Client</h3>
+              <p className="text-zinc-500 font-serif italic">Choose a client from the list to view their decks and assets.</p>
             </div>
           )}
         </div>
@@ -1320,6 +1352,13 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               onUpdateCustomer(editingCustomer.id, name, company);
               setEditingCustomer(null);
             }}
+          />
+        )}
+        {editingDeck && (
+          <DeckModal
+            initialName={editingDeck.name}
+            onClose={() => setEditingDeck(null)}
+            onConfirm={handleRenameDeck}
           />
         )}
       </AnimatePresence>
@@ -2511,8 +2550,8 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
   );
 }
 
-function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: (name: string) => void }) {
-  const [name, setName] = useState('');
+function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => void, onConfirm: (name: string) => void, initialName?: string }) {
+  const [name, setName] = useState(initialName);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2538,8 +2577,8 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
       >
         <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">New Presentation</p>
-            <h3 className="font-serif text-2xl">Create Deck</h3>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">{initialName ? 'Rename Presentation' : 'New Presentation'}</p>
+            <h3 className="font-serif text-2xl">{initialName ? 'Rename Deck' : 'Create Deck'}</h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
             <X size={20} />
@@ -2571,7 +2610,7 @@ function NewDeckModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: 
               disabled={!name.trim()}
               className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Deck
+              {initialName ? 'Save Changes' : 'Create Deck'}
             </button>
           </div>
         </form>
