@@ -540,7 +540,7 @@ export default function App() {
           <MockupStudio
             garment={selectedGarment}
             deck={currentDeck}
-            onBack={() => setView('catalog')}
+            onBack={() => setView(selectedDeckItem ? 'deck-view' : 'catalog')}
             onSave={async (newImage, isVariation) => {
               try {
                 const compressedImage = await compressImageIfNeeded(newImage);
