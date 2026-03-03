@@ -32,6 +32,12 @@ export interface Customer {
   company: string;
 }
 
+export interface CustomerAsset {
+  id: string;
+  customer_id: number;
+  image: string;
+}
+
 export interface Deck {
   id: number;
   customer_id: number;
@@ -1108,15 +1114,60 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 }) {
   const [selectedCustId, setSelectedCustId] = useState<number | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [assets, setAssets] = useState<CustomerAsset[]>([]);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [isUploadingAsset, setIsUploadingAsset] = useState(false);
 
   useEffect(() => {
     if (selectedCustId) {
       fetch(`/api/customers/${selectedCustId}/decks`)
         .then(res => res.json())
         .then(setDecks);
+      fetch(`/api/customers/${selectedCustId}/assets`)
+        .then(res => res.json())
+        .then(setAssets);
     }
   }, [selectedCustId]);
+
+  const handleUploadAsset = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && selectedCustId) {
+      setIsUploadingAsset(true);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const compressed = await compressImageIfNeeded(reader.result as string);
+          const res = await fetch(`/api/customers/${selectedCustId}/assets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: compressed })
+          });
+          if (res.ok) {
+            const newAsset = await res.json();
+            setAssets(prev => [...prev, newAsset]);
+          }
+        } catch (err) {
+          alert('Failed to upload asset');
+        } finally {
+          setIsUploadingAsset(false);
+          if (e.target) e.target.value = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteAsset = async (assetId: string) => {
+    if (!selectedCustId || !confirm('Delete this asset?')) return;
+    try {
+      const res = await fetch(`/api/customers/${selectedCustId}/assets/${assetId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAssets(prev => prev.filter(a => a.id !== assetId));
+      }
+    } catch (err) {
+      alert('Failed to delete asset');
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
@@ -1214,6 +1265,41 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                     <p className="text-zinc-400 font-serif italic">No decks created for this client yet.</p>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="editorial-title text-2xl">Asset Vault</h3>
+                    <p className="text-zinc-500 text-sm mt-1">Stored logos and assets for {customers.find(c => c.id === selectedCustId)?.company}.</p>
+                  </div>
+                  <label className={`flex items-center gap-2 px-6 py-3 rounded-full text-xs uppercase tracking-widest font-bold transition-all shadow-sm ${isUploadingAsset ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : 'bg-white border border-zinc-200 text-zinc-900 hover:border-zinc-900 cursor-pointer'}`}>
+                    {isUploadingAsset ? <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" /> : <Upload size={16} />}
+                    {isUploadingAsset ? 'Uploading' : 'Upload Asset'}
+                    <input type="file" className="hidden" accept="image/*" onChange={handleUploadAsset} disabled={isUploadingAsset} />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {assets.map(asset => (
+                    <div key={asset.id} className="aspect-square bg-white border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
+                      <img src={asset.image} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}
+                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur shadow-sm rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all pointer-events-auto"
+                        title="Remove Asset"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {assets.length === 0 && !isUploadingAsset && (
+                    <div className="col-span-full py-12 text-center border-2 border-dashed border-zinc-100 rounded-2xl bg-zinc-50/50">
+                      <ImageIcon className="mx-auto text-zinc-300 mb-3" size={32} />
+                      <p className="text-zinc-400 font-serif italic text-sm">No assets uploaded to the vault yet.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
@@ -1840,6 +1926,15 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useMotionValue(0);
+  const [vaultAssets, setVaultAssets] = useState<CustomerAsset[]>([]);
+
+  useEffect(() => {
+    if (deck?.customer_id) {
+      fetch(`/api/customers/${deck.customer_id}/assets`)
+        .then(res => res.json())
+        .then(setVaultAssets);
+    }
+  }, [deck?.customer_id]);
 
   // Sync motion value with state for AI generation
   useEffect(() => {
@@ -2106,19 +2201,39 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-6 mb-6">
+                <div className="w-24 h-24 bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logo ? (
                     <img src={logo} className="w-full h-full object-contain p-2" />
                   ) : (
                     <ImageIcon className="text-zinc-200" size={24} />
                   )}
                 </div>
-                <label className="bg-white border border-zinc-200 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:border-zinc-900 transition-colors">
+                <label className="bg-white border border-zinc-200 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:border-zinc-900 transition-colors flex-shrink-0">
                   Upload Logo
                   <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
                 </label>
               </div>
+
+              {vaultAssets.length > 0 && (
+                <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100">
+                  <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-3 flex items-center gap-2">
+                    <Sparkles size={12} className="text-zinc-400" />
+                    Or Select from Asset Vault
+                  </h4>
+                  <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                    {vaultAssets.map(asset => (
+                      <button
+                        key={asset.id}
+                        onClick={() => setLogo(asset.image)}
+                        className={`flex-shrink-0 w-16 h-16 bg-white border-2 rounded-xl flex items-center justify-center p-2 transition-all ${logo === asset.image ? 'border-zinc-900 shadow-sm scale-105' : 'border-transparent hover:border-zinc-200'}`}
+                      >
+                        <img src={asset.image} className="w-full h-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
 
             <section>

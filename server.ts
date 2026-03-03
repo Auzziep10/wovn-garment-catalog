@@ -198,6 +198,38 @@ app.delete("/api/customers/:id", async (req, res) => {
   }
 });
 
+app.get("/api/customers/:id/assets", async (req, res) => {
+  try {
+    const q = query(collection(db, "customer_assets"), where("customer_id", "==", req.params.id));
+    const snapshot = await getDocs(q);
+    const assets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(assets);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch assets" });
+  }
+});
+
+app.post("/api/customers/:id/assets", async (req, res) => {
+  try {
+    const { image } = req.body;
+    const data = { customer_id: req.params.id, image, created_at: new Date().toISOString() };
+    const docRef = await addDoc(collection(db, "customer_assets"), data);
+    res.json({ id: docRef.id, ...data });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to add asset" });
+  }
+});
+
+app.delete("/api/customers/:id/assets/:assetId", async (req, res) => {
+  try {
+    const docRef = doc(db, "customer_assets", req.params.assetId);
+    await deleteDoc(docRef);
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete asset" });
+  }
+});
+
 app.get("/api/customers/:id/decks", async (req, res) => {
   try {
     const q = query(collection(db, "decks"), where("customer_id", "==", req.params.id));
