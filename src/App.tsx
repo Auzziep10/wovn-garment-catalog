@@ -2060,7 +2060,8 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   const [logo, setLogo] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
-  const [prompt, setPrompt] = useState('Place the logo realistically. Wrap it securely along the sleeve, hat curve, or fabric folds matching the angles as needed.');
+  const [garmentColor, setGarmentColor] = useState('Original (No Change)');
+  const [logoColor, setLogoColor] = useState('Original (No Change)');
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
@@ -2167,6 +2168,14 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
     try {
       const compositeImage = await getCompositeImage();
       if (!compositeImage) throw new Error("Could not generate composite image");
+
+      let prompt = 'Place the logo realistically. Wrap it securely along the sleeve, hat curve, or fabric folds matching the angles as needed.';
+      if (garmentColor !== 'Original (No Change)') {
+        prompt += ` Change the garment fabric color to ${garmentColor}, preserving all lighting and textures.`;
+      }
+      if (logoColor !== 'Original (No Change)') {
+        prompt += ` Make the logo completely ${logoColor}.`;
+      }
 
       const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt);
       setResultImage(mockup);
@@ -2379,14 +2388,40 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             </section>
 
             <section>
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4">2. Describe the Finish</h3>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="w-full bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
-                rows={3}
-                placeholder="e.g. High-quality silver embroidery, screen printed with a vintage fade..."
-              />
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4">2. Color Options</h3>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Garment Color</label>
+                  <select
+                    value={garmentColor}
+                    onChange={(e) => setGarmentColor(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    {[
+                      'Original (No Change)', 'Black', 'White', 'Charcoal', 'Navy Blue',
+                      'Royal Blue', 'Red', 'Maroon', 'Forest Green', 'Olive',
+                      'Heather Grey', 'Cream', 'Pink', 'Yellow', 'Orange'
+                    ].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Logo Color</label>
+                  <select
+                    value={logoColor}
+                    onChange={(e) => setLogoColor(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    {[
+                      'Original (No Change)', 'Black', 'White', 'Silver / Grey',
+                      'Gold', 'Navy Blue', 'Red', 'Yellow', 'Green'
+                    ].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </section>
 
             <div className="pt-8 border-t border-zinc-100 flex flex-col gap-4">
