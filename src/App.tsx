@@ -768,15 +768,6 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                     >
                       {currentDeck ? 'Add to Deck' : 'Select Deck'}
                     </button>
-                    <button
-                      onClick={() => {
-                        onSelectGarment(viewingGarment);
-                        setViewingGarment(null);
-                      }}
-                      className="w-full bg-white border border-zinc-200 text-zinc-900 px-8 py-5 text-sm uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors rounded-full"
-                    >
-                      Open in Mockup Studio
-                    </button>
                   </div>
                 </div>
               </div>
