@@ -1281,7 +1281,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {assets.map(asset => (
-                    <div key={asset.id} className="aspect-square bg-white border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
+                    <div key={asset.id} className="aspect-square bg-checkerboard border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
                       <img src={asset.image} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}
@@ -2208,7 +2208,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
               <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 bg-white border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-24 h-24 bg-checkerboard border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logo ? (
                     <img src={logo} className="w-full h-full object-contain p-2" />
                   ) : (
@@ -2232,7 +2232,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                       <button
                         key={asset.id}
                         onClick={() => setLogo(asset.image)}
-                        className={`flex-shrink-0 w-16 h-16 bg-white border-2 rounded-xl flex items-center justify-center p-2 transition-all ${logo === asset.image ? 'border-zinc-900 shadow-sm scale-105' : 'border-transparent hover:border-zinc-200'}`}
+                        className={`flex-shrink-0 w-16 h-16 bg-checkerboard border-2 rounded-xl flex items-center justify-center p-2 transition-all ${logo === asset.image ? 'border-zinc-900 shadow-sm scale-105' : 'border-transparent hover:border-zinc-200'}`}
                       >
                         <img src={asset.image} className="w-full h-full object-contain" />
                       </button>
