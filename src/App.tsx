@@ -2482,50 +2482,56 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 >
                   <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Re-bake Mockup' : 'Bake Mockup')}
                 </button>
-                {resultImage ? (
+                {resultImage && (
                   <button
                     onClick={() => setResultImage('')}
                     className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
                   >
                     <Edit2 size={16} /> Adjust Placement
                   </button>
-                ) : logo ? (
-                  <div className="flex-1 flex gap-2">
-                    <button
-                      onClick={handleSaveCurrentView}
-                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
-                    >
-                      <Save size={16} /> Quick Save
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const dataUrl = await getCompositeImage();
-                        if (dataUrl) {
-                          onSave(dataUrl, true);
-                        }
-                      }}
-                      className="flex-[1.5] bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
-                    >
-                      <Save size={16} /> Save as Variant
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex gap-2">
-                    <button
-                      onClick={() => onSave(activeGarmentImage)}
-                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
-                    >
-                      <Save size={16} /> Save Blank
-                    </button>
-                    <button
-                      onClick={() => onSave(activeGarmentImage, true)}
-                      className="flex-[1.5] bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
-                    >
-                      <Save size={16} /> Save Blank as Variant
-                    </button>
-                  </div>
                 )}
               </div>
+
+              {!resultImage && (
+                <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                  {logo ? (
+                    <>
+                      <button
+                        onClick={handleSaveCurrentView}
+                        className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
+                      >
+                        <Save size={16} /> Quick Save
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const dataUrl = await getCompositeImage();
+                          if (dataUrl) {
+                            onSave(dataUrl, true);
+                          }
+                        }}
+                        className="flex-1 bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
+                      >
+                        <Save size={16} /> Save as Variant
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => onSave(activeGarmentImage)}
+                        className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
+                      >
+                        <Save size={16} /> Save Blank
+                      </button>
+                      <button
+                        onClick={() => onSave(activeGarmentImage, true)}
+                        className="flex-1 bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
+                      >
+                        <Save size={16} /> Save Blank as Variant
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
               {resultImage && (
                 <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-2">
