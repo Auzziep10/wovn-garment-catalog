@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw,
-  Grid, List, Edit2, ArrowUp, ArrowDown
+  Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup } from './services/geminiService';
@@ -106,6 +106,27 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
 };
 
 export default function App() {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check local storage or system preference on initial load
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') return true;
+      if (saved === 'light') return false;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
   const [view, setView] = useState<View>('catalog');
   const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
   const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
@@ -361,7 +382,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-zinc-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
+      <header className="border-b border-zinc-100 dark:border-zinc-800 sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 -ml-2">
@@ -370,13 +391,13 @@ export default function App() {
             <div className="hidden md:flex items-center gap-6">
               <button
                 onClick={() => setView('catalog')}
-                className={`nav-link ${view === 'catalog' ? 'text-zinc-900' : ''}`}
+                className={`nav-link ${view === 'catalog' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
               >
                 Collection
               </button>
               <button
                 onClick={() => setView('customers')}
-                className={`nav-link ${view === 'customers' ? 'text-zinc-900' : ''}`}
+                className={`nav-link ${view === 'customers' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
               >
                 Customers
               </button>
@@ -389,20 +410,26 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             {currentDeck && (
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-full border border-zinc-100">
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Active Deck:</span>
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-900">{currentDeck.name}</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400">Active Deck:</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-900 dark:text-zinc-50">{currentDeck.name}</span>
               </div>
             )}
-            <Search size={20} className="text-zinc-400 cursor-pointer hover:text-zinc-900 transition-colors" />
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <Search size={20} className="text-zinc-400 dark:text-zinc-500 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors" />
             <div
               className="relative cursor-pointer group"
               onClick={() => { if (currentDeck) setView('deck-view'); else setView('customers'); }}
             >
-              <ShoppingBag size={20} className="text-zinc-400 group-hover:text-zinc-900 transition-colors" />
+              <ShoppingBag size={20} className="text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-50 transition-colors" />
               {currentDeck && (
-                <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                   {currentDeck.items?.length || 0}
                 </span>
               )}
@@ -420,18 +447,18 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/20 dark:bg-black/20 backdrop-blur-sm z-[60]"
             />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-80 bg-white z-[70] shadow-2xl p-8 overflow-y-auto"
+              className="fixed top-0 left-0 bottom-0 w-80 bg-white dark:bg-zinc-950 z-[70] shadow-2xl p-8 overflow-y-auto"
             >
               <div className="flex flex-col gap-12">
                 <section>
-                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Category</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
                     {['Athleisure', 'Executive', 'Auto-Industry'].map((cat) => (
                       <button
@@ -446,7 +473,7 @@ export default function App() {
                 </section>
 
                 <section>
-                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Gender</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-6 font-bold">Gender</h3>
                   <div className="flex flex-col gap-4">
                     {['Male', 'Female', 'Accessories'].map((gen) => (
                       <button
@@ -461,7 +488,7 @@ export default function App() {
                 </section>
 
                 <section>
-                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Type</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-6 font-bold">Type</h3>
                   <div className="flex flex-col gap-4">
                     {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other'].map((t) => (
                       <button
@@ -630,29 +657,29 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-16 gap-4 md:gap-8">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2 font-bold">
             {[category, gender].filter(Boolean).join(' / ') || 'All Garments'}
           </p>
           <h2 className="editorial-title">{type || 'Collection'}</h2>
         </div>
         <div className="flex flex-col md:items-end gap-4">
-          <p className="text-zinc-500 max-w-md text-sm leading-relaxed md:text-right">
+          <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 max-w-md text-sm leading-relaxed md:text-right">
             Our curated collection of high-performance garments designed for the modern professional.
             Each piece is selected for its quality, durability, and aesthetic appeal.
           </p>
           <div className="flex items-center gap-4">
             <button
               onClick={onAddGarment}
-              className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 transition-colors shadow-sm"
+              className="bg-zinc-900 dark:bg-zinc-50 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-sm"
             >
               + Garment
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
+              <span className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold">Sort By</span>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as any)}
-                className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+                className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer text-zinc-700"
               >
                 <option value="default">Default</option>
                 <option value="asc">Price: Low to High</option>
@@ -672,16 +699,16 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             className="group cursor-pointer"
             onClick={() => { setViewingGarment(garment); setActiveImageIndex(0); }}
           >
-            <div className="aspect-[3/4] bg-white mb-6 overflow-hidden relative">
+            <div className="aspect-[3/4] bg-white dark:bg-zinc-950 mb-6 overflow-hidden relative">
               <img
                 src={garment.image}
                 alt={garment.name}
                 className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <div className="absolute inset-0 bg-black/0 dark:bg-black/0 group-hover:bg-black/10 dark:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <button
                   onClick={(e) => { e.stopPropagation(); onDeleteGarment(garment); }}
-                  className="absolute top-4 right-4 bg-white/80 hover:bg-red-50 hover:text-red-500 text-zinc-400 p-2 rounded-full transition-all"
+                  className="absolute top-4 right-4 bg-white/80 dark:bg-zinc-950/80 hover:bg-red-50 hover:text-red-500 text-zinc-400 dark:text-zinc-500 p-2 rounded-full transition-all"
                   title="Delete Garment"
                 >
                   <Trash2 size={16} />
@@ -689,7 +716,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); onAddToDeck(garment); }}
-                    className="bg-white text-zinc-900 px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-900 hover:text-white transition-colors"
+                    className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
                   >
                     {currentDeck ? 'Add to Deck' : 'Select Deck'}
                   </button>
@@ -699,7 +726,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-serif text-xl mb-1">{garment.name}</h3>
-                <p className="text-zinc-400 text-xs uppercase tracking-widest">{garment.category}</p>
+                <p className="text-zinc-400 dark:text-zinc-500 text-xs uppercase tracking-widest">{garment.category}</p>
               </div>
               <p className="font-medium">${garment.price}</p>
             </div>
@@ -708,9 +735,9 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
       </div>
 
       {garments.length === 0 && (
-        <div className="py-32 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
-          <ImageIcon className="mx-auto text-zinc-200 mb-4" size={48} />
-          <p className="text-zinc-400 font-serif italic">No garments found matching your filters.</p>
+        <div className="py-32 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-3xl">
+          <ImageIcon className="mx-auto text-zinc-200 dark:text-zinc-700 mb-4" size={48} />
+          <p className="text-zinc-400 dark:text-zinc-500 font-serif italic">No garments found matching your filters.</p>
         </div>
       )}
 
@@ -720,25 +747,25 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 md:p-6"
+            className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 md:p-6"
             onClick={() => setViewingGarment(null)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+              className="bg-white dark:bg-zinc-950 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
               onClick={e => e.stopPropagation()}
             >
-              <div className="md:w-1/2 bg-white flex flex-col p-6 md:p-12 min-h-[30vh] md:min-h-[40vh]">
+              <div className="md:w-1/2 bg-white dark:bg-zinc-950 flex flex-col p-6 md:p-12 min-h-[30vh] md:min-h-[40vh]">
                 <div className="flex-1 mb-6 relative min-h-[300px]">
                   <img src={viewingGarment.images && viewingGarment.images.length > 0 ? viewingGarment.images[activeImageIndex] : viewingGarment.image} alt={viewingGarment.name} className="absolute inset-0 w-full h-full object-contain" />
                 </div>
                 {viewingGarment.images && viewingGarment.images.length > 1 && (
                   <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
                     {viewingGarment.images.map((img, i) => (
-                      <button key={i} onClick={() => setActiveImageIndex(i)} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeImageIndex === i ? 'border-zinc-900 border-2' : 'border-zinc-200 hover:border-zinc-400'}`}>
-                        <img src={img} className="w-full h-full object-cover bg-zinc-50" />
+                      <button key={i} onClick={() => setActiveImageIndex(i)} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeImageIndex === i ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
+                        <img src={img} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
                       </button>
                     ))}
                   </div>
@@ -746,22 +773,22 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
               </div>
               <div className="md:w-1/2 p-6 md:p-12 flex flex-col max-h-[60vh] md:max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-end mb-2 md:mb-4">
-                  <button onClick={() => setViewingGarment(null)} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+                  <button onClick={() => setViewingGarment(null)} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors">
                     <X size={24} />
                   </button>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-2 md:mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
                   <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
                   <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.price}</p>
 
                   {viewingGarment.supplier_link && (
-                    <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-6 border-b border-zinc-200 hover:border-zinc-900 pb-1">
+                    <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-6 border-b border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:border-zinc-50 pb-1">
                       Procurement Source ↗
                     </a>
                   )}
 
-                  <p className="text-zinc-500 text-sm md:text-lg leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100">
+                  <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm md:text-lg leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100 dark:border-zinc-800">
                     {viewingGarment.description}
                   </p>
 
@@ -771,7 +798,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                         onAddToDeck(viewingGarment);
                         setViewingGarment(null);
                       }}
-                      className="w-full bg-zinc-900 text-white px-8 py-5 text-sm uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors rounded-full shadow-lg"
+                      className="w-full bg-zinc-900 dark:bg-zinc-50 text-white px-8 py-5 text-sm uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors rounded-full shadow-lg"
                     >
                       {currentDeck ? 'Add to Deck' : 'Select Deck'}
                     </button>
@@ -940,21 +967,21 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       <div className="flex justify-between items-center mb-8 md:mb-12">
         <h2 className="editorial-title">{editingGarment ? 'Edit Garment' : 'New Garment'}</h2>
         {editingGarment && (
-          <button type="button" onClick={handleCancelEdit} className="text-zinc-500 hover:text-zinc-900 transition-colors uppercase text-xs tracking-widest font-bold">
+          <button type="button" onClick={handleCancelEdit} className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors uppercase text-xs tracking-widest font-bold">
             Cancel Edit
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
-        <div className="lg:col-span-1 border-r border-zinc-100 pr-0 lg:pr-8">
+        <div className="lg:col-span-1 border-r border-zinc-100 dark:border-zinc-800 pr-0 lg:pr-8">
           <div className="flex flex-col gap-4 mb-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xs uppercase tracking-widest font-bold">Existing Library</h3>
               <select
                 value={librarySortBy}
                 onChange={(e) => setLibrarySortBy(e.target.value as any)}
-                className="bg-transparent border-b border-zinc-200 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 w-24"
+                className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 w-24"
               >
                 <option value="default">Sort: Default</option>
                 <option value="category">Sort: Category</option>
@@ -962,20 +989,20 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <option value="type">Sort: Type</option>
               </select>
             </div>
-            <div className="flex gap-2 text-[9px] uppercase font-bold text-zinc-500">
-              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+            <div className="flex gap-2 text-[9px] uppercase font-bold text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 flex-1 focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer">
                 <option value="">All Categories</option>
                 <option value="Athleisure">Athleisure</option>
                 <option value="Executive">Executive</option>
                 <option value="Auto-Industry">Auto-Industry</option>
               </select>
-              <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+              <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 flex-1 focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer">
                 <option value="">All Genders</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Accessories">Accessories</option>
               </select>
-              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
+              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 flex-1 focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer">
                 <option value="">All Types</option>
                 <option value="Tops">Tops</option>
                 <option value="Bottom">Bottom</option>
@@ -988,11 +1015,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
           </div>
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
             {filteredAndSortedGarments.map(g => (
-              <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 border border-zinc-200' : 'hover:bg-zinc-50'}`}>
-                <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
+              <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700' : 'hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50'}`}>
+                <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700" />
                 <div>
                   <p className="font-serif text-sm truncate">{g.name}</p>
-                  <p className="text-[10px] uppercase text-zinc-500">{g.category}</p>
+                  <p className="text-[10px] uppercase text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">{g.category}</p>
                 </div>
               </div>
             ))}
@@ -1002,25 +1029,25 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
         <div className="lg:col-span-2">
           <form key={editingGarment?.id || 'new'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div className="space-y-4">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 block">Garment Images</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 block">Garment Images</label>
               <div className="grid grid-cols-2 gap-4">
                 {images.map((img, i) => (
-                  <div key={i} className="aspect-[3/4] bg-white border-2 border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
+                  <div key={i} className="aspect-[3/4] bg-white dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
                     <img src={img} className="w-full h-full object-contain p-2" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(i)}
-                      className="absolute top-2 right-2 bg-white/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 bg-white/80 dark:bg-zinc-950/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 size={16} className="text-red-500" />
                     </button>
                     {i === 0 ? (
-                      <div className="absolute bottom-2 left-2 bg-zinc-900 text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest z-10 shadow-md">Main</div>
+                      <div className="absolute bottom-2 left-2 bg-zinc-900 dark:bg-zinc-50 text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest z-10 shadow-md">Main</div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleSetMainImage(i)}
-                        className="absolute bottom-2 left-2 bg-white border border-zinc-200 text-zinc-900 text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-zinc-50 shadow-md"
+                        className="absolute bottom-2 left-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 shadow-md"
                       >
                         Set Main
                       </button>
@@ -1028,9 +1055,9 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                   </div>
                 ))}
 
-                <label className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl cursor-pointer hover:bg-zinc-100 transition-colors flex flex-col items-center justify-center p-4">
-                  <Upload className="mx-auto text-zinc-400 mb-2" size={24} />
-                  <span className="text-xs text-zinc-500 font-medium text-center">Add Photo</span>
+                <label className="aspect-[3/4] bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl cursor-pointer hover:bg-zinc-100 dark:bg-zinc-800 transition-colors flex flex-col items-center justify-center p-4">
+                  <Upload className="mx-auto text-zinc-400 dark:text-zinc-500 mb-2" size={24} />
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 font-medium text-center">Add Photo</span>
                   <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
                 </label>
               </div>
@@ -1038,28 +1065,28 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
             <div className="space-y-6">
               <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
-                <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Garment Name</label>
+                <input name="name" required className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Supplier Link (Optional)</label>
-                <input name="supplier_link" type="url" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Supplier Link (Optional)</label>
+                <input name="supplier_link" type="url" className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Description</label>
-                <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.description || ""} placeholder="Garment details..." />
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Description</label>
+                <textarea name="description" rows={3} className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors resize-none" defaultValue={editingGarment?.description || ""} placeholder="Garment details..." />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Price (USD)</label>
-                  <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.price || ""} placeholder="219.00" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Price (USD)</label>
+                  <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors" defaultValue={editingGarment?.price || ""} placeholder="219.00" />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Category</label>
-                  <select name="category" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.category || "Athleisure"}>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Category</label>
+                  <select name="category" className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.category || "Athleisure"}>
                     <option>Athleisure</option>
                     <option>Executive</option>
                     <option>Auto-Industry</option>
@@ -1069,16 +1096,16 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
-                  <select name="gender" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.gender || "Male"}>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Gender</label>
+                  <select name="gender" className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.gender || "Male"}>
                     <option>Male</option>
                     <option>Female</option>
                     <option>Accessories</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Type</label>
-                  <select name="type" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.type || "Tops"}>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Type</label>
+                  <select name="type" className="w-full border-b border-zinc-200 dark:border-zinc-700 py-2 focus:border-zinc-900 dark:border-zinc-50 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.type || "Tops"}>
                     <option>Tops</option>
                     <option>Bottom</option>
                     <option>Headwear</option>
@@ -1089,7 +1116,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-zinc-900 text-white py-4 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors mt-8">
+              <button type="submit" className="w-full bg-zinc-900 dark:bg-zinc-50 text-white py-4 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors mt-8">
                 {editingGarment ? 'Save Changes' : 'Add to Catalog'}
               </button>
             </div>
@@ -1192,11 +1219,11 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
         <div className="lg:col-span-1">
           <h2 className="editorial-title mb-8">Clients</h2>
-          <form onSubmit={onAddCustomer} className="space-y-6 mb-12 p-6 bg-zinc-50 rounded-2xl">
+          <form onSubmit={onAddCustomer} className="space-y-6 mb-12 p-6 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-2xl">
             <h3 className="text-xs uppercase tracking-widest font-bold mb-4">New Customer</h3>
-            <input name="name" placeholder="Contact Name (Optional)" className="w-full bg-transparent border-b border-zinc-200 py-2 outline-none focus:border-zinc-900" />
-            <input name="company" required placeholder="Company Name" className="w-full bg-transparent border-b border-zinc-200 py-2 outline-none focus:border-zinc-900" />
-            <button type="submit" className="w-full bg-zinc-900 text-white py-3 text-[10px] uppercase tracking-widest font-bold">Add Client</button>
+            <input name="name" placeholder="Contact Name (Optional)" className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 outline-none focus:border-zinc-900 dark:border-zinc-50" />
+            <input name="company" required placeholder="Company Name" className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 outline-none focus:border-zinc-900 dark:border-zinc-50" />
+            <button type="submit" className="w-full bg-zinc-900 dark:bg-zinc-50 text-white py-3 text-[10px] uppercase tracking-widest font-bold">Add Client</button>
           </form>
 
           <div className="space-y-2">
@@ -1204,11 +1231,11 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               <div key={c.id} className="relative group/card">
                 <button
                   onClick={() => { setSelectedCustId(c.id); onSelectCustomer(c); }}
-                  className={`w-full text-left p-4 rounded-xl transition-all flex items-center justify-between group-hover/card:pr-12 ${selectedCustId === c.id ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-50'}`}
+                  className={`w-full text-left p-4 rounded-xl transition-all flex items-center justify-between group-hover/card:pr-12 ${selectedCustId === c.id ? 'bg-zinc-900 dark:bg-zinc-50 text-white' : 'hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50'}`}
                 >
                   <div>
                     <p className="font-serif text-lg">{c.company}</p>
-                    <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{c.name || <span className="italic opacity-50">No contact name</span>}</p>
+                    <p className={`text-xs ${selectedCustId === c.id ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500 dark:text-zinc-400 dark:text-zinc-500'}`}>{c.name || <span className="italic opacity-50">No contact name</span>}</p>
                   </div>
                   <ChevronRight size={16} className={selectedCustId === c.id ? 'text-white' : 'text-zinc-300'} />
                 </button>
@@ -1217,7 +1244,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                     e.stopPropagation();
                     onDeleteCustomer(c);
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 opacity-0 group-hover/card:opacity-100 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 dark:text-zinc-500 opacity-0 group-hover/card:opacity-100 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                   title="Delete Client"
                 >
                   <Trash2 size={16} />
@@ -1236,14 +1263,14 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                     <h2 className="editorial-title">{customers.find(c => c.id === selectedCustId)?.company}</h2>
                     <button
                       onClick={() => setEditingCustomer(customers.find(c => c.id === selectedCustId) || null)}
-                      className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 rounded-full transition-colors"
+                      className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors"
                       title="Edit Client Profile"
                     >
                       <Edit2 size={24} />
                     </button>
                   </div>
-                  <p className="text-zinc-500 mt-2 text-lg">
-                    Contact: {customers.find(c => c.id === selectedCustId)?.name ? <span className="font-medium text-zinc-900">{customers.find(c => c.id === selectedCustId)?.name}</span> : <span className="italic text-zinc-400">Not provided</span>}
+                  <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 mt-2 text-lg">
+                    Contact: {customers.find(c => c.id === selectedCustId)?.name ? <span className="font-medium text-zinc-900 dark:text-zinc-50">{customers.find(c => c.id === selectedCustId)?.name}</span> : <span className="italic text-zinc-400 dark:text-zinc-500">Not provided</span>}
                   </p>
                 </div>
                 <button
@@ -1254,7 +1281,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                       alert('Please select a client first.');
                     }
                   }}
-                  className="flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors shadow-lg active:scale-95"
+                  className="flex items-center gap-2 bg-zinc-900 dark:bg-zinc-50 text-white px-6 py-3 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-lg active:scale-95"
                 >
                   <Plus size={16} /> New Deck
                 </button>
@@ -1264,21 +1291,21 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 {decks.map(d => (
                   <div
                     key={d.id}
-                    className="group border border-zinc-100 rounded-[2rem] p-6 md:p-8 hover:border-zinc-900 transition-colors cursor-pointer"
+                    className="group border border-zinc-100 dark:border-zinc-800 rounded-[2rem] p-6 md:p-8 hover:border-zinc-900 dark:border-zinc-50 transition-colors cursor-pointer"
                     onClick={() => onViewDeck(d)}
                   >
                     <div className="flex items-center justify-between mb-6 md:mb-8">
-                      <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:text-white transition-colors">
+                      <div className="p-3 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 dark:bg-zinc-50 group-hover:text-white transition-colors">
                         <Presentation size={24} />
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Presentation</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Presentation</p>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingDeck(d);
                           }}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-1.5 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 rounded-full transition-colors opacity-0 group-hover:opacity-100"
                           title="Rename Presentation"
                         >
                           <Edit2 size={14} />
@@ -1286,24 +1313,24 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                       </div>
                     </div>
                     <h3 className="font-serif text-2xl mb-2">{d.name}</h3>
-                    <p className="text-zinc-500 text-sm">Curated garment selection for client review.</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm">Curated garment selection for client review.</p>
                   </div>
                 ))}
                 {decks.length === 0 && (
-                  <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
-                    <Layout className="mx-auto text-zinc-200 mb-4" size={48} />
-                    <p className="text-zinc-400 font-serif italic">No decks created for this client yet.</p>
+                  <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-3xl">
+                    <Layout className="mx-auto text-zinc-200 dark:text-zinc-700 mb-4" size={48} />
+                    <p className="text-zinc-400 dark:text-zinc-500 font-serif italic">No decks created for this client yet.</p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100">
+              <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h3 className="editorial-title text-2xl">Asset Vault</h3>
-                    <p className="text-zinc-500 text-sm mt-1">Stored logos and assets for {customers.find(c => c.id === selectedCustId)?.company}.</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mt-1">Stored logos and assets for {customers.find(c => c.id === selectedCustId)?.company}.</p>
                   </div>
-                  <label className={`flex items-center gap-2 px-6 py-3 rounded-full text-xs uppercase tracking-widest font-bold transition-all shadow-sm ${isUploadingAsset ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : 'bg-white border border-zinc-200 text-zinc-900 hover:border-zinc-900 cursor-pointer'}`}>
+                  <label className={`flex items-center gap-2 px-6 py-3 rounded-full text-xs uppercase tracking-widest font-bold transition-all shadow-sm ${isUploadingAsset ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed' : 'bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 hover:border-zinc-900 dark:border-zinc-50 cursor-pointer'}`}>
                     {isUploadingAsset ? <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" /> : <Upload size={16} />}
                     {isUploadingAsset ? 'Uploading' : 'Upload Asset'}
                     <input type="file" className="hidden" accept="image/*" onChange={handleUploadAsset} disabled={isUploadingAsset} />
@@ -1312,11 +1339,11 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {assets.map(asset => (
-                    <div key={asset.id} className="aspect-square bg-checkerboard border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
+                    <div key={asset.id} className="aspect-square bg-checkerboard border border-zinc-100 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
                       <img src={asset.image} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}
-                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur shadow-sm rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all pointer-events-auto"
+                        className="absolute top-2 right-2 p-2 bg-white/90 dark:bg-zinc-950/90 backdrop-blur shadow-sm rounded-full text-zinc-400 dark:text-zinc-500 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all pointer-events-auto"
                         title="Remove Asset"
                       >
                         <Trash2 size={14} />
@@ -1324,19 +1351,19 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                     </div>
                   ))}
                   {assets.length === 0 && !isUploadingAsset && (
-                    <div className="col-span-full py-12 text-center border-2 border-dashed border-zinc-100 rounded-2xl bg-zinc-50/50">
+                    <div className="col-span-full py-12 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-2xl bg-zinc-50/50">
                       <ImageIcon className="mx-auto text-zinc-300 mb-3" size={32} />
-                      <p className="text-zinc-400 font-serif italic text-sm">No assets uploaded to the vault yet.</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-serif italic text-sm">No assets uploaded to the vault yet.</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 rounded-[2rem] bg-zinc-50/50">
+            <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2rem] bg-zinc-50/50">
               <Users className="text-zinc-300 mb-6" size={48} />
-              <h3 className="editorial-title text-3xl mb-2 text-zinc-400">Select a Client</h3>
-              <p className="text-zinc-500 font-serif italic">Choose a client from the list to view their decks and assets.</p>
+              <h3 className="editorial-title text-3xl mb-2 text-zinc-400 dark:text-zinc-500">Select a Client</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 font-serif italic">Choose a client from the list to view their decks and assets.</p>
             </div>
           )}
         </div>
@@ -1378,56 +1405,56 @@ function EditCustomerModal({ customer, onClose, onSave }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+      className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
+        className="bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Client Profile</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1">Client Profile</p>
             <h3 className="font-serif text-2xl">Edit Client</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-6 md:p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Company Name</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Company Name</label>
             <input
               value={company}
               onChange={e => setCompany(e.target.value)}
-              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+              className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Contact Name (Optional)</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Contact Name (Optional)</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+              className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
               placeholder="Add contact name later..."
             />
           </div>
         </div>
 
-        <div className="p-6 md:p-8 border-t border-zinc-100 flex gap-4">
+        <div className="p-6 md:p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
+            className="flex-1 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 dark:bg-zinc-800 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(name, company)}
-            className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+            className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
           >
             Save Changes
           </button>
@@ -1550,22 +1577,22 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   return (
     <div className="min-h-screen bg-zinc-50/50">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-        <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-8 md:mb-12">
           <ArrowLeft size={16} /> Back to Clients
         </button>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-20 gap-6 md:gap-8">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">Presentation Deck</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2 font-bold">Presentation Deck</p>
             <h2 className="editorial-title">{deck.name}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
             <div className="flex items-center gap-2 mr-4">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By:</span>
+              <span className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold">Sort By:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
+                className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer text-zinc-700"
               >
                 <option value="default">Custom Order</option>
                 <option value="category">Category</option>
@@ -1573,30 +1600,30 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 <option value="type">Type</option>
               </select>
             </div>
-            <div className="flex items-center gap-2 mr-4 bg-white border border-zinc-200 p-1 rounded-full shadow-sm">
+            <div className="flex items-center gap-2 mr-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 p-1 rounded-full shadow-sm">
               <button
                 onClick={() => setDisplayMode('presentation')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 dark:bg-zinc-50 text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600'}`}
               >
                 <List size={14} /> Presentation
               </button>
               <button
                 onClick={() => setDisplayMode('grid')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'grid' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'grid' ? 'bg-zinc-900 dark:bg-zinc-50 text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600'}`}
               >
                 <Grid size={14} /> Grid
               </button>
             </div>
-            <label className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors cursor-pointer flex items-center gap-2">
+            <label className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 dark:border-zinc-50 transition-colors cursor-pointer flex items-center gap-2">
               <Upload size={14} /> Custom Item
               <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
             </label>
-            <button className="bg-white border border-zinc-200 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors">
+            <button className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 dark:border-zinc-50 transition-colors">
               Share Link
             </button>
             <button
               onClick={() => onPresent()}
-              className="bg-zinc-900 text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+              className="bg-zinc-900 dark:bg-zinc-50 text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
             >
               Present View
             </button>
@@ -1614,7 +1641,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 md:gap-16 items-center`}
               >
                 <div className="flex-1 w-full">
-                  <div className="aspect-[4/5] bg-white shadow-2xl rounded-[2rem] overflow-hidden relative group">
+                  <div className="aspect-[4/5] bg-white dark:bg-zinc-950 shadow-2xl rounded-[2rem] overflow-hidden relative group">
                     <img
                       src={activeVariations[item.id] || item.mock_image}
                       alt={item.garment_name}
@@ -1625,7 +1652,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       {item.garment_id !== null && item.garment_id !== undefined && (
                         <button
                           onClick={() => handleMockupEdit(item)}
-                          className="bg-white/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
+                          className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
                           title="Edit Mockup"
                         >
                           <Wand2 size={20} />
@@ -1633,14 +1660,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       )}
                       <button
                         onClick={() => setEditingItem(item)}
-                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
+                        className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
                         title="Edit Details"
                       >
                         <Edit2 size={20} />
                       </button>
                       <button
                         onClick={() => onRemoveItem(item.id)}
-                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors pointer-events-auto"
+                        className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors pointer-events-auto"
                         title="Remove from Deck"
                       >
                         <Trash2 size={20} />
@@ -1651,7 +1678,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index > 0 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'up')}
-                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
+                              className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
                               title="Move Up"
                             >
                               <ArrowUp size={20} />
@@ -1660,7 +1687,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index < displayedItems.length - 1 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'down')}
-                              className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
+                              className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
                               title="Move Down"
                             >
                               <ArrowDown size={20} />
@@ -1673,17 +1700,17 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 </div>
                 <div className="flex-1 space-y-8 max-w-lg">
                   <div className="space-y-4">
-                    <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Item {index + 1}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold">Item {index + 1}</p>
                     <h3 className="font-serif text-3xl md:text-5xl leading-tight">{item.custom_name || item.garment_name}</h3>
-                    <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
+                    <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-base md:text-lg leading-relaxed">
                       {item.custom_description || item.garment_description}
                     </p>
                   </div>
-                  <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
+                  <div className="pt-8 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                     <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p>
                     <div className="flex flex-wrap gap-2">
                       {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                        <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
+                        <span key={size} className="px-3 h-10 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900 dark:text-zinc-50">
                           {size}
                         </span>
                       ))}
@@ -1691,12 +1718,12 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   </div>
 
                   {item.variations && item.variations.length > 0 && (
-                    <div className="pt-8 border-t border-zinc-200">
-                      <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-4">View Variation</p>
+                    <div className="pt-8 border-t border-zinc-200 dark:border-zinc-700">
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-4">View Variation</p>
                       <div className="flex gap-2 lg:gap-3 flex-wrap">
                         <button
                           onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
-                          className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
+                          className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white dark:bg-zinc-950 ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 dark:border-zinc-50 shadow-sm scale-105' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}
                         >
                           <img src={item.mock_image} className="w-full h-full object-contain" />
                         </button>
@@ -1704,7 +1731,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           <button
                             key={idx}
                             onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
-                            className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
+                            className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white dark:bg-zinc-950 ${activeVariations[item.id] === v ? 'border-zinc-900 dark:border-zinc-50 shadow-sm scale-105' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}
                           >
                             <img src={v} className="w-full h-full object-contain" />
                           </button>
@@ -1727,18 +1754,18 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 transition={{ delay: index * 0.05 }}
                 className="group"
               >
-                <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100">
+                <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
                   <img
                     src={activeVariations[item.id] || item.mock_image}
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
                     className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                  <div className="absolute inset-0 bg-black/0 dark:bg-black/0 group-hover:bg-black/20 dark:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                     <div className="flex gap-2 pointer-events-auto">
                       {item.garment_id !== null && item.garment_id !== undefined && (
                         <button
                           onClick={() => handleMockupEdit(item)}
-                          className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                          className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
                           title="Edit Mockup"
                         >
                           <Wand2 size={18} />
@@ -1746,14 +1773,14 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       )}
                       <button
                         onClick={() => setEditingItem(item)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
                         title="Edit Details"
                       >
                         <Edit2 size={18} />
                       </button>
                       <button
                         onClick={() => onRemoveItem(item.id)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors"
+                        className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-colors"
                         title="Remove from Deck"
                       >
                         <Trash2 size={18} />
@@ -1764,7 +1791,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index > 0 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'up')}
-                              className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
                               title="Move Up"
                             >
                               <ArrowUp size={18} />
@@ -1773,7 +1800,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                           {index < displayedItems.length - 1 && (
                             <button
                               onClick={() => handleMoveItem(item.id, 'down')}
-                              className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                              className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
                               title="Move Down"
                             >
                               <ArrowDown size={18} />
@@ -1789,7 +1816,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   <div className="flex gap-1.5 mb-3 px-1 overflow-x-auto hide-scrollbar">
                     <button
                       onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
-                      className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
+                      className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 dark:border-zinc-50 shadow-sm' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}
                     >
                       <img src={item.mock_image} className="w-full h-full object-contain" />
                     </button>
@@ -1797,7 +1824,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       <button
                         key={idx}
                         onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
-                        className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
+                        className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${activeVariations[item.id] === v ? 'border-zinc-900 dark:border-zinc-50 shadow-sm' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}
                       >
                         <img src={v} className="w-full h-full object-contain" />
                       </button>
@@ -1807,9 +1834,9 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
                 <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
+                  <p className="text-zinc-400 dark:text-zinc-500 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
                   {item.supplier_link && (
-                    <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 border-b border-transparent hover:border-zinc-900 transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 border-b border-transparent hover:border-zinc-900 dark:border-zinc-50 transition-colors" onClick={(e) => e.stopPropagation()}>
                       Link
                     </a>
                   )}
@@ -1817,8 +1844,8 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
               </motion.div>
             ))}
             {items.length === 0 && (
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
-                <p className="text-zinc-400 font-serif italic">This deck is empty. Add some garments from the catalog!</p>
+              <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-3xl">
+                <p className="text-zinc-400 dark:text-zinc-500 font-serif italic">This deck is empty. Add some garments from the catalog!</p>
               </div>
             )}
           </div>
@@ -1839,7 +1866,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-[120] flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
+            className="fixed inset-0 bg-black/95 dark:bg-black/95 z-[120] flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
             onClick={() => setZoomedImage(null)}
           >
             <motion.img
@@ -1913,22 +1940,22 @@ function EditItemModal({ item, onClose, onSave }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+      className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Client Customization</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1">Client Customization</p>
             <h3 className="font-serif text-2xl">Edit Item Details</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -1936,10 +1963,10 @@ function EditItemModal({ item, onClose, onSave }: {
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-6">
-              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4 relative group">
+              <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 flex items-center justify-center p-4 relative group">
                 <img src={mockImage} className="w-full h-full object-contain" />
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <div className="bg-white text-zinc-900 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
+                <label className="absolute inset-0 bg-black/40 dark:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <div className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
                     <Upload size={14} /> Replace Main Photo
                   </div>
                   <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
@@ -1947,10 +1974,10 @@ function EditItemModal({ item, onClose, onSave }: {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Variations (Colors/Mockups)</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Variations (Colors/Mockups)</p>
                 <div className="flex flex-wrap gap-2">
                   {variations.map((v, i) => (
-                    <div key={i} className="w-16 h-16 border border-zinc-200 rounded-xl overflow-hidden relative group">
+                    <div key={i} className="w-16 h-16 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden relative group">
                       <img src={v} className="w-full h-full object-contain p-1" />
                       <button
                         title="Remove Variation"
@@ -1965,13 +1992,13 @@ function EditItemModal({ item, onClose, onSave }: {
                           setMockImage(v);
                           setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
                         }}
-                        className="absolute top-0 right-0 p-1 bg-zinc-900 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl text-[8px] uppercase font-bold tracking-widest"
+                        className="absolute top-0 right-0 p-1 bg-zinc-900 dark:bg-zinc-50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl text-[8px] uppercase font-bold tracking-widest"
                       >
                         Main
                       </button>
                     </div>
                   ))}
-                  <label className="w-16 h-16 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center cursor-pointer hover:border-zinc-900 transition-colors text-zinc-400 hover:text-zinc-900" title="Add Variation">
+                  <label className="w-16 h-16 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center cursor-pointer hover:border-zinc-900 dark:border-zinc-50 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50" title="Add Variation">
                     <Plus size={16} />
                     <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
                   </label>
@@ -1981,30 +2008,30 @@ function EditItemModal({ item, onClose, onSave }: {
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Display Name</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Display Name</label>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Price ($)</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Price ($)</label>
                 <input
                   type="number"
                   value={price}
                   onChange={e => setPrice(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Size Spread (comma separated)</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Size Spread (comma separated)</label>
                 <input
                   value={sizes}
                   onChange={e => setSizes(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
                   placeholder="XS, S, M, L, XL"
                 />
               </div>
@@ -2012,20 +2039,20 @@ function EditItemModal({ item, onClose, onSave }: {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Description</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Description</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
+              className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
               rows={4}
             />
           </div>
         </div>
 
-        <div className="p-6 md:p-8 border-t border-zinc-100 flex gap-4">
+        <div className="p-6 md:p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
+            className="flex-1 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 dark:bg-zinc-800 transition-colors"
           >
             Cancel
           </button>
@@ -2038,7 +2065,7 @@ function EditItemModal({ item, onClose, onSave }: {
               mock_image: mockImage,
               variations: variations
             })}
-            className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+            className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
           >
             Save Changes
           </button>
@@ -2197,7 +2224,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
+      <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-8 md:mb-12">
         <ArrowLeft size={16} /> Back
       </button>
 
@@ -2205,7 +2232,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
         <div className="space-y-8">
           <div
             ref={containerRef}
-            className="aspect-[3/4] bg-white rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 cursor-crosshair"
+            className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 dark:border-zinc-800 cursor-crosshair"
           >
             <img src={resultImage || activeGarmentImage} className="w-full h-full object-contain pointer-events-none" />
 
@@ -2218,12 +2245,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 style={{ x, y, scale: logoScale, rotate }}
                 className="absolute top-1/2 left-1/2 w-32 h-32 -ml-16 -mt-16 flex items-center justify-center cursor-move group z-10"
               >
-                <div className="relative w-full h-full border-2 border-zinc-900/0 group-hover:border-zinc-900/50 transition-colors">
+                <div className="relative w-full h-full border-2 border-zinc-900 dark:border-zinc-50/0 group-hover:border-zinc-900 dark:border-zinc-50/50 transition-colors">
                   <img src={logo} className="w-full h-full object-contain drop-shadow-xl pointer-events-none" />
 
                   {/* Rotation Handle */}
                   <div
-                    className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-zinc-200 rounded-full flex items-center justify-center cursor-alias opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center cursor-alias opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       const startX = e.clientX;
@@ -2246,12 +2273,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                       window.addEventListener('mouseup', onMouseUp);
                     }}
                   >
-                    <RotateCw size={14} className="text-zinc-900" />
+                    <RotateCw size={14} className="text-zinc-900 dark:text-zinc-50" />
                   </div>
 
                   {/* Scale Handle */}
                   <div
-                    className="absolute -bottom-2 -right-2 w-4 h-4 bg-zinc-900 border-2 border-white rounded-sm cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    className="absolute -bottom-2 -right-2 w-4 h-4 bg-zinc-900 dark:bg-zinc-50 border-2 border-white rounded-sm cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       const startX = e.clientX;
@@ -2273,27 +2300,27 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   />
                 </div>
 
-                <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[8px] px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none whitespace-nowrap shadow-xl">
+                <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-zinc-900 dark:bg-zinc-50 text-white text-[8px] px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none whitespace-nowrap shadow-xl">
                   Drag to Position • Use Handles to Transform
                 </div>
               </motion.div>
             )}
 
             {isGenerating && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center z-50">
-                <div className="w-16 h-16 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin mb-6"></div>
+              <div className="absolute inset-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center z-50">
+                <div className="w-16 h-16 border-4 border-zinc-900 dark:border-zinc-50 border-t-transparent rounded-full animate-spin mb-6"></div>
                 <h3 className="font-serif text-2xl mb-2">Creating Realistic Mockup</h3>
-                <p className="text-zinc-500 text-sm">Our AI is meticulously placing the logo and adjusting lighting for a perfect result...</p>
+                <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm">Our AI is meticulously placing the logo and adjusting lighting for a perfect result...</p>
               </div>
             )}
           </div>
 
           {!resultImage && logo && (
-            <div className="flex items-center gap-6 bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
+            <div className="flex items-center gap-6 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Scale</span>
-                  <span className="text-[10px] font-mono text-zinc-900">{(logoScale * 100).toFixed(0)}%</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Scale</span>
+                  <span className="text-[10px] font-mono text-zinc-900 dark:text-zinc-50">{(logoScale * 100).toFixed(0)}%</span>
                 </div>
                 <input
                   type="range"
@@ -2306,12 +2333,12 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 />
               </div>
 
-              <div className="w-px h-12 bg-zinc-200" />
+              <div className="w-px h-12 bg-zinc-200 dark:bg-zinc-700" />
 
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Rotation</span>
-                  <span className="text-[10px] font-mono text-zinc-900">{logoRotation.toFixed(0)}°</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Rotation</span>
+                  <span className="text-[10px] font-mono text-zinc-900 dark:text-zinc-50">{logoRotation.toFixed(0)}°</span>
                 </div>
                 <input
                   type="range"
@@ -2329,9 +2356,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
         <div className="space-y-12">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">Mockup Studio</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2 font-bold">Mockup Studio</p>
             <h2 className="editorial-title mb-4">Interactive Placement</h2>
-            <p className="text-zinc-500 leading-relaxed">
+            <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 leading-relaxed">
               Drag the logo to your desired position and adjust the scale.
               Our AI will then "bake" it into the garment, matching perspective and lighting perfectly.
             </p>
@@ -2343,8 +2370,8 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Garment Photo</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
                   {garment.images.map((img, i) => (
-                    <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 border-2' : 'border-zinc-200 hover:border-zinc-400'}`}>
-                      <img src={img} className="w-full h-full object-cover bg-zinc-50" />
+                    <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
+                      <img src={img} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
                     </button>
                   ))}
                 </div>
@@ -2354,23 +2381,23 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
               <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 bg-checkerboard border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-24 h-24 bg-checkerboard border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logo ? (
                     <img src={logo} className="w-full h-full object-contain p-2" />
                   ) : (
-                    <ImageIcon className="text-zinc-200" size={24} />
+                    <ImageIcon className="text-zinc-200 dark:text-zinc-700" size={24} />
                   )}
                 </div>
-                <label className="bg-white border border-zinc-200 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:border-zinc-900 transition-colors flex-shrink-0">
+                <label className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:border-zinc-900 dark:border-zinc-50 transition-colors flex-shrink-0">
                   Upload Logo
                   <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
                 </label>
               </div>
 
               {vaultAssets.length > 0 && (
-                <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100">
-                  <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-3 flex items-center gap-2">
-                    <Sparkles size={12} className="text-zinc-400" />
+                <div className="bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800">
+                  <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-2">
+                    <Sparkles size={12} className="text-zinc-400 dark:text-zinc-500" />
                     Or Select from Asset Vault
                   </h4>
                   <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
@@ -2378,7 +2405,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                       <button
                         key={asset.id}
                         onClick={() => setLogo(asset.image)}
-                        className={`flex-shrink-0 w-16 h-16 bg-checkerboard border-2 rounded-xl flex items-center justify-center p-2 transition-all ${logo === asset.image ? 'border-zinc-900 shadow-sm scale-105' : 'border-transparent hover:border-zinc-200'}`}
+                        className={`flex-shrink-0 w-16 h-16 bg-checkerboard border-2 rounded-xl flex items-center justify-center p-2 transition-all ${logo === asset.image ? 'border-zinc-900 dark:border-zinc-50 shadow-sm scale-105' : 'border-transparent hover:border-zinc-200 dark:border-zinc-700'}`}
                       >
                         <img src={asset.image} className="w-full h-full object-contain" />
                       </button>
@@ -2393,7 +2420,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                className="w-full bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none mb-6"
+                className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none mb-6"
                 rows={3}
                 placeholder="e.g. High-quality silver embroidery, screen printed with a vintage fade..."
               />
@@ -2401,11 +2428,11 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4">3. Color Options</h3>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Garment Color</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Garment Color</label>
                   <select
                     value={garmentColor}
                     onChange={(e) => setGarmentColor(e.target.value)}
-                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
                   >
                     {[
                       'Original (No Change)', 'Black', 'White', 'Charcoal', 'Navy Blue',
@@ -2417,11 +2444,11 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                   </select>
                 </div>
                 <div className="flex-1 space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Logo Color</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Logo Color</label>
                   <select
                     value={logoColor}
                     onChange={(e) => setLogoColor(e.target.value)}
-                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
                   >
                     {[
                       'Original (No Change)', 'Black', 'White', 'Silver / Grey',
@@ -2434,26 +2461,26 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
               </div>
             </section>
 
-            <div className="pt-8 border-t border-zinc-100 flex flex-col gap-4">
+            <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !logo}
-                  className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Re-bake Mockup' : 'Bake Mockup')}
                 </button>
                 {resultImage ? (
                   <button
                     onClick={() => setResultImage('')}
-                    className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
+                    className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
                   >
                     <Edit2 size={16} /> Adjust Placement
                   </button>
                 ) : logo && (
                   <button
                     onClick={handleSaveCurrentView}
-                    className="flex-1 bg-white border border-zinc-900 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
+                    className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-50 text-zinc-900 dark:text-zinc-50 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-center gap-2 animate-in fade-in"
                   >
                     <Save size={16} /> Quick Save
                   </button>
@@ -2464,7 +2491,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-2">
                   <button
                     onClick={() => onSave(resultImage)}
-                    className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
                   >
                     <Save size={16} /> Update Main Mockup
                   </button>
@@ -2505,47 +2532,47 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
+      className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
+        className="bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Add to Deck</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1">Add to Deck</p>
             <h3 className="font-serif text-2xl">Select Destination</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 bg-zinc-50 flex items-center gap-4 border-b border-zinc-100">
-          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden border border-zinc-100 flex-shrink-0">
+        <div className="p-4 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 flex items-center gap-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="w-16 h-16 bg-white dark:bg-zinc-950 rounded-xl overflow-hidden border border-zinc-100 dark:border-zinc-800 flex-shrink-0">
             <img src={garment.image} className="w-full h-full object-contain p-1" />
           </div>
           <div>
             <p className="font-medium text-sm">{garment.name}</p>
-            <p className="text-xs text-zinc-500">${garment.price}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">${garment.price}</p>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
           {sortedCompanies.map(company => (
-            <div key={company} className="border border-zinc-100 rounded-3xl overflow-hidden shadow-sm">
+            <div key={company} className="border border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
               <button
                 onClick={() => setExpandedCompany(expandedCompany === company ? null : company)}
-                className="w-full text-left p-6 bg-white hover:bg-zinc-50 transition-colors flex items-center justify-between"
+                className="w-full text-left p-6 bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 transition-colors flex items-center justify-between"
               >
                 <div className="flex flex-col">
                   <h4 className="font-serif text-2xl font-bold">{company}</h4>
                 </div>
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50">
                   {expandedCompany === company ? (
                     <X size={16} className="text-zinc-600" />
                   ) : (
@@ -2561,15 +2588,15 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
                     exit={{ height: 0 }}
                     className="overflow-hidden bg-zinc-50/50"
                   >
-                    <div className="p-4 space-y-2 border-t border-zinc-100">
+                    <div className="p-4 space-y-2 border-t border-zinc-100 dark:border-zinc-800">
                       {groupedDecks[company].map(deck => (
                         <button
                           key={deck.id}
                           onClick={() => onSelect(deck)}
-                          className="w-full text-left p-4 rounded-xl bg-white hover:border-zinc-300 border border-zinc-100 shadow-sm transition-all flex items-center justify-between group"
+                          className="w-full text-left p-4 rounded-xl bg-white dark:bg-zinc-950 hover:border-zinc-300 border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all flex items-center justify-between group"
                         >
-                          <span className="text-base font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">{deck.name}</span>
-                          <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          <span className="text-base font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-50 transition-colors">{deck.name}</span>
+                          <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                             Select <ChevronRight size={12} />
                           </span>
                         </button>
@@ -2582,7 +2609,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
           ))}
           {decks.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-zinc-400 font-serif italic text-sm">No decks found. Create one in the Customers tab.</p>
+              <p className="text-zinc-400 dark:text-zinc-500 font-serif italic text-sm">No decks found. Create one in the Customers tab.</p>
             </div>
           )}
         </div>
@@ -2617,21 +2644,21 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-white z-[100] flex flex-col"
+      className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col"
     >
       <div className="flex items-center justify-between p-4 md:p-8">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-serif">
+          <div className="w-10 h-10 bg-zinc-900 dark:bg-zinc-50 rounded-full flex items-center justify-center text-white font-serif">
             W
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Presentation Mode</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Presentation Mode</p>
             <h3 className="font-serif text-xl">{deck.name}</h3>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-4 hover:bg-zinc-50 rounded-full transition-colors"
+          className="p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors"
         >
           <X size={24} />
         </button>
@@ -2640,7 +2667,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
       <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-hidden">
         <button
           onClick={prev}
-          className="absolute left-2 md:left-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
+          className="absolute left-2 md:left-8 z-10 p-2 md:p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors bg-white/50 dark:bg-zinc-950/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
         >
           <ArrowLeft size={24} className="md:w-8 md:h-8" />
         </button>
@@ -2654,7 +2681,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
           >
             <div className="flex flex-col flex-1 w-full max-w-sm md:max-w-none mx-auto gap-4">
-              <div className="aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white flex items-center justify-center p-6 md:p-12">
+              <div className="aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 flex items-center justify-center p-6 md:p-12">
                 <img
                   src={activeVariations[currentItem.id] || currentItem.mock_image}
                   className="w-full h-full object-contain"
@@ -2665,7 +2692,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
                 <div className="flex gap-2 lg:gap-3 flex-wrap justify-center">
                   <button
                     onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: currentItem.mock_image }))}
-                    className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[currentItem.id] || activeVariations[currentItem.id] === currentItem.mock_image) ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                    className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white dark:bg-zinc-950 ${(!activeVariations[currentItem.id] || activeVariations[currentItem.id] === currentItem.mock_image) ? 'border-zinc-900 dark:border-zinc-50 shadow-sm scale-110' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                   >
                     <img src={currentItem.mock_image} className="w-full h-full object-contain" />
                   </button>
@@ -2673,7 +2700,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
                     <button
                       key={idx}
                       onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
-                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white dark:bg-zinc-950 ${activeVariations[currentItem.id] === v ? 'border-zinc-900 dark:border-zinc-50 shadow-sm scale-110' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                     >
                       <img src={v} className="w-full h-full object-contain" />
                     </button>
@@ -2683,17 +2710,17 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
             </div>
             <div className="flex-1 space-y-4 md:space-y-8 w-full">
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-widest font-bold text-zinc-400 text-center md:text-left">Item {currentIndex + 1} of {items.length}</p>
+                <p className="text-xs uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 text-center md:text-left">Item {currentIndex + 1} of {items.length}</p>
                 <h2 className="font-serif text-4xl md:text-7xl leading-tight text-center md:text-left">{currentItem.custom_name || currentItem.garment_name}</h2>
-                <p className="text-zinc-500 text-base md:text-xl leading-relaxed text-center md:text-left">
+                <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-base md:text-xl leading-relaxed text-center md:text-left">
                   {currentItem.custom_description || currentItem.garment_description}
                 </p>
               </div>
-              <div className="pt-8 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="pt-8 md:pt-12 border-t border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-6">
                 <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
                   {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                    <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
+                    <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500">
                       {size}
                     </span>
                   ))}
@@ -2705,7 +2732,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
 
         <button
           onClick={next}
-          className="absolute right-2 md:right-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
+          className="absolute right-2 md:right-8 z-10 p-2 md:p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors bg-white/50 dark:bg-zinc-950/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
         >
           <ChevronRight size={24} className="md:w-8 md:h-8" />
         </button>
@@ -2715,7 +2742,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
         {items.map((_, i) => (
           <div
             key={i}
-            className={`h-1 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-12 bg-zinc-900' : 'w-2 bg-zinc-200'}`}
+            className={`h-1 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-12 bg-zinc-900 dark:bg-zinc-50' : 'w-2 bg-zinc-200 dark:bg-zinc-700'}`}
           />
         ))}
       </div>
@@ -2738,35 +2765,35 @@ function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => vo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
+      className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden"
+        className="bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">{initialName ? 'Rename Presentation' : 'New Presentation'}</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1">{initialName ? 'Rename Presentation' : 'New Presentation'}</p>
             <h3 className="font-serif text-2xl">{initialName ? 'Rename Deck' : 'Create Deck'}</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
           <div>
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Deck Name</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-2 block">Deck Name</label>
             <input
               autoFocus
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Spring 2026 Collection"
-              className="w-full border-b border-zinc-200 py-3 text-lg font-serif outline-none focus:border-zinc-900 transition-colors"
+              className="w-full border-b border-zinc-200 dark:border-zinc-700 py-3 text-lg font-serif outline-none focus:border-zinc-900 dark:border-zinc-50 transition-colors"
             />
           </div>
 
@@ -2774,14 +2801,14 @@ function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => vo
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-4 text-xs uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 transition-colors"
+              className="flex-1 py-4 text-xs uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {initialName ? 'Save Changes' : 'Create Deck'}
             </button>
