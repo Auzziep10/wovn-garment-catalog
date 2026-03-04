@@ -1445,7 +1445,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   onRemoveItem: (itemId: number) => void
 }) {
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
-  const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('presentation');
+  const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('grid');
   const [editingItem, setEditingItem] = useState<DeckItem | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
