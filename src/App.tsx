@@ -151,22 +151,43 @@ export default function App() {
   useEffect(() => {
     fetchGarments();
     fetchCustomers();
-    // Auto-select first deck if available
-    fetch('/api/customers')
-      .then(res => res.json())
-      .then(customers => {
-        if (customers.length > 0) {
-          fetch(`/api/customers/${customers[0].id}/decks`)
-            .then(res => res.json())
-            .then(decks => {
-              if (decks.length > 0) {
-                fetch(`/api/decks/${decks[0].id}`)
-                  .then(res => res.json())
-                  .then(setCurrentDeck);
+
+    const params = new URLSearchParams(window.location.search);
+    const sharedDeckId = params.get('deck');
+
+    if (sharedDeckId) {
+      if (!currentDeck) {
+        fetch(`/api/decks/${sharedDeckId}`)
+          .then(res => res.json())
+          .then(deck => {
+            if (deck && deck.id) {
+              setCurrentDeck(deck);
+              setView('deck-view');
+              if (params.get('pricing') === 'off') {
+                setShowPricing(false);
               }
-            });
-        }
-      });
+            }
+          })
+          .catch(err => console.error("Could not load shared deck:", err));
+      }
+    } else {
+      // Auto-select first deck if available
+      fetch('/api/customers')
+        .then(res => res.json())
+        .then(customers => {
+          if (customers.length > 0) {
+            fetch(`/api/customers/${customers[0].id}/decks`)
+              .then(res => res.json())
+              .then(decks => {
+                if (decks.length > 0) {
+                  fetch(`/api/decks/${decks[0].id}`)
+                    .then(res => res.json())
+                    .then(setCurrentDeck);
+                }
+              });
+          }
+        });
+    }
   }, [selectedCategory, selectedGender, selectedType]);
 
   const fetchGarments = async () => {
@@ -1630,7 +1651,17 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
               <Upload size={14} /> Custom Item
               <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
             </label>
-            <button className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 dark:border-zinc-50 transition-colors">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  alert('Share link copied to clipboard!');
+                }).catch(() => {
+                  alert('Failed to copy link. Please manually copy: ' + url);
+                });
+              }}
+              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 dark:border-zinc-50 transition-colors"
+            >
               Share Link
             </button>
             <button
