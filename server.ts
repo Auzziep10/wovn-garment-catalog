@@ -271,7 +271,16 @@ app.get("/api/decks/:id", async (req, res) => {
       return res.status(404).json({ error: "Deck not found" });
     }
 
-    const deckData = { id: deckSnap.id, ...deckSnap.data() };
+    const deckData: any = { id: deckSnap.id, ...deckSnap.data() };
+
+    if (deckData.customer_id) {
+      const custRef = doc(db, "customers", deckData.customer_id);
+      const custSnap = await getDoc(custRef);
+      if (custSnap.exists()) {
+        const cData = custSnap.data();
+        deckData.customer_name = cData.company || cData.name || "Unknown Customer";
+      }
+    }
 
     const itemsQ = query(collection(db, "deck_items"), where("deck_id", "==", req.params.id));
     const itemsSnap = await getDocs(itemsQ);

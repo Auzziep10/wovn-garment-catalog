@@ -42,6 +42,7 @@ export interface Deck {
   id: number;
   customer_id: number;
   name: string;
+  customer_name?: string;
   items?: DeckItem[];
 }
 
@@ -2743,7 +2744,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             W
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Presentation Mode</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">
+              Presentation Mode {deck.customer_name ? `• ${deck.customer_name}` : ''}
+            </p>
             <h3 className="font-serif text-xl">{deck.name}</h3>
           </div>
         </div>
