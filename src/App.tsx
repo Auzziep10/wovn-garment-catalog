@@ -66,7 +66,7 @@ export interface DeckItem {
   supplier_link?: string | null;
 }
 
-type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation';
+type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
 
 const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
   // If it's already under ~800KB (base64 length < 1M), return as-is
@@ -127,7 +127,15 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  const [view, setView] = useState<View>('catalog');
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('deck')) {
+        return 'shared-presentation';
+      }
+    }
+    return 'catalog';
+  });
   const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
   const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
   const [selectedType, setSelectedType] = useState<GarmentType | ''>('');
@@ -162,7 +170,7 @@ export default function App() {
           .then(deck => {
             if (deck && deck.id) {
               setCurrentDeck(deck);
-              setView('deck-view');
+              setView('shared-presentation');
               if (params.get('pricing') === 'off') {
                 setShowPricing(false);
               }
@@ -404,61 +412,63 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-zinc-100 dark:border-zinc-800 sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 -ml-2">
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-            <div className="hidden md:flex items-center gap-6">
-              <button
-                onClick={() => setView('catalog')}
-                className={`nav-link ${view === 'catalog' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
-              >
-                Collection
+      {view !== 'shared-presentation' && (
+        <header className="border-b border-zinc-100 dark:border-zinc-800 sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-50">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 -ml-2">
+                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <button
-                onClick={() => setView('customers')}
-                className={`nav-link ${view === 'customers' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
-              >
-                Customers
-              </button>
-            </div>
-          </div>
-
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="font-serif text-2xl tracking-widest uppercase">WOVN</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {currentDeck && (
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400">Active Deck:</span>
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-900 dark:text-zinc-50">{currentDeck.name}</span>
+              <div className="hidden md:flex items-center gap-6">
+                <button
+                  onClick={() => setView('catalog')}
+                  className={`nav-link ${view === 'catalog' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
+                >
+                  Collection
+                </button>
+                <button
+                  onClick={() => setView('customers')}
+                  className={`nav-link ${view === 'customers' ? 'text-zinc-900 dark:text-zinc-50' : ''}`}
+                >
+                  Customers
+                </button>
               </div>
-            )}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <Search size={20} className="text-zinc-400 dark:text-zinc-500 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors" />
-            <div
-              className="relative cursor-pointer group"
-              onClick={() => { if (currentDeck) setView('deck-view'); else setView('customers'); }}
-            >
-              <ShoppingBag size={20} className="text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-50 transition-colors" />
+            </div>
+
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <h1 className="font-serif text-2xl tracking-widest uppercase">WOVN</h1>
+            </div>
+
+            <div className="flex items-center gap-4">
               {currentDeck && (
-                <span className="absolute -top-1 -right-1 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {currentDeck.items?.length || 0}
-                </span>
+                <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400">Active Deck:</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-900 dark:text-zinc-50">{currentDeck.name}</span>
+                </div>
               )}
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <Search size={20} className="text-zinc-400 dark:text-zinc-500 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors" />
+              <div
+                className="relative cursor-pointer group"
+                onClick={() => { if (currentDeck) setView('deck-view'); else setView('customers'); }}
+              >
+                <ShoppingBag size={20} className="text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-50 transition-colors" />
+                {currentDeck && (
+                  <span className="absolute -top-1 -right-1 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {currentDeck.items?.length || 0}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Side Menu Overlay */}
       <AnimatePresence>
@@ -586,6 +596,14 @@ export default function App() {
             deck={currentDeck}
             onClose={() => setView('deck-view')}
             showPricing={showPricing}
+          />
+        )}
+        {view === 'shared-presentation' && currentDeck && (
+          <PresentationMode
+            deck={currentDeck}
+            onClose={() => { }}
+            showPricing={showPricing}
+            isSharedView={true}
           />
         )}
         {view === 'mockup-studio' && selectedGarment && (
@@ -2694,7 +2712,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
     </motion.div>
   );
 }
-function PresentationMode({ deck, onClose, showPricing }: { deck: Deck, onClose: () => void, showPricing: boolean }) {
+function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: { deck: Deck, onClose: () => void, showPricing: boolean, isSharedView?: boolean }) {
   const [items, setItems] = useState<DeckItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
@@ -2733,12 +2751,14 @@ function PresentationMode({ deck, onClose, showPricing }: { deck: Deck, onClose:
             <h3 className="font-serif text-xl">{deck.name}</h3>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors"
-        >
-          <X size={24} />
-        </button>
+        {!isSharedView && (
+          <button
+            onClick={onClose}
+            className="p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors"
+          >
+            <X size={24} />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-hidden">
