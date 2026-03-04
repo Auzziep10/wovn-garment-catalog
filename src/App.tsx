@@ -1568,11 +1568,11 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
   const handleMockupEdit = (item: DeckItem) => {
     onGarmentClick({
-      id: item.garment_id,
-      name: item.garment_name!,
-      description: item.garment_description!,
-      price: item.garment_price!,
-      image: item.original_image!,
+      id: item.garment_id || 0,
+      name: item.custom_name || item.garment_name || 'Custom Item',
+      description: item.custom_description || item.garment_description || '',
+      price: item.custom_price || item.garment_price || 0,
+      image: item.original_image || item.mock_image,
       category: (item.category as Category) || 'Athleisure',
       gender: (item.gender as Gender) || 'Male',
       type: (item.type as GarmentType) || 'Tops'
@@ -1710,15 +1710,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                       className="w-full h-full object-contain p-4 md:p-8 cursor-zoom-in"
                     />
                     <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0 pointer-events-none">
-                      {item.garment_id !== null && item.garment_id !== undefined && (
-                        <button
-                          onClick={() => handleMockupEdit(item)}
-                          className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
-                          title="Edit Mockup"
-                        >
-                          <Wand2 size={20} />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleMockupEdit(item)}
+                        className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
+                        title="Edit Mockup"
+                      >
+                        <Wand2 size={20} />
+                      </button>
                       <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
@@ -1823,15 +1821,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                   />
                   <div className="absolute inset-0 bg-black/0 dark:bg-black/0 group-hover:bg-black/20 dark:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                     <div className="flex gap-2 pointer-events-auto">
-                      {item.garment_id !== null && item.garment_id !== undefined && (
-                        <button
-                          onClick={() => handleMockupEdit(item)}
-                          className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
-                          title="Edit Mockup"
-                        >
-                          <Wand2 size={18} />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleMockupEdit(item)}
+                        className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
+                        title="Edit Mockup"
+                      >
+                        <Wand2 size={18} />
+                      </button>
                       <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
