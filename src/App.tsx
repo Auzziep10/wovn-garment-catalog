@@ -143,6 +143,7 @@ export default function App() {
   const [isNewDeckModalOpen, setIsNewDeckModalOpen] = useState(false);
   const [garmentToAddToDeck, setGarmentToAddToDeck] = useState<Garment | null>(null);
   const [pendingMockupImage, setPendingMockupImage] = useState<string | null>(null);
+  const [showPricing, setShowPricing] = useState(true);
   const [allDecks, setAllDecks] = useState<(Deck & { customer_name: string })[]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -537,6 +538,8 @@ export default function App() {
         {view === 'deck-view' && currentDeck && (
           <DeckPresentationView
             deck={currentDeck}
+            showPricing={showPricing}
+            setShowPricing={setShowPricing}
             onBack={() => setView('customers')}
             onGarmentClick={(g, item) => {
               setSelectedGarment(g);
@@ -561,6 +564,7 @@ export default function App() {
           <PresentationMode
             deck={currentDeck}
             onClose={() => setView('deck-view')}
+            showPricing={showPricing}
           />
         )}
         {view === 'mockup-studio' && selectedGarment && (
@@ -1464,12 +1468,14 @@ function EditCustomerModal({ customer, onClose, onSave }: {
   );
 }
 
-function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemoveItem }: {
+function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing }: {
   deck: Deck,
   onBack: () => void,
   onGarmentClick: (g: Garment, item: DeckItem) => void,
   onPresent: () => void,
-  onRemoveItem: (itemId: number) => void
+  onRemoveItem: (itemId: number) => void,
+  showPricing: boolean,
+  setShowPricing: (show: boolean) => void
 }) {
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('grid');
@@ -1602,6 +1608,12 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
             </div>
             <div className="flex items-center gap-2 mr-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 p-1 rounded-full shadow-sm">
               <button
+                onClick={() => setShowPricing(!showPricing)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${showPricing ? 'bg-zinc-900 dark:bg-zinc-50 text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600'}`}
+              >
+                {showPricing ? 'Pricing On' : 'Pricing Off'}
+              </button>
+              <button
                 onClick={() => setDisplayMode('presentation')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 dark:bg-zinc-50 text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600'}`}
               >
@@ -1707,7 +1719,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                     </p>
                   </div>
                   <div className="pt-8 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-                    <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p>
+                    {showPricing ? <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p> : <div />}
                     <div className="flex flex-wrap gap-2">
                       {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
                         <span key={size} className="px-3 h-10 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900 dark:text-zinc-50">
@@ -1834,7 +1846,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
                 <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-zinc-400 dark:text-zinc-500 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p>
+                  {showPricing ? <p className="text-zinc-400 dark:text-zinc-500 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p> : <div />}
                   {item.supplier_link && (
                     <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 border-b border-transparent hover:border-zinc-900 dark:border-zinc-50 transition-colors" onClick={(e) => e.stopPropagation()}>
                       Link
@@ -2617,7 +2629,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
     </motion.div>
   );
 }
-function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }) {
+function PresentationMode({ deck, onClose, showPricing }: { deck: Deck, onClose: () => void, showPricing: boolean }) {
   const [items, setItems] = useState<DeckItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
@@ -2717,7 +2729,7 @@ function PresentationMode({ deck, onClose }: { deck: Deck, onClose: () => void }
                 </p>
               </div>
               <div className="pt-8 md:pt-12 border-t border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-6">
-                <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p>
+                {showPricing ? <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
                   {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
                     <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500">
