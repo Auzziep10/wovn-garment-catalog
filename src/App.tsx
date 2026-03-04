@@ -2761,7 +2761,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-y-auto overflow-x-hidden py-12 md:py-0">
         <button
           onClick={prev}
           className="absolute left-2 md:left-8 z-10 p-2 md:p-4 hover:bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-full transition-colors bg-white/50 dark:bg-zinc-950/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
@@ -2777,8 +2777,8 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             exit={{ opacity: 0, x: -20 }}
             className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
           >
-            <div className="flex flex-col flex-1 w-full max-w-sm md:max-w-none mx-auto gap-4">
-              <div className="aspect-[3/4] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 flex items-center justify-center p-6 md:p-12">
+            <div className="flex flex-col flex-1 w-full max-w-sm lg:max-w-md mx-auto gap-4">
+              <div className="aspect-[3/4] max-h-[60vh] w-full mx-auto rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 flex items-center justify-center p-6 md:p-12">
                 <img
                   src={activeVariations[currentItem.id] || currentItem.mock_image}
                   className="w-full h-full object-contain"
