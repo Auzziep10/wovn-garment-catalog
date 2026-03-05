@@ -77,13 +77,10 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
           
 CRITICAL CONSTRAINTS:
 ${isRotationRequested ?
-          '1. ROTATION REQUESTED: You are instructed to rotate the garment based on the USER PLACEMENT & FINISH INSTRUCTIONS below. DO NOT preserve the original camera angle. The background should remain similar, but the garment should be generated from the requested new perspective.'
+          '1. ROTATION REQUESTED: YOU MUST COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO THE REQUESTED ANGLE. DO NOT KEEP IT FACING FORWARD! Disregard the camera angle of the first image. We want what this garment would realistically look like photographed from the new requested perspective/side. \n2. BACKGROUND: Keep the background color/lighting identical to the first image.\n3. LOGO INTEGRATION: Use the second image ONLY to understand what the logo looks like. Disregard its exact 2D coordinates in the second image. Instead, place it realistically on the rotated garment where it would logically sit in 3D space.\n4. 3D WRAPPING: Ensure the logo perfectly contours to the folds and curves of the garment in its newly rotated viewpoint.'
           :
-          '1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.'}
-2. BACKGROUND: Keep the background from the first image identical.
-3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as a flat overlay. Please update the first image to incorporate this logo realistically into the fabric.
-4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment (e.g. curving around a sleeve, bending over a hat, or sinking into fabric folds) at that exact location.
-5. FINISH: Follow the fabric's lighting, shadows, and texture perfectly at that specific location.
+          '1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.\n2. BACKGROUND: Keep the background from the first image identical.\n3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as a flat overlay. Please update the first image to incorporate this logo realistically into the fabric.\n4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment (e.g. curving around a sleeve, bending over a hat, or sinking into fabric folds) at that exact location.'}
+5. FINISH: Follow the fabric's lighting, shadows, and texture perfectly.
 
 USER PLACEMENT & FINISH INSTRUCTIONS:
 ${prompt}`

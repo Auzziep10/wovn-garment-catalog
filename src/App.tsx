@@ -2287,16 +2287,16 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-8 md:mb-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8 h-[calc(100vh-80px)] flex flex-col">
+      <button onClick={onBack} className="flex-shrink-0 flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-4 md:mb-6 w-max">
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-        <div className="space-y-8 lg:sticky lg:top-24 h-max">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start overflow-hidden min-h-0 border-b border-transparent">
+        <div className="h-full w-full flex flex-col items-center justify-start lg:justify-center relative">
           <div
             ref={containerRef}
-            className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 dark:border-zinc-800 cursor-crosshair"
+            className="aspect-[3/4] max-h-[80vh] lg:max-h-full w-full max-w-md lg:max-w-lg bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 dark:border-zinc-800 cursor-crosshair mx-auto"
           >
             <img src={resultImage || activeGarmentImage} className="w-full h-full object-contain pointer-events-none" />
 
@@ -2418,7 +2418,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
           )}
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-12 h-full overflow-y-auto pr-2 pb-20 hide-scrollbar pt-2">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2 font-bold">Mockup Studio</p>
             <h2 className="editorial-title mb-4">Interactive Placement</h2>
