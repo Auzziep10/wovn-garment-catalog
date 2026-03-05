@@ -3239,6 +3239,57 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
     </motion.div>
   );
 }
+
+function ImageMagnifier({ src }: { src: string }) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    const { top, left, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    setCursorPosition({ x, y });
+    setPosition({
+      x: (x / width) * 100,
+      y: (y / height) * 100
+    });
+  };
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center cursor-crosshair">
+      <img
+        src={src}
+        className="w-full h-full object-contain pointer-events-auto"
+        onMouseEnter={() => setShowMagnifier(true)}
+        onMouseLeave={() => setShowMagnifier(false)}
+        onMouseMove={handleMouseMove}
+      />
+      {showMagnifier && (
+        <div
+          className="absolute pointer-events-none rounded-full shadow-2xl border-[3px] border-white/40 dark:border-zinc-800/80 z-50 overflow-hidden bg-white dark:bg-zinc-950 backdrop-blur-md"
+          style={{
+            width: '200px',
+            height: '200px',
+            top: `${cursorPosition.y - 100}px`,
+            left: `${cursorPosition.x - 100}px`,
+          }}
+        >
+          <div
+            className="w-full h-full"
+            style={{
+              backgroundImage: `url(${src})`,
+              backgroundPosition: `${position.x}% ${position.y}%`,
+              backgroundSize: '250%',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: { deck: Deck, onClose: () => void, showPricing: boolean, isSharedView?: boolean }) {
   const [items, setItems] = useState<DeckItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -3307,11 +3358,8 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
           >
             <div className="flex flex-col flex-1 w-full max-w-sm lg:max-w-md mx-auto gap-4">
-              <div className="aspect-[3/4] max-h-[60vh] w-full mx-auto rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 flex items-center justify-center p-6 md:p-12">
-                <img
-                  src={activeVariations[currentItem.id] || currentItem.mock_image}
-                  className="w-full h-full object-contain"
-                />
+              <div className="aspect-[3/4] max-h-[60vh] w-full mx-auto rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 flex items-center justify-center p-6 md:p-12 relative">
+                <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} />
               </div>
 
               {currentItem.variations && currentItem.variations.length > 0 && (
