@@ -2254,23 +2254,20 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(item.variations || []);
-  const [isGeneratingColors, setIsGeneratingColors] = useState(false);
+  const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
 
-  const handleGenerateVariations = async () => {
-    if (brandColors.length === 0) return;
-    setIsGeneratingColors(true);
+  const handleGenerateVariationForColor = async (color: string) => {
+    setGeneratingColor(color);
     try {
-      const generated = await Promise.all(
-        brandColors.map(color => generateColorVariation(mockImage, color))
-      );
-      setVariations(prev => [...prev, ...generated]);
+      const generated = await generateColorVariation(mockImage, color);
+      setVariations(prev => [...prev, generated]);
     } catch (err) {
       console.error(err);
-      alert('Failed to generate some or all variations.');
+      alert(`Failed to generate variation for ${color}.`);
     } finally {
-      setIsGeneratingColors(false);
+      setGeneratingColor(null);
     }
   };
 
@@ -2350,15 +2347,24 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Variations (Colors/Mockups)</p>
                   {brandColors.length > 0 && (
-                    <button
-                      onClick={handleGenerateVariations}
-                      disabled={isGeneratingColors}
-                      className="text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-50 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
-                      title="Generates a variation for each brand color automatically."
-                    >
-                      {isGeneratingColors ? <div className="w-3 h-3 border-2 border-zinc-500 border-t-zinc-900 dark:border-zinc-400 dark:border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
-                      Auto-Bake Brand Colors
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Auto-Bake:</span>
+                      <div className="flex gap-1.5">
+                        {brandColors.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => handleGenerateVariationForColor(c)}
+                            disabled={generatingColor !== null}
+                            className="w-5 h-5 rounded-full border border-zinc-200 dark:border-zinc-700 hover:scale-110 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
+                            style={{ backgroundColor: c }}
+                            title={`Generate ${c} variant`}
+                          >
+                            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                            {generatingColor === c && <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin mix-blend-difference absolute z-10" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
