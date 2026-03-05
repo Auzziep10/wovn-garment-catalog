@@ -1535,6 +1535,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
   const [generatingSceneForItem, setGeneratingSceneForItem] = useState<DeckItem | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -1578,6 +1579,53 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
     });
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    if (sortBy !== 'default') return;
+    setDraggedItemId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    // Hide the drag image ghost slightly or just let default
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (sortBy !== 'default') return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (sortBy !== 'default' || draggedItemId === null || draggedItemId === targetId) {
+      setDraggedItemId(null);
+      return;
+    }
+
+    const sourceIdx = items.findIndex(i => i.id === draggedItemId);
+    const targetIdx = items.findIndex(i => i.id === targetId);
+
+    if (sourceIdx < 0 || targetIdx < 0) {
+      setDraggedItemId(null);
+      return;
+    }
+
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(sourceIdx, 1);
+    newItems.splice(targetIdx, 0, movedItem);
+
+    newItems.forEach((item, idx) => item.order_index = idx);
+    setItems(newItems);
+    setDraggedItemId(null);
+
+    await fetch(`/api/decks/${deck.id}/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
+    });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemId(null);
   };
 
   const handleMockupEdit = (item: DeckItem) => {
@@ -1857,11 +1905,17 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
             {displayedItems.map((item, index) => (
               <motion.div
+                layout
                 key={item.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="group"
+                transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
+                className={`group ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
+                draggable={sortBy === 'default'}
+                onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
+                onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent)}
+                onDrop={(e) => handleDrop(e as unknown as React.DragEvent, item.id)}
+                onDragEnd={handleDragEnd}
               >
                 <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
                   <img
