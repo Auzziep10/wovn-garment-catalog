@@ -45,6 +45,9 @@ export interface Customer {
   color1?: string;
   color2?: string;
   color3?: string;
+  pantone1?: string;
+  pantone2?: string;
+  pantone3?: string;
 }
 
 export interface CustomerAsset {
@@ -1391,19 +1394,45 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                   <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mb-6">Select up to 3 brand colors for {customers.find(c => c.id === selectedCustId)?.company}.</p>
                   <div className="flex gap-6">
                     {[1, 2, 3].map(i => {
-                      const field = `color${i}` as keyof Customer;
-                      const val = customers.find(c => c.id === selectedCustId)?.[field] as string || '#f4f4f5';
+                      const colorField = `color${i}` as keyof Customer;
+                      const pantoneField = `pantone${i}` as keyof Customer;
+                      const c = customers.find(cust => cust.id === selectedCustId);
+                      const colorVal = c?.[colorField] as string || '#f4f4f5';
+                      const pantoneVal = c?.[pantoneField] as string || '';
+
                       return (
-                        <div key={i} className="flex flex-col gap-2 items-center group">
-                          <label className="w-16 h-16 rounded-full overflow-hidden cursor-pointer border-2 border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:scale-105 hover:border-zinc-900 dark:hover:border-zinc-50 relative flex items-center justify-center bg-checkerboard">
+                        <div key={i} className="flex flex-col gap-3 group bg-white dark:bg-zinc-950 p-4 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-40 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors shadow-sm">
+                          <label className="w-full h-20 rounded-xl overflow-hidden cursor-pointer border-2 border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:scale-105 hover:border-zinc-900 dark:hover:border-zinc-50 relative flex items-center justify-center bg-checkerboard mx-auto">
                             <input
                               type="color"
-                              value={val}
-                              onChange={(e) => onUpdateCustomer(selectedCustId!, { [field]: e.target.value })}
+                              value={colorVal}
+                              onChange={(e) => onUpdateCustomer(selectedCustId!, { [colorField]: e.target.value })}
                               className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0"
                             />
-                            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: val !== '#f4f4f5' ? val : 'transparent' }} />
+                            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: colorVal !== '#f4f4f5' ? colorVal : 'transparent' }} />
                           </label>
+                          <div className="flex flex-col gap-2 mt-1">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1 block">Hex Code</label>
+                              <input
+                                type="text"
+                                value={colorVal === '#f4f4f5' ? '' : colorVal.toUpperCase()}
+                                onChange={(e) => onUpdateCustomer(selectedCustId!, { [colorField]: e.target.value })}
+                                placeholder="#HEX"
+                                className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-xs outline-none focus:border-zinc-900 dark:border-zinc-50 font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1 block">Pantone</label>
+                              <input
+                                type="text"
+                                value={pantoneVal}
+                                onChange={(e) => onUpdateCustomer(selectedCustId!, { [pantoneField]: e.target.value })}
+                                placeholder="PMS..."
+                                className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-xs outline-none focus:border-zinc-900 dark:border-zinc-50 font-mono"
+                              />
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
