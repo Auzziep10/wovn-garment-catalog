@@ -152,9 +152,20 @@ export default function App() {
       if (params.get('deck')) {
         return 'shared-presentation';
       }
+      const saved = localStorage.getItem('lastView');
+      if (saved === 'admin' || saved === 'customers' || saved === 'catalog') {
+        return saved as View;
+      }
     }
     return 'catalog';
   });
+
+  useEffect(() => {
+    if (view === 'admin' || view === 'customers' || view === 'catalog') {
+      localStorage.setItem('lastView', view);
+    }
+  }, [view]);
+
   const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
   const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
   const [selectedType, setSelectedType] = useState<GarmentType | ''>('');
@@ -3047,6 +3058,20 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
   onSelect: (deck: Deck) => void
 }) {
   const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
+  const [decksContainingGarment, setDecksContainingGarment] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (garment?.id) {
+      fetch(`/api/garments/${garment.id}/decks`)
+        .then(res => res.json())
+        .then(ids => {
+          if (Array.isArray(ids)) {
+            setDecksContainingGarment(new Set(ids));
+          }
+        })
+        .catch(err => console.error("Error fetching decks containing garment:", err));
+    }
+  }, [garment]);
 
   const groupedDecks = decks.reduce((acc, deck) => {
     if (!acc[deck.customer_name]) acc[deck.customer_name] = [];
@@ -3122,11 +3147,22 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
                         <button
                           key={deck.id}
                           onClick={() => onSelect(deck)}
-                          className="w-full text-left p-4 rounded-xl bg-white dark:bg-zinc-950 hover:border-zinc-300 border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all flex items-center justify-between group"
+                          className={`w-full text-left p-4 rounded-xl ${decksContainingGarment.has(deck.id) ? 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700' : 'bg-white dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800'} hover:border-zinc-300 border shadow-sm transition-all flex items-center justify-between group`}
                         >
-                          <span className="text-base font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-50 transition-colors">{deck.name}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-50 transition-colors">{deck.name}</span>
+                            {decksContainingGarment.has(deck.id) && (
+                              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                Added
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            Select <ChevronRight size={12} />
+                            {decksContainingGarment.has(deck.id) ? (
+                              <>Add Again <ChevronRight size={12} /></>
+                            ) : (
+                              <>Select <ChevronRight size={12} /></>
+                            )}
                           </span>
                         </button>
                       ))}

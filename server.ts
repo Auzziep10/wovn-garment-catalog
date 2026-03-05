@@ -145,6 +145,17 @@ app.put("/api/garments/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update garment" });
   }
 });
+app.get("/api/garments/:id/decks", async (req, res) => {
+  try {
+    const q = query(collection(db, "deck_items"), where("garment_id", "==", req.params.id));
+    const snapshot = await getDocs(q);
+    const deckIds = snapshot.docs.map(doc => doc.data().deck_id);
+    // Deduplicate in case a garment is in a deck multiple times
+    res.json([...new Set(deckIds)]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch garment decks" });
+  }
+});
 
 app.delete("/api/garments/:id", async (req, res) => {
   try {
