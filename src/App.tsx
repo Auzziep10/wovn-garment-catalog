@@ -2811,7 +2811,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               </h3>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Garment Color</label>
                     {brandColors.length > 0 && (
                       <div className="flex gap-1.5">
@@ -2827,22 +2827,16 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                       </div>
                     )}
                   </div>
-                  <select
+                  <input
+                    type="text"
                     value={garmentColor}
                     onChange={(e) => setGarmentColor(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
-                  >
-                    {[
-                      'Original (No Change)', ...brandColors, 'Black', 'White', 'Charcoal', 'Navy Blue',
-                      'Royal Blue', 'Red', 'Maroon', 'Forest Green', 'Olive',
-                      'Heather Grey', 'Cream', 'Pink', 'Yellow', 'Orange'
-                    ].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    placeholder="e.g. Navy Blue, #FF0000"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all font-mono"
+                  />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Logo Color</label>
                     {brandColors.length > 0 && (
                       <div className="flex gap-1.5">
@@ -2858,18 +2852,13 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                       </div>
                     )}
                   </div>
-                  <select
+                  <input
+                    type="text"
                     value={logoColor}
                     onChange={(e) => setLogoColor(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
-                  >
-                    {[
-                      'Original (No Change)', ...brandColors, 'Black', 'White', 'Silver / Grey',
-                      'Gold', 'Navy Blue', 'Red', 'Yellow', 'Green'
-                    ].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    placeholder="e.g. White, Black, #000000"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all font-mono"
+                  />
                 </div>
               </div>
 
