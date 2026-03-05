@@ -174,6 +174,8 @@ export default function App() {
   const [allDecks, setAllDecks] = useState<(Deck & { customer_name: string })[]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [backgroundTask, setBackgroundTask] = useState<{ message: string; subMessage?: string } | null>(null);
+  const [isGeneratingGlobalColors, setIsGeneratingGlobalColors] = useState(false);
 
   useEffect(() => {
     fetchGarments();
@@ -317,6 +319,74 @@ export default function App() {
     } catch (err) {
       console.error('Error deleting customer:', err);
       alert('Network error. Please try again.');
+    }
+  };
+
+  const handleGlobalGenerateColors = async (customerId: number, colorsToGen: string[]) => {
+    setIsGeneratingGlobalColors(true);
+    setBackgroundTask({ message: 'Initializing color variations...' });
+    try {
+      const decksRes = await fetch(`/api/customers/${customerId}/decks`);
+      const customerDecks = await decksRes.json();
+
+      let totalItems = 0;
+      let processedItems = 0;
+
+      const decksData = [];
+      for (const deck of customerDecks) {
+        const res = await fetch(`/api/decks/${deck.id}`);
+        const deckData = await res.json();
+        decksData.push(deckData);
+        totalItems += (deckData.items?.length || 0) * colorsToGen.length;
+      }
+
+      if (totalItems === 0) {
+        setBackgroundTask(null);
+        setIsGeneratingGlobalColors(false);
+        return;
+      }
+
+      for (const deckData of decksData) {
+        const items = deckData.items || [];
+        for (const item of items) {
+          const newVariations = [...(item.variations || [])];
+          let changed = false;
+
+          for (const hex of colorsToGen) {
+            setBackgroundTask({
+              message: `Generating Colors (${processedItems + 1}/${totalItems})`,
+              subMessage: `Baking ${hex} variation for ${item.garment_name || 'an item'}...`
+            });
+
+            try {
+              const newImage = await generateColorVariation(item.mock_image, hex);
+              const compressed = await compressImageIfNeeded(newImage);
+              newVariations.push(compressed);
+              changed = true;
+            } catch (err) {
+              console.error("Failed to generate for color", hex, err);
+            }
+            processedItems++;
+          }
+
+          if (changed) {
+            await fetch(`/api/deck-items/${item.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ variations: newVariations })
+            });
+          }
+        }
+      }
+      setBackgroundTask({ message: 'Color variations complete!', subMessage: 'Changes saved to library.' });
+      const timer = setTimeout(() => setBackgroundTask(null), 4000);
+      return () => clearTimeout(timer);
+    } catch (err) {
+      console.error(err);
+      setBackgroundTask({ message: 'Error during generation', subMessage: 'Please check console.' });
+      setTimeout(() => setBackgroundTask(null), 4000);
+    } finally {
+      setIsGeneratingGlobalColors(false);
     }
   };
 
@@ -558,6 +628,23 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {backgroundTask && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed bottom-6 right-6 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 px-6 py-4 rounded-2xl shadow-2xl z-[120] flex items-center gap-4 border border-zinc-800 dark:border-zinc-200"
+          >
+            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <p className="font-bold text-sm">{backgroundTask.message}</p>
+              {backgroundTask.subMessage && <p className="text-xs opacity-70 mt-0.5">{backgroundTask.subMessage}</p>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <main className="flex-1">
         {view === 'catalog' && (
@@ -583,6 +670,8 @@ export default function App() {
             onViewDeck={(d) => { setCurrentDeck(d); setView('deck-view'); }}
             onCreateDeck={() => setIsNewDeckModalOpen(true)}
             onUpdateCustomer={handleUpdateCustomer}
+            onGenerateColors={handleGlobalGenerateColors}
+            isGeneratingColors={isGeneratingGlobalColors}
           />
         )}
         {view === 'deck-view' && currentDeck && (
@@ -1192,14 +1281,16 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   );
 }
 
-function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCustomer, onViewDeck, onCreateDeck, onUpdateCustomer }: {
+function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCustomer, onViewDeck, onCreateDeck, onUpdateCustomer, onGenerateColors, isGeneratingColors }: {
   customers: Customer[],
   onAddCustomer: (e: React.FormEvent<HTMLFormElement>) => void,
   onSelectCustomer: (c: Customer) => void,
   onDeleteCustomer: (c: Customer) => void,
   onViewDeck: (d: Deck) => void,
   onCreateDeck: (customerId: number) => void,
-  onUpdateCustomer: (id: number, updates: Partial<Customer>) => void
+  onUpdateCustomer: (id: number, updates: Partial<Customer>) => void,
+  onGenerateColors: (customerId: number, colorsToGen: string[]) => void,
+  isGeneratingColors: boolean
 }) {
   const [selectedCustId, setSelectedCustId] = useState<number | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -1207,7 +1298,6 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
-  const [isGeneratingColors, setIsGeneratingColors] = useState(false);
   const [resolvingPantone, setResolvingPantone] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -1281,7 +1371,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
     }
   };
 
-  const handleGenerateColors = async () => {
+  const handleGenerateColors = () => {
     if (!selectedCustId) return;
     const cust = customers.find(c => c.id === selectedCustId);
     if (!cust) return;
@@ -1292,44 +1382,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       return;
     }
 
-    setIsGeneratingColors(true);
-    try {
-      for (const deck of decks) {
-        const res = await fetch(`/api/decks/${deck.id}`);
-        const deckData = await res.json();
-        const items = deckData.items || [];
-
-        for (const item of items) {
-          const newVariations = [...(item.variations || [])];
-          let changed = false;
-
-          for (const hex of colorsToGen) {
-            try {
-              const newImage = await generateColorVariation(item.mock_image, hex);
-              const compressed = await compressImageIfNeeded(newImage);
-              newVariations.push(compressed);
-              changed = true;
-            } catch (err) {
-              console.error("Failed to generate for color", hex, err);
-            }
-          }
-
-          if (changed) {
-            await fetch(`/api/deck-items/${item.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ variations: newVariations })
-            });
-          }
-        }
-      }
-      alert("Color variations generated successfully and added to all garments in the client's decks!");
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred during generation.");
-    } finally {
-      setIsGeneratingColors(false);
-    }
+    onGenerateColors(selectedCustId, colorsToGen);
   };
 
   return (
