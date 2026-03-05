@@ -508,7 +508,7 @@ export default function App() {
                     {['Athleisure', 'Executive', 'Auto-Industry'].map((cat) => (
                       <button
                         key={cat}
-                        onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setIsMenuOpen(false); setView('catalog'); }}
+                        onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedCategory === cat ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {cat}
@@ -523,7 +523,7 @@ export default function App() {
                     {['Male', 'Female', 'Accessories'].map((gen) => (
                       <button
                         key={gen}
-                        onClick={() => { setSelectedGender(selectedGender === gen ? '' : gen as Gender); setIsMenuOpen(false); setView('catalog'); }}
+                        onClick={() => { setSelectedGender(selectedGender === gen ? '' : gen as Gender); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedGender === gen ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {gen}
@@ -538,7 +538,7 @@ export default function App() {
                     {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other'].map((t) => (
                       <button
                         key={t}
-                        onClick={() => { setSelectedType(selectedType === t ? '' : t as GarmentType); setIsMenuOpen(false); setView('catalog'); }}
+                        onClick={() => { setSelectedType(selectedType === t ? '' : t as GarmentType); setView('catalog'); }}
                         className={`text-left text-lg font-serif ${selectedType === t ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
                       >
                         {t}
