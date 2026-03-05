@@ -2148,6 +2148,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
   const [customPrompt, setCustomPrompt] = useState('Place the logo realistically. Wrap it securely along the sleeve, hat curve, or fabric folds matching the angles as needed.');
   const [garmentColor, setGarmentColor] = useState('Original (No Change)');
   const [logoColor, setLogoColor] = useState('Original (No Change)');
+  const [garmentView, setGarmentView] = useState('Front View (Default)');
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
@@ -2261,6 +2262,10 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
       }
       if (logoColor !== 'Original (No Change)') {
         prompt += ` Make the logo completely ${logoColor}.`;
+      }
+
+      if (garmentView !== 'Front View (Default)') {
+        prompt += ` Rotate the garment to specifically display the ${garmentView.toLowerCase()} angle.`;
       }
 
       const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt);
@@ -2511,6 +2516,24 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                     {[
                       'Original (No Change)', 'Black', 'White', 'Silver / Grey',
                       'Gold', 'Navy Blue', 'Red', 'Yellow', 'Green'
+                    ].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6">4. Garment View</h3>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Rotation / Perspective</label>
+                  <select
+                    value={garmentView}
+                    onChange={(e) => setGarmentView(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    {[
+                      'Front View (Default)', 'Back View', 'Left Side View', 'Right Side View', 'Slight Angle / Three-Quarter View'
                     ].map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
