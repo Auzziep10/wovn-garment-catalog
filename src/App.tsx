@@ -3,11 +3,11 @@ import useMeasure from 'react-use-measure';
 import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
-  Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw,
+  Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup } from './services/geminiService';
+import { generateMockup, generateModelScene } from './services/geminiService';
 
 export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry';
 export type Gender = 'Male' | 'Female' | 'Accessories';
@@ -1522,6 +1522,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   const [editingItem, setEditingItem] = useState<DeckItem | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
+  const [generatingSceneForItem, setGeneratingSceneForItem] = useState<DeckItem | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -1592,6 +1593,22 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
     }
   };
 
+  const handleSaveModelScene = async (img: string) => {
+    if (!generatingSceneForItem) return;
+
+    try {
+      const updatedVariations = [...(generatingSceneForItem.variations || []), img];
+      await handleSaveDetails(generatingSceneForItem.id, {
+        ...generatingSceneForItem,
+        variations: updatedVariations
+      });
+      setGeneratingSceneForItem(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save generated scene');
+    }
+  };
+
   const handleUploadExternal = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -1622,6 +1639,16 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
+      <AnimatePresence>
+        {generatingSceneForItem && (
+          <ModelSceneGeneratorModal
+            item={generatingSceneForItem}
+            baseImage={activeVariations[generatingSceneForItem.id] || generatingSceneForItem.mock_image}
+            onClose={() => setGeneratingSceneForItem(null)}
+            onSave={handleSaveModelScene}
+          />
+        )}
+      </AnimatePresence>
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors mb-8 md:mb-12">
           <ArrowLeft size={16} /> Back to Clients
@@ -1717,6 +1744,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                         title="Edit Mockup"
                       >
                         <Wand2 size={20} />
+                      </button>
+                      <button
+                        onClick={() => setGeneratingSceneForItem(item)}
+                        className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur p-3 md:p-4 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors pointer-events-auto"
+                        title="Generate Scene"
+                      >
+                        <Camera size={20} />
                       </button>
                       <button
                         onClick={() => setEditingItem(item)}
@@ -1828,6 +1862,13 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                         title="Edit Mockup"
                       >
                         <Wand2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => setGeneratingSceneForItem(item)}
+                        className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
+                        title="Generate Scene"
+                      >
+                        <Camera size={18} />
                       </button>
                       <button
                         onClick={() => setEditingItem(item)}
@@ -2624,6 +2665,105 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
         </div>
       </div>
     </div>
+  );
+}
+
+function ModelSceneGeneratorModal({ item, baseImage, onClose, onSave }: {
+  item: DeckItem,
+  baseImage: string,
+  onClose: () => void,
+  onSave: (img: string) => void
+}) {
+  const [prompt, setPrompt] = useState('A professional fashion model walking down a sunny city street in New York, confident pose');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [resultImage, setResultImage] = useState<string>('');
+  const [error, setError] = useState('');
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    setError('');
+    try {
+      const generated = await generateModelScene(baseImage, prompt);
+      setResultImage(generated);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to generate scene. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/40 dark:bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1">AI Model Generator</p>
+            <h3 className="font-serif text-2xl">Create Lifestyle Scene</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 dark:bg-zinc-900 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-4">
+              <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 flex items-center justify-center relative bg-checkerboard">
+                <img src={resultImage || baseImage} className="w-full h-full object-contain p-2" />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Describe Scene & Model</label>
+                <textarea
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
+                  rows={5}
+                />
+              </div>
+
+              {error && (
+                <p className="text-red-500 text-xs font-medium">{error}</p>
+              )}
+
+              <div className="space-y-4 pt-4">
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !prompt}
+                  className="w-full bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Sparkles size={16} /> {isGenerating ? 'Generating...' : 'Generate New Scene'}
+                </button>
+
+                {resultImage && (
+                  <button
+                    onClick={() => onSave(resultImage)}
+                    className="w-full bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
+                  >
+                    <Save size={16} /> Add as Variation to Item
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

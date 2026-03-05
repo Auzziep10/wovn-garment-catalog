@@ -115,3 +115,58 @@ ${prompt}`
 
   throw new Error("Failed to generate mockup image");
 }
+
+export async function generateModelScene(baseImage: string, prompt: string) {
+  const model = "gemini-2.5-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/png";
+
+  if (baseImage.startsWith('http')) {
+    const result = await toBase64(baseImage);
+    baseImageData = result.data;
+    baseMimeType = result.mimeType;
+  } else {
+    baseImageData = baseImage.split(",")[1] || baseImage;
+    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
+    if (match) baseMimeType = match[1];
+  }
+
+  const modelObj = getGenerativeModel(ai, {
+    model,
+  });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Create a professional lifestyle photography scene with a real human model wearing the provided garment.
+          
+CRITICAL CONSTRAINTS:
+1. SUBJECT: Render a realistic human model wearing the garment from the provided image.
+2. GARMENT ACCURACY: The garment on the model MUST match the provided garment EXACTLY in terms of color, logos, graphics, shape, and style. Ensure the logo is clearly visible and correctly placed.
+3. SCENE: ${prompt}
+4. QUALITY: The image should be a highly realistic, professional lifestyle photography shot.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to generate model scene image");
+}
