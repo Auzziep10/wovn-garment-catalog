@@ -4,10 +4,22 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon
+  Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene } from './services/geminiService';
+
+function HoverTooltip({ content }: { content: string }) {
+  return (
+    <div className="relative inline-flex items-center ml-2 group -mt-1">
+      <Info size={14} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-help" />
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-zinc-900 border border-zinc-700 text-white text-[10px] leading-relaxed p-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] text-center pointer-events-none normal-case font-normal tracking-normal">
+        {content}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+      </div>
+    </div>
+  );
+}
 
 export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry';
 export type Gender = 'Male' | 'Female' | 'Accessories';
@@ -2427,7 +2439,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             <div className="flex items-center gap-6 bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Scale</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 flex items-center">
+                    Scale <HoverTooltip content="Precisely scale the flat logo before baking." />
+                  </span>
                   <span className="text-[10px] font-mono text-zinc-900 dark:text-zinc-50">{(logoScale * 100).toFixed(0)}%</span>
                 </div>
                 <input
@@ -2445,7 +2459,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
 
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Rotation</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 flex items-center">
+                    Rotation <HoverTooltip content="Spin the flat logo to match the angle of the garment surface." />
+                  </span>
                   <span className="text-[10px] font-mono text-zinc-900 dark:text-zinc-50">{logoRotation.toFixed(0)}°</span>
                 </div>
                 <input
@@ -2487,7 +2503,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             )}
 
             <section>
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4">1. Customer Logo</h3>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
+                1. Customer Logo <HoverTooltip content="Upload a high-quality graphic (transparent PNG works best) to overlay on the garment." />
+              </h3>
               <div className="flex items-center gap-6 mb-6">
                 <div className="w-24 h-24 bg-checkerboard border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logo ? (
@@ -2506,7 +2524,7 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 <div className="bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800">
                   <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-2">
                     <Sparkles size={12} className="text-zinc-400 dark:text-zinc-500" />
-                    Or Select from Asset Vault
+                    Or Select from Asset Vault <HoverTooltip content="Quickly re-use logos previously uploaded and saved to this customer's profile." />
                   </h4>
                   <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                     {vaultAssets.map(asset => (
@@ -2524,7 +2542,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
             </section>
 
             <section>
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4">2. Describe the Finish</h3>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
+                2. Describe the Finish <HoverTooltip content="Optional details for the AI to follow (e.g. 'Faded vintage screenprint' or 'Thick 3D embroidery'). It will incorporate this lighting/texture." />
+              </h3>
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
@@ -2533,7 +2553,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 placeholder="e.g. High-quality silver embroidery, screen printed with a vintage fade..."
               />
 
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4">3. Color Options</h3>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
+                3. Color Options <HoverTooltip content="Prompt the AI to realistically change the base color of the garment or graphic." />
+              </h3>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Garment Color</label>
@@ -2568,7 +2590,9 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
                 </div>
               </div>
 
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6">4. Garment View</h3>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
+                4. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective to showcase sides or rear placements." />
+              </h3>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Rotation / Perspective</label>
