@@ -1460,7 +1460,10 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                       const colorField = `color${i}` as keyof Customer;
                       const pantoneField = `pantone${i}` as keyof Customer;
                       const c = customers.find(cust => cust.id === selectedCustId);
-                      const colorVal = c?.[colorField] as string || '#f4f4f5';
+                      let colorVal = c?.[colorField] as string || '#f4f4f5';
+                      if (colorVal !== '#f4f4f5' && !colorVal.startsWith('#')) {
+                        colorVal = '#' + colorVal;
+                      }
                       const pantoneVal = c?.[pantoneField] as string || '';
 
                       return (
@@ -1480,7 +1483,11 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                               <input
                                 type="text"
                                 value={colorVal === '#f4f4f5' ? '' : colorVal.toUpperCase()}
-                                onChange={(e) => onUpdateCustomer(selectedCustId!, { [colorField]: e.target.value })}
+                                onChange={(e) => {
+                                  let val = e.target.value.trim();
+                                  if (val && !val.startsWith('#')) val = '#' + val;
+                                  onUpdateCustomer(selectedCustId!, { [colorField]: val });
+                                }}
                                 placeholder="#HEX"
                                 className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-xs outline-none focus:border-zinc-900 dark:border-zinc-50 font-mono"
                               />
