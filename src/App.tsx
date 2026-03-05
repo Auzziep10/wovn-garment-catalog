@@ -42,6 +42,9 @@ export interface Customer {
   id: number;
   name: string;
   company: string;
+  color1?: string;
+  color2?: string;
+  color3?: string;
 }
 
 export interface CustomerAsset {
@@ -275,12 +278,12 @@ export default function App() {
     }
   };
 
-  const handleUpdateCustomer = async (id: number, name: string, company: string) => {
+  const handleUpdateCustomer = async (id: number, updates: Partial<Customer>) => {
     try {
       const res = await fetch(`/api/customers/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, company })
+        body: JSON.stringify(updates)
       });
       if (res.ok) {
         await fetchCustomers();
@@ -1192,7 +1195,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   onDeleteCustomer: (c: Customer) => void,
   onViewDeck: (d: Deck) => void,
   onCreateDeck: (customerId: number) => void,
-  onUpdateCustomer: (id: number, name: string, company: string) => void
+  onUpdateCustomer: (id: number, updates: Partial<Customer>) => void
 }) {
   const [selectedCustId, setSelectedCustId] = useState<number | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -1383,7 +1386,31 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               </div>
 
               <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between mb-8">
+                <div className="mb-14">
+                  <h3 className="editorial-title text-2xl mb-2">Color Palette</h3>
+                  <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mb-6">Select up to 3 brand colors for {customers.find(c => c.id === selectedCustId)?.company}.</p>
+                  <div className="flex gap-6">
+                    {[1, 2, 3].map(i => {
+                      const field = `color${i}` as keyof Customer;
+                      const val = customers.find(c => c.id === selectedCustId)?.[field] as string || '#f4f4f5';
+                      return (
+                        <div key={i} className="flex flex-col gap-2 items-center group">
+                          <label className="w-16 h-16 rounded-full overflow-hidden cursor-pointer border-2 border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:scale-105 hover:border-zinc-900 dark:hover:border-zinc-50 relative flex items-center justify-center bg-checkerboard">
+                            <input
+                              type="color"
+                              value={val}
+                              onChange={(e) => onUpdateCustomer(selectedCustId!, { [field]: e.target.value })}
+                              className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0"
+                            />
+                            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: val !== '#f4f4f5' ? val : 'transparent' }} />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-12 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between mb-8">
                   <div>
                     <h3 className="editorial-title text-2xl">Asset Vault</h3>
                     <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mt-1">Stored logos and assets for {customers.find(c => c.id === selectedCustId)?.company}.</p>
@@ -1432,8 +1459,8 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
           <EditCustomerModal
             customer={editingCustomer}
             onClose={() => setEditingCustomer(null)}
-            onSave={(name, company) => {
-              onUpdateCustomer(editingCustomer.id, name, company);
+            onSave={(updates) => {
+              onUpdateCustomer(editingCustomer.id, updates);
               setEditingCustomer(null);
             }}
           />
@@ -1453,7 +1480,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 function EditCustomerModal({ customer, onClose, onSave }: {
   customer: Customer,
   onClose: () => void,
-  onSave: (name: string, company: string) => void
+  onSave: (updates: Partial<Customer>) => void
 }) {
   const [name, setName] = useState(customer.name || '');
   const [company, setCompany] = useState(customer.company || '');
@@ -1511,7 +1538,7 @@ function EditCustomerModal({ customer, onClose, onSave }: {
             Cancel
           </button>
           <button
-            onClick={() => onSave(name, company)}
+            onClick={() => onSave({ name, company })}
             className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
           >
             Save Changes
