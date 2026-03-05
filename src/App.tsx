@@ -2589,7 +2589,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
       </button>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start overflow-hidden min-h-0 border-b border-transparent">
-        <div className="h-full w-full flex flex-col items-center justify-start lg:justify-center relative">
+        <div className="h-full w-full flex flex-col items-center justify-start overflow-y-auto pb-12 relative px-1">
           <div
             ref={containerRef}
             className="aspect-[3/4] max-h-[80vh] lg:max-h-full w-full max-w-md lg:max-w-lg bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 dark:border-zinc-800 cursor-crosshair mx-auto"
@@ -2718,7 +2718,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
           )}
         </div>
 
-        <div className="space-y-12 h-full overflow-y-auto pr-2 pb-20 hide-scrollbar pt-2">
+        <div className="space-y-12 h-full overflow-y-auto pr-4 pb-32 pt-2">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2 font-bold">Mockup Studio</p>
             <h2 className="editorial-title mb-4">Interactive Placement</h2>
