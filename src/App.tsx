@@ -730,6 +730,7 @@ export default function App() {
             garment={selectedGarment}
             deck={currentDeck}
             deckItem={selectedDeckItem}
+            customer={currentDeck ? customers.find(c => c.id === currentDeck.customer_id) : null}
             onBack={() => setView(selectedDeckItem ? 'deck-view' : 'catalog')}
             onSave={async (newImage, isVariation) => {
               try {
@@ -1510,14 +1511,6 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 <div className="mb-14">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="editorial-title text-2xl">Color Palette</h3>
-                    <button
-                      onClick={handleGenerateColors}
-                      disabled={isGeneratingColors}
-                      className="flex items-center gap-2 bg-zinc-900 dark:bg-zinc-50 text-white px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-sm disabled:opacity-50"
-                    >
-                      {isGeneratingColors ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={14} />}
-                      {isGeneratingColors ? 'Generating...' : 'Generate Variations'}
-                    </button>
                   </div>
                   <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mb-6">Select up to 3 brand colors for {customers.find(c => c.id === selectedCustId)?.company}.</p>
                   <div className="flex gap-6">
@@ -2432,10 +2425,11 @@ function EditItemModal({ item, onClose, onSave }: {
   );
 }
 
-function MockupStudio({ garment, deck, deckItem, onBack, onSave }: {
+function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   garment: Garment,
   deck: Deck | null,
   deckItem?: DeckItem | null,
+  customer?: Customer | null,
   onBack: () => void,
   onSave: (img: string, isVariation?: boolean) => void
 }) {
@@ -2452,6 +2446,8 @@ function MockupStudio({ garment, deck, deckItem, onBack, onSave }: {
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
+
+  const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -2815,14 +2811,29 @@ function MockupStudio({ garment, deck, deckItem, onBack, onSave }: {
               </h3>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Garment Color</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Garment Color</label>
+                    {brandColors.length > 0 && (
+                      <div className="flex gap-1.5">
+                        {brandColors.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => setGarmentColor(c)}
+                            className={`w-4 h-4 rounded-full border border-zinc-200 dark:border-zinc-700 ${garmentColor === c ? 'ring-2 ring-zinc-900 dark:ring-zinc-50 ring-offset-1 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-110'} transition-all`}
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <select
                     value={garmentColor}
                     onChange={(e) => setGarmentColor(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
                   >
                     {[
-                      'Original (No Change)', 'Black', 'White', 'Charcoal', 'Navy Blue',
+                      'Original (No Change)', ...brandColors, 'Black', 'White', 'Charcoal', 'Navy Blue',
                       'Royal Blue', 'Red', 'Maroon', 'Forest Green', 'Olive',
                       'Heather Grey', 'Cream', 'Pink', 'Yellow', 'Orange'
                     ].map(c => (
@@ -2831,14 +2842,29 @@ function MockupStudio({ garment, deck, deckItem, onBack, onSave }: {
                   </select>
                 </div>
                 <div className="flex-1 space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Logo Color</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Logo Color</label>
+                    {brandColors.length > 0 && (
+                      <div className="flex gap-1.5">
+                        {brandColors.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => setLogoColor(c)}
+                            className={`w-4 h-4 rounded-full border border-zinc-200 dark:border-zinc-700 ${logoColor === c ? 'ring-2 ring-zinc-900 dark:ring-zinc-50 ring-offset-1 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-110'} transition-all`}
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <select
                     value={logoColor}
                     onChange={(e) => setLogoColor(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
                   >
                     {[
-                      'Original (No Change)', 'Black', 'White', 'Silver / Grey',
+                      'Original (No Change)', ...brandColors, 'Black', 'White', 'Silver / Grey',
                       'Gold', 'Navy Blue', 'Red', 'Yellow', 'Green'
                     ].map(c => (
                       <option key={c} value={c}>{c}</option>
