@@ -39,7 +39,7 @@ async function toBase64(url: string): Promise<{ data: string; mimeType: string }
   });
 }
 
-export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string) {
+export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string, isRotationRequested: boolean = false) {
   // Nano Banana is the Gemini 2.5 Flash Image model
   const model = "gemini-2.5-flash-image";
 
@@ -76,7 +76,10 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
       text: `TASK: Create a professional product mockup.
           
 CRITICAL CONSTRAINTS:
-1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.
+${isRotationRequested ?
+          '1. ROTATION REQUESTED: You are instructed to rotate the garment based on the USER PLACEMENT & FINISH INSTRUCTIONS below. DO NOT preserve the original camera angle. The background should remain similar, but the garment should be generated from the requested new perspective.'
+          :
+          '1. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.'}
 2. BACKGROUND: Keep the background from the first image identical.
 3. LOGO INTEGRATION: The second image shows the garment with the logo manually placed as a flat overlay. Please update the first image to incorporate this logo realistically into the fabric.
 4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment (e.g. curving around a sleeve, bending over a hat, or sinking into fabric folds) at that exact location.

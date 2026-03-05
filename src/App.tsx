@@ -2268,7 +2268,8 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
         prompt += ` Rotate the garment to specifically display the ${garmentView.toLowerCase()} angle.`;
       }
 
-      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt);
+      const isRotationRequested = garmentView !== 'Front View (Default)';
+      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt, isRotationRequested);
       setResultImage(mockup);
     } catch (err) {
       console.error(err);
@@ -2291,8 +2292,8 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-        <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+        <div className="space-y-8 lg:sticky lg:top-24 h-max">
           <div
             ref={containerRef}
             className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-100 dark:border-zinc-800 cursor-crosshair"
