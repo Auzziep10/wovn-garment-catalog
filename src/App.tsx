@@ -1590,6 +1590,8 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
     if (res.ok) {
       fetchItems();
       setEditingItem(null);
+    } else {
+      throw new Error(await res.text());
     }
   };
 
@@ -1597,7 +1599,8 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
     if (!generatingSceneForItem) return;
 
     try {
-      const updatedVariations = [...(generatingSceneForItem.variations || []), img];
+      const compressedImg = await compressImageIfNeeded(img);
+      const updatedVariations = [...(generatingSceneForItem.variations || []), compressedImg];
       await handleSaveDetails(generatingSceneForItem.id, {
         ...generatingSceneForItem,
         variations: updatedVariations
@@ -1605,7 +1608,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
       setGeneratingSceneForItem(null);
     } catch (err) {
       console.error(err);
-      alert('Failed to save generated scene');
+      alert('Failed to save generated scene. The server might have rejected the file size or the network was interrupted.');
     }
   };
 
