@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info
+  Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info, GripHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene } from './services/geminiService';
@@ -1910,14 +1910,19 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                className={`group ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
+                className={`group relative rounded-2xl ${sortBy === 'default' ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
                 draggable={sortBy === 'default'}
                 onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
                 onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent)}
                 onDrop={(e) => handleDrop(e as unknown as React.DragEvent, item.id)}
                 onDragEnd={handleDragEnd}
               >
-                <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
+                <div className="aspect-[3/4] bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 dark:border-zinc-800 transition-all group-hover:border-zinc-300 dark:group-hover:border-zinc-600">
+                  {sortBy === 'default' && (
+                    <div className="absolute top-3 left-3 z-10 px-3 py-1.5 bg-black/40 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1.5 backdrop-blur-sm text-[10px] uppercase font-bold tracking-widest">
+                      <GripHorizontal size={14} /> Drag to Reorder
+                    </div>
+                  )}
                   <img
                     src={activeVariations[item.id] || item.mock_image}
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
@@ -1954,28 +1959,6 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
                         <Trash2 size={18} />
                       </button>
 
-                      {sortBy === 'default' && (
-                        <>
-                          {index > 0 && (
-                            <button
-                              onClick={() => handleMoveItem(item.id, 'up')}
-                              className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
-                              title="Move Up"
-                            >
-                              <ArrowUp size={18} />
-                            </button>
-                          )}
-                          {index < displayedItems.length - 1 && (
-                            <button
-                              onClick={() => handleMoveItem(item.id, 'down')}
-                              className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 p-3 rounded-full shadow-lg hover:bg-zinc-900 dark:bg-zinc-50 hover:text-white transition-colors"
-                              title="Move Down"
-                            >
-                              <ArrowDown size={18} />
-                            </button>
-                          )}
-                        </>
-                      )}
                     </div>
                   </div>
                 </div>
