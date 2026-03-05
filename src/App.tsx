@@ -21,7 +21,7 @@ function HoverTooltip({ content }: { content: string }) {
   );
 }
 
-export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry';
+export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf';
 export type Gender = 'Male' | 'Female' | 'Accessories';
 export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other';
 
@@ -505,7 +505,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
-                    {['Athleisure', 'Executive', 'Auto-Industry'].map((cat) => (
+                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf'].map((cat) => (
                       <button
                         key={cat}
                         onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setView('catalog'); }}
@@ -1051,6 +1051,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <option value="Athleisure">Athleisure</option>
                 <option value="Executive">Executive</option>
                 <option value="Auto-Industry">Auto-Industry</option>
+                <option value="Golf">Golf</option>
               </select>
               <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-2 flex-1 focus:outline-none focus:border-zinc-900 dark:border-zinc-50 cursor-pointer">
                 <option value="">All Genders</option>
@@ -1146,6 +1147,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                     <option>Athleisure</option>
                     <option>Executive</option>
                     <option>Auto-Industry</option>
+                    <option>Golf</option>
                   </select>
                 </div>
               </div>
