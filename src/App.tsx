@@ -2262,7 +2262,8 @@ function EditItemModal({ item, customer, onClose, onSave }: {
     setGeneratingColor(color);
     try {
       const generated = await generateColorVariation(mockImage, color);
-      setVariations(prev => [...prev, generated]);
+      const compressed = await compressImageIfNeeded(generated);
+      setVariations(prev => [...prev, compressed]);
     } catch (err) {
       console.error(err);
       alert(`Failed to generate variation for ${color}.`);
@@ -2449,14 +2450,21 @@ function EditItemModal({ item, customer, onClose, onSave }: {
             Cancel
           </button>
           <button
-            onClick={() => onSave({
-              custom_name: name,
-              custom_description: description,
-              custom_price: parseFloat(price),
-              custom_sizes: sizes,
-              mock_image: mockImage,
-              variations: variations
-            })}
+            onClick={async () => {
+              try {
+                await onSave({
+                  custom_name: name,
+                  custom_description: description,
+                  custom_price: parseFloat(price),
+                  custom_sizes: sizes,
+                  mock_image: mockImage,
+                  variations: variations
+                });
+              } catch (err: any) {
+                console.error(err);
+                alert("Failed to save changes: " + (err.message || 'Unknown error'));
+              }
+            }}
             className="flex-1 bg-zinc-900 dark:bg-zinc-50 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
           >
             Save Changes
