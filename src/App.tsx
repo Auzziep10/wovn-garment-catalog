@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info, GripHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex } from './services/geminiService';
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -1208,6 +1208,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
   const [isGeneratingColors, setIsGeneratingColors] = useState(false);
+  const [resolvingPantone, setResolvingPantone] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (selectedCustId) {
@@ -1493,11 +1494,24 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                               />
                             </div>
                             <div>
-                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1 block">Pantone</label>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500 mb-1 flex items-center gap-2">
+                                Pantone
+                                {resolvingPantone[i] && <div className="w-2 h-2 border border-zinc-400 border-t-transparent rounded-full animate-spin" />}
+                              </label>
                               <input
                                 type="text"
                                 value={pantoneVal}
                                 onChange={(e) => onUpdateCustomer(selectedCustId!, { [pantoneField]: e.target.value })}
+                                onBlur={async () => {
+                                  if (pantoneVal && pantoneVal.trim().length > 2) {
+                                    setResolvingPantone(prev => ({ ...prev, [i]: true }));
+                                    const hex = await convertColorToHex(pantoneVal);
+                                    if (hex) {
+                                      onUpdateCustomer(selectedCustId!, { [colorField]: hex });
+                                    }
+                                    setResolvingPantone(prev => ({ ...prev, [i]: false }));
+                                  }
+                                }}
                                 placeholder="PMS..."
                                 className="w-full bg-transparent border-b border-zinc-200 dark:border-zinc-700 py-1 text-xs outline-none focus:border-zinc-900 dark:border-zinc-50 font-mono"
                               />

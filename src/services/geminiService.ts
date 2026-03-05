@@ -224,3 +224,16 @@ CRITICAL CONSTRAINTS:
 
   throw new Error("Failed to generate colored variation");
 }
+
+export async function convertColorToHex(colorName: string): Promise<string | null> {
+  try {
+    const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+    const result = await modelObj.generateContent(`What is the closest hex code for the color "${colorName}"? Reply EXACTLY and ONLY with the 6-character hex code starting with #. Do not include any other text.`);
+    const text = result.response.text().trim();
+    const match = text.match(/#[0-9A-Fa-f]{6}/);
+    return match ? match[0].toUpperCase() : null;
+  } catch (err) {
+    console.error("Failed to convert color to hex:", err);
+    return null;
+  }
+}
