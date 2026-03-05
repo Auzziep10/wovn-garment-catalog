@@ -170,3 +170,57 @@ CRITICAL CONSTRAINTS:
 
   throw new Error("Failed to generate model scene image");
 }
+
+export async function generateColorVariation(baseImage: string, colorHex: string) {
+  const model = "gemini-2.5-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/png";
+
+  if (baseImage.startsWith('http')) {
+    const result = await toBase64(baseImage);
+    baseImageData = result.data;
+    baseMimeType = result.mimeType;
+  } else {
+    baseImageData = baseImage.split(",")[1] || baseImage;
+    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
+    if (match) baseMimeType = match[1];
+  }
+
+  const modelObj = getGenerativeModel(ai, {
+    model,
+  });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Recoloring
+CRITICAL CONSTRAINTS:
+1. ONLY change the color of the garment in the image to exactly match this hex color code: ${colorHex}.
+2. Preserve all lighting, shadows, fabric textures, folds, and details authentically.
+3. Keep the background identical to the original image.
+4. Do NOT change the framing, zoom, or crop.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to generate colored variation");
+}

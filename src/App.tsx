@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info, GripHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation } from './services/geminiService';
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -629,6 +629,7 @@ export default function App() {
           <MockupStudio
             garment={selectedGarment}
             deck={currentDeck}
+            deckItem={selectedDeckItem}
             onBack={() => setView(selectedDeckItem ? 'deck-view' : 'catalog')}
             onSave={async (newImage, isVariation) => {
               try {
@@ -1206,6 +1207,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
+  const [isGeneratingColors, setIsGeneratingColors] = useState(false);
 
   useEffect(() => {
     if (selectedCustId) {
@@ -1275,6 +1277,57 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       }
     } catch {
       alert('Network error. Please try again.');
+    }
+  };
+
+  const handleGenerateColors = async () => {
+    if (!selectedCustId) return;
+    const cust = customers.find(c => c.id === selectedCustId);
+    if (!cust) return;
+
+    const colorsToGen = [cust.color1, cust.color2, cust.color3].filter(c => c && c !== '#f4f4f5') as string[];
+    if (colorsToGen.length === 0) {
+      alert("Please set at least one brand color first.");
+      return;
+    }
+
+    setIsGeneratingColors(true);
+    try {
+      for (const deck of decks) {
+        const res = await fetch(`/api/decks/${deck.id}`);
+        const deckData = await res.json();
+        const items = deckData.items || [];
+
+        for (const item of items) {
+          const newVariations = [...(item.variations || [])];
+          let changed = false;
+
+          for (const hex of colorsToGen) {
+            try {
+              const newImage = await generateColorVariation(item.mock_image, hex);
+              const compressed = await compressImageIfNeeded(newImage);
+              newVariations.push(compressed);
+              changed = true;
+            } catch (err) {
+              console.error("Failed to generate for color", hex, err);
+            }
+          }
+
+          if (changed) {
+            await fetch(`/api/deck-items/${item.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ variations: newVariations })
+            });
+          }
+        }
+      }
+      alert("Color variations generated successfully and added to all garments in the client's decks!");
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during generation.");
+    } finally {
+      setIsGeneratingColors(false);
     }
   };
 
@@ -1390,7 +1443,17 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 
               <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100 dark:border-zinc-800">
                 <div className="mb-14">
-                  <h3 className="editorial-title text-2xl mb-2">Color Palette</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="editorial-title text-2xl">Color Palette</h3>
+                    <button
+                      onClick={handleGenerateColors}
+                      disabled={isGeneratingColors}
+                      className="flex items-center gap-2 bg-zinc-900 dark:bg-zinc-50 text-white px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      {isGeneratingColors ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={14} />}
+                      {isGeneratingColors ? 'Generating...' : 'Generate Variations'}
+                    </button>
+                  </div>
                   <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm mb-6">Select up to 3 brand colors for {customers.find(c => c.id === selectedCustId)?.company}.</p>
                   <div className="flex gap-6">
                     {[1, 2, 3].map(i => {
@@ -2284,14 +2347,15 @@ function EditItemModal({ item, onClose, onSave }: {
   );
 }
 
-function MockupStudio({ garment, deck, onBack, onSave }: {
+function MockupStudio({ garment, deck, deckItem, onBack, onSave }: {
   garment: Garment,
   deck: Deck | null,
+  deckItem?: DeckItem | null,
   onBack: () => void,
   onSave: (img: string, isVariation?: boolean) => void
 }) {
   const [activeGarmentImage, setActiveGarmentImage] = useState<string>(
-    garment.images && garment.images.length > 0 ? garment.images[0] : garment.image
+    deckItem ? deckItem.mock_image : (garment.images && garment.images.length > 0 ? garment.images[0] : garment.image)
   );
   const [logo, setLogo] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -2584,18 +2648,31 @@ function MockupStudio({ garment, deck, onBack, onSave }: {
           </div>
 
           <div className="space-y-8">
-            {garment.images && garment.images.length > 1 && (
+            {(garment.images && garment.images.length > 1) || (deckItem?.variations && deckItem.variations.length > 0) ? (
               <section>
-                <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Garment Photo</h3>
+                <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Base Model/Color</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-                  {garment.images.map((img, i) => (
-                    <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
-                      <img src={img} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
-                    </button>
-                  ))}
+                  {deckItem ? (
+                    <>
+                      <button onClick={() => { setActiveGarmentImage(deckItem.mock_image); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === deckItem.mock_image ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
+                        <img src={deckItem.mock_image} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
+                      </button>
+                      {deckItem.variations?.map((img, i) => (
+                        <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
+                          <img src={img} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    garment.images?.map((img, i) => (
+                      <button key={i} onClick={() => { setActiveGarmentImage(img); setResultImage(''); }} className={`flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${activeGarmentImage === img ? 'border-zinc-900 dark:border-zinc-50 border-2' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'}`}>
+                        <img src={img} className="w-full h-full object-cover bg-zinc-50 dark:bg-zinc-900 dark:bg-zinc-50" />
+                      </button>
+                    ))
+                  )}
                 </div>
               </section>
-            )}
+            ) : null}
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
