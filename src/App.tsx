@@ -3274,25 +3274,30 @@ function ImageMagnifier({ src }: { src: string }) {
         onMouseMove={handleMouseMove}
       />
       {showMagnifier && (
-        <div
-          className="absolute pointer-events-none rounded-full shadow-2xl border-[3px] border-white/40 dark:border-zinc-800/80 z-50 overflow-hidden bg-white dark:bg-zinc-950 backdrop-blur-md"
-          style={{
-            width: '200px',
-            height: '200px',
-            top: `${cursorPosition.y - 100}px`,
-            left: `${cursorPosition.x - 100}px`,
-          }}
-        >
+        <>
           <div
-            className="w-full h-full"
+            className="fixed top-24 bottom-16 right-16 w-[45vw] max-w-3xl rounded-[2rem] shadow-2xl border-4 border-white dark:border-zinc-800 z-50 overflow-hidden bg-white dark:bg-zinc-950 pointer-events-none hidden md:block animate-in fade-in zoom-in-95 duration-200"
+          >
+            <div
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url(${src})`,
+                backgroundPosition: `${position.x}% ${position.y}%`,
+                backgroundSize: '250%',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          </div>
+          <div
+            className="absolute pointer-events-none border-2 border-zinc-400/50 bg-white/10 dark:bg-black/10 mix-blend-difference"
             style={{
-              backgroundImage: `url(${src})`,
-              backgroundPosition: `${position.x}% ${position.y}%`,
-              backgroundSize: '250%',
-              backgroundRepeat: 'no-repeat'
+              width: '80px',
+              height: '80px',
+              top: `${cursorPosition.y - 40}px`,
+              left: `${cursorPosition.x - 40}px`,
             }}
           />
-        </div>
+        </>
       )}
     </div>
   );
