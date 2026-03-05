@@ -688,6 +688,7 @@ export default function App() {
         {view === 'deck-view' && currentDeck && (
           <DeckPresentationView
             deck={currentDeck}
+            customer={customers.find(c => c.id === currentDeck.customer_id) || null}
             showPricing={showPricing}
             setShowPricing={setShowPricing}
             onBack={() => setView('customers')}
@@ -1719,8 +1720,9 @@ function EditCustomerModal({ customer, onClose, onSave }: {
   );
 }
 
-function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing }: {
+function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing }: {
   deck: Deck,
+  customer: Customer | null,
   onBack: () => void,
   onGarmentClick: (g: Garment, item: DeckItem) => void,
   onPresent: () => void,
@@ -2207,6 +2209,7 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
         {editingItem && (
           <EditItemModal
             item={editingItem}
+            customer={customer}
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
           />
@@ -2239,8 +2242,9 @@ function DeckPresentationView({ deck, onBack, onGarmentClick, onPresent, onRemov
   );
 }
 
-function EditItemModal({ item, onClose, onSave }: {
+function EditItemModal({ item, customer, onClose, onSave }: {
   item: DeckItem,
+  customer?: Customer | null,
   onClose: () => void,
   onSave: (details: any) => void
 }) {
@@ -2250,6 +2254,25 @@ function EditItemModal({ item, onClose, onSave }: {
   const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(item.variations || []);
+  const [isGeneratingColors, setIsGeneratingColors] = useState(false);
+
+  const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
+
+  const handleGenerateVariations = async () => {
+    if (brandColors.length === 0) return;
+    setIsGeneratingColors(true);
+    try {
+      const generated = await Promise.all(
+        brandColors.map(color => generateColorVariation(mockImage, color))
+      );
+      setVariations(prev => [...prev, ...generated]);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate some or all variations.');
+    } finally {
+      setIsGeneratingColors(false);
+    }
+  };
 
   const handleImageReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2323,8 +2346,21 @@ function EditItemModal({ item, onClose, onSave }: {
                 </label>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Variations (Colors/Mockups)</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Variations (Colors/Mockups)</p>
+                  {brandColors.length > 0 && (
+                    <button
+                      onClick={handleGenerateVariations}
+                      disabled={isGeneratingColors}
+                      className="text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-50 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+                      title="Generates a variation for each brand color automatically."
+                    >
+                      {isGeneratingColors ? <div className="w-3 h-3 border-2 border-zinc-500 border-t-zinc-900 dark:border-zinc-400 dark:border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+                      Auto-Bake Brand Colors
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {variations.map((v, i) => (
                     <div key={i} className="w-16 h-16 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden relative group">
