@@ -3373,35 +3373,35 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-white z-[100] flex flex-col"
+      className="fixed inset-0 bg-white z-[100] flex flex-col h-[100dvh]"
     >
-      <div className="flex items-center justify-between p-4 md:p-8">
-        <div className="flex items-center gap-4">
-          <img src="/wovn-logo.png" alt="WOVN" className="h-6 object-contain" />
+      <div className="flex flex-none items-start md:items-center justify-between p-4 md:p-8 pb-2 md:pb-8 border-b md:border-none border-zinc-100 shrink-0 bg-white z-10 w-full">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1.5 md:gap-4 overflow-hidden">
+          <img src="/wovn-logo.png" alt="WOVN" className="h-5 md:h-6 object-contain" />
           <div className="w-px h-8 bg-zinc-200 hidden md:block" />
-          <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
+          <div className="min-w-0">
+            <p className="text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-zinc-400 truncate">
               Presentation Mode {deck.customer_name ? `• ${deck.customer_name}` : ''}
             </p>
-            <h3 className="font-serif text-xl">{deck.name}</h3>
+            <h3 className="font-serif text-lg md:text-xl truncate">{deck.name}</h3>
           </div>
         </div>
         {!isSharedView && (
           <button
             onClick={onClose}
-            className="p-4 hover:bg-zinc-50 rounded-full transition-colors"
+            className="p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors shrink-0 ml-2"
           >
-            <X size={24} />
+            <X size={20} className="md:w-6 md:h-6" />
           </button>
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-center relative px-4 md:px-20 overflow-y-auto overflow-x-hidden py-12 md:py-0">
+      <div className="flex-1 flex items-start md:items-center justify-center relative px-2 md:px-20 overflow-y-auto overflow-x-hidden pt-6 pb-32 md:py-0 w-full scrolling-touch">
         <button
           onClick={prev}
-          className="absolute left-2 md:left-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
+          className="fixed md:absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/80 backdrop-blur shadow-md md:shadow-none md:bg-transparent md:backdrop-blur-none"
         >
-          <ArrowLeft size={24} className="md:w-8 md:h-8" />
+          <ArrowLeft size={20} className="md:w-8 md:h-8" />
         </button>
 
         <AnimatePresence mode="wait">
@@ -3410,10 +3410,10 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col md:flex-row items-center gap-8 md:gap-20 max-w-6xl w-full my-8 md:my-0"
+            className="flex flex-col md:flex-row items-center gap-6 md:gap-20 max-w-6xl w-full my-4 md:my-0 px-4 md:px-0"
           >
-            <div className="flex flex-col flex-1 w-full max-w-sm lg:max-w-md mx-auto gap-4">
-              <div className="aspect-[3/4] max-h-[60vh] w-full mx-auto rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white flex items-center justify-center p-6 md:p-12 relative">
+            <div className="flex flex-col flex-1 w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto gap-4">
+              <div className="aspect-[4/5] md:aspect-[3/4] max-h-[50vh] md:max-h-[60vh] w-full mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center p-4 md:p-12 relative border border-zinc-100 md:border-none">
                 <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} />
               </div>
 
@@ -3421,7 +3421,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                 <div className="flex gap-2 lg:gap-3 flex-wrap justify-center">
                   <button
                     onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: currentItem.mock_image }))}
-                    className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[currentItem.id] || activeVariations[currentItem.id] === currentItem.mock_image) ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                    className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[currentItem.id] || activeVariations[currentItem.id] === currentItem.mock_image) ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                   >
                     <img src={currentItem.mock_image} className="w-full h-full object-contain" />
                   </button>
@@ -3429,7 +3429,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                     <button
                       key={idx}
                       onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
-                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                     >
                       <img src={v} className="w-full h-full object-contain" />
                     </button>
@@ -3437,19 +3437,19 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                 </div>
               )}
             </div>
-            <div className="flex-1 space-y-4 md:space-y-8 w-full">
-              <div className="space-y-4">
-                <p className="text-xs uppercase tracking-widest font-bold text-zinc-400 text-center md:text-left">Item {currentIndex + 1} of {items.length}</p>
-                <h2 className="font-serif text-4xl md:text-7xl leading-tight text-center md:text-left">{currentItem.custom_name || currentItem.garment_name}</h2>
-                <p className="text-zinc-500 text-base md:text-xl leading-relaxed text-center md:text-left">
+            <div className="flex-1 space-y-3 md:space-y-8 w-full mt-4 md:mt-0">
+              <div className="space-y-2 md:space-y-4 text-center md:text-left">
+                <p className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-zinc-400">Item {currentIndex + 1} of {items.length}</p>
+                <h2 className="font-serif text-3xl md:text-7xl leading-tight">{currentItem.custom_name || currentItem.garment_name}</h2>
+                <p className="text-zinc-500 text-sm md:text-xl leading-relaxed">
                   {currentItem.custom_description || currentItem.garment_description}
                 </p>
               </div>
-              <div className="pt-8 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                {showPricing ? <p className="text-3xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
-                <div className="flex flex-wrap justify-center md:justify-start gap-2 max-w-full">
+              <div className="pt-6 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+                {showPricing ? <p className="text-2xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
+                <div className="flex flex-wrap justify-center md:justify-start gap-1.5 md:gap-2 max-w-full">
                   {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                    <span key={size} className="w-10 h-10 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
+                    <span key={size} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
                       {size}
                     </span>
                   ))}
@@ -3461,17 +3461,17 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
 
         <button
           onClick={next}
-          className="absolute right-2 md:right-8 z-10 p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/50 backdrop-blur md:bg-transparent md:backdrop-blur-none"
+          className="fixed md:absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/80 backdrop-blur shadow-md md:shadow-none md:bg-transparent md:backdrop-blur-none"
         >
-          <ChevronRight size={24} className="md:w-8 md:h-8" />
+          <ChevronRight size={20} className="md:w-8 md:h-8" />
         </button>
       </div>
 
-      <div className="p-8 flex justify-center gap-2">
+      <div className="flex-none p-4 md:p-8 flex flex-wrap justify-center gap-1 border-t border-zinc-100 md:border-none bg-white md:bg-transparent items-center shrink-0 w-full sticky bottom-0 z-30">
         {items.map((_, i) => (
           <div
             key={i}
-            className={`h-1 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-12 bg-zinc-900' : 'w-2 bg-zinc-200'}`}
+            className={`h-1 !rounded-full transition-all duration-500 ${i === currentIndex ? 'w-6 md:w-12 bg-zinc-900' : 'w-1.5 md:w-2 bg-zinc-200'}`}
           />
         ))}
       </div>
