@@ -112,13 +112,10 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Use white background for transparent PNGs before converting to JPEG
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
       }
-      // Compress to JPEG to dramatically reduce size
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
+      // Compress to WebP to maintain transparency and reduce size
+      resolve(canvas.toDataURL('image/webp', 0.8));
     };
     img.src = base64Str;
   });
