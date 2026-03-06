@@ -6,6 +6,7 @@ import {
   getFirestore, collection, getDocs, addDoc, doc, getDoc,
   updateDoc, deleteDoc, query, where, writeBatch
 } from "firebase/firestore";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -25,6 +26,7 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
 
 async function seedDatabaseIfEmpty() {
   if (firebaseConfig.projectId === "YOUR_PROJECT_ID") {
@@ -98,6 +100,30 @@ app.use(express.json({ limit: "50mb" }));
 // seedDatabaseIfEmpty().catch(console.warn);
 
 // API Routes
+app.post("/api/upload", async (req, res) => {
+  try {
+    const { image, folder = "uploads" } = req.body;
+    if (!image || !image.startsWith("data:image/")) {
+      return res.status(400).json({ error: "Invalid image data" });
+    }
+
+    const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: "Invalid base64 string" });
+
+    const ext = match[1].split('/')[1] || 'png';
+    const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const storageRef = ref(storage, fileName);
+
+    await uploadString(storageRef, image, 'data_url');
+    const url = await getDownloadURL(storageRef);
+
+    res.json({ url });
+  } catch (error: any) {
+    console.error("Backend upload error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/garments", async (req, res) => {
   try {
     const { category, gender, type } = req.query;
