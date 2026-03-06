@@ -6,7 +6,7 @@ import {
   getFirestore, collection, getDocs, addDoc, doc, getDoc,
   updateDoc, deleteDoc, query, where, writeBatch
 } from "firebase/firestore";
-import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -114,7 +114,8 @@ app.post("/api/upload", async (req, res) => {
     const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
     const storageRef = ref(storage, fileName);
 
-    await uploadString(storageRef, image, 'data_url');
+    const buffer = Buffer.from(match[2], 'base64');
+    await uploadBytes(storageRef, buffer, { contentType: `image/${ext}` });
     const url = await getDownloadURL(storageRef);
 
     res.json({ url });
