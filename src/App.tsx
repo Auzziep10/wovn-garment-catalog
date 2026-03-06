@@ -507,8 +507,8 @@ export default function App() {
               </div>
             </div>
 
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <h1 className="font-serif text-2xl tracking-widest uppercase">WOVN</h1>
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+              <img src="/wovn-logo.png" alt="WOVN" className="h-6 object-contain dark:invert" />
             </div>
 
             <div className="flex items-center gap-4">
@@ -3336,6 +3336,8 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
     >
       <div className="flex items-center justify-between p-4 md:p-8">
         <div className="flex items-center gap-4">
+          <img src="/wovn-logo.png" alt="WOVN" className="h-6 object-contain dark:invert" />
+          <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
           <div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">
               Presentation Mode {deck.customer_name ? `• ${deck.customer_name}` : ''}
