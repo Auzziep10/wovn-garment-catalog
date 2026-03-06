@@ -2781,7 +2781,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
           <div className="space-y-8">
             {(garment.images && garment.images.length > 1) || (deckItem?.variations && deckItem.variations.length > 0) ? (
               <section>
-                <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Base Model/Color</h3>
+                <h3 className="text-xs uppercase tracking-widest font-bold mb-4">Select Variation Starting Point</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
                   {deckItem ? (
                     <>
