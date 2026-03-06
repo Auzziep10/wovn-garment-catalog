@@ -3336,9 +3336,6 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
     >
       <div className="flex items-center justify-between p-4 md:p-8">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-zinc-900 dark:bg-zinc-50 rounded-full flex items-center justify-center text-white font-serif">
-            W
-          </div>
           <div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">
               Presentation Mode {deck.customer_name ? `• ${deck.customer_name}` : ''}
