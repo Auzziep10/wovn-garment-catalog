@@ -1910,7 +1910,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             <button
               onClick={async () => {
                 try {
-                  const url = `${window.location.origin}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
+                  // @ts-ignore
+                  const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                  const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
                   const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
 
                   if (!response.ok) throw new Error('Shortening failed');
@@ -1920,7 +1922,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   alert('Anonymous share link copied to clipboard!');
                 } catch (err) {
                   // Fallback if the shortener API fails
-                  const url = `${window.location.origin}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
+                  // @ts-ignore
+                  const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                  const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
                   navigator.clipboard.writeText(url).then(() => {
                     alert('Share link copied to clipboard! (Fallback original URL)');
                   }).catch(() => {
