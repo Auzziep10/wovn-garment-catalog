@@ -2563,7 +2563,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   };
 
   const getCompositeImage = async (): Promise<string | null> => {
-    if (!logo) return null;
+    if (!logo) return activeGarmentImage;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -2635,10 +2635,6 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   };
 
   const handleGenerate = async () => {
-    if (!logo) {
-      alert('Please upload a customer logo first');
-      return;
-    }
     setIsGenerating(true);
 
     try {
@@ -2646,10 +2642,13 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
       if (!compositeImage) throw new Error("Could not generate composite image");
 
       let prompt = customPrompt;
+      if (!logo && prompt.includes('Perfectly preserve the text in the logo')) {
+        prompt = prompt.replace('CRITICAL: Perfectly preserve the text in the logo so it is flawless, sharp, and easy to read. Place the logo realistically, matching the angles and lighting of the fabric.', 'Create a highly realistic garment mockup.');
+      }
       if (garmentColor !== 'Original (No Change)') {
         prompt += ` Change the garment fabric color to ${garmentColor}, preserving all lighting and textures.`;
       }
-      if (logoColor !== 'Original (No Change)') {
+      if (logoColor !== 'Original (No Change)' && logo) {
         prompt += ` Make the logo completely ${logoColor}.`;
       }
 
@@ -2982,7 +2981,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !logo}
+                  disabled={isGenerating}
                   className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Re-bake Mockup' : 'Bake Mockup')}
