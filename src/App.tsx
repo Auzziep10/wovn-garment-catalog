@@ -99,7 +99,23 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('wovn-auth') === 'true';
+      const authData = localStorage.getItem('wovn-auth');
+      if (authData) {
+        try {
+          const { timestamp } = JSON.parse(authData);
+          if (Date.now() - timestamp < 4 * 60 * 60 * 1000) {
+            return true;
+          } else {
+            localStorage.removeItem('wovn-auth');
+          }
+        } catch (e) {
+          // Fallback if old 'true' string is still in storage
+          if (authData === 'true') {
+            localStorage.setItem('wovn-auth', JSON.stringify({ timestamp: Date.now() }));
+            return true;
+          }
+        }
+      }
     }
     return false;
   });
@@ -482,7 +498,7 @@ export default function App() {
             const correctPass = import.meta.env.VITE_APP_PASSWORD || 'wovn2026';
             if (passwordInput === correctPass) {
               setIsAuthenticated(true);
-              localStorage.setItem('wovn-auth', 'true');
+              localStorage.setItem('wovn-auth', JSON.stringify({ timestamp: Date.now() }));
             } else {
               alert('Incorrect passcode');
             }
