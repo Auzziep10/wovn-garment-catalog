@@ -2489,7 +2489,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   const [logo, setLogo] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
-  const [customPrompt, setCustomPrompt] = useState('Place the logo realistically. Wrap it securely along the sleeve, hat curve, or fabric folds matching the angles as needed.');
+  const [customPrompt, setCustomPrompt] = useState('CRITICAL: Perfectly preserve the text in the logo so it is flawless, sharp, and easy to read. Place the logo realistically, matching the angles and lighting of the fabric.');
   const [garmentColor, setGarmentColor] = useState('Original (No Change)');
   const [logoColor, setLogoColor] = useState('Original (No Change)');
   const [garmentView, setGarmentView] = useState('Front View (Default)');
