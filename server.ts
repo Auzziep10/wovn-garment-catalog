@@ -115,7 +115,9 @@ app.post("/api/upload", async (req, res) => {
     const storageRef = ref(storage, fileName);
 
     const buffer = Buffer.from(match[2], 'base64');
-    const bucket = process.env.VITE_FIREBASE_STORAGE_BUCKET || "wovn-catalog.firebasestorage.app";
+
+    // Hardcode the correct bucket since Vercel env variable might still be holding the old invalid appspot.com name
+    const bucket = "wovn-catalog.firebasestorage.app";
     const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(fileName)}`;
 
     const fireRestRes = await fetch(uploadUrl, {
