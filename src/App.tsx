@@ -493,9 +493,9 @@ export default function App() {
           <p className="text-zinc-500 text-sm mb-8 leading-relaxed">Enter the team passcode to access the catalog dashboard.</p>
           <form onSubmit={(e) => {
             e.preventDefault();
-            // Defaulting to "wovn2026" for easy testing, override in Vercel if wanted.
+            // Defaulting to "Wovn1!" for easy testing, override in Vercel if wanted.
             // @ts-ignore
-            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'wovn2026';
+            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'Wovn1!';
             if (passwordInput === correctPass) {
               setIsAuthenticated(true);
               localStorage.setItem('wovn-auth', JSON.stringify({ timestamp: Date.now() }));
