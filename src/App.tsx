@@ -90,42 +90,10 @@ type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 
 const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
   if (!base64Str.startsWith('data:image/')) return base64Str;
 
-  let finalImageStr = base64Str;
-
-  // If it's a huge base64 string, compress it locally as a fallback
-  if (base64Str.length > 500000) {
-    finalImageStr = await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
-
-        const maxDim = 1200;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = (height / width) * maxDim;
-            width = maxDim;
-          } else {
-            width = (width / height) * maxDim;
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-        }
-        resolve(canvas.toDataURL('image/webp', 0.8));
-      };
-      img.src = base64Str;
-    });
-  }
-
-  // Attempt to upload to Firebase Storage to bypass 1MB Firestore limit, getting a URL back.
-  // If Firebase Storage is not configured or fails, it gracefully falls back to the compressed base64.
-  return await uploadImageToStorage(finalImageStr, 'mockups');
+  // Now that Firebase Storage proxying is working reliably, we no longer need to destructively 
+  // downscale the image on the client side before uploading. We simply pipe the raw 
+  // full-resolution image straight to the backend for storage.
+  return await uploadImageToStorage(base64Str, 'mockups');
 };
 
 export default function App() {
