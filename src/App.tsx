@@ -97,6 +97,14 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
 };
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('wovn-auth') === 'true';
+    }
+    return false;
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+
   const [view, setView] = useState<View>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -459,6 +467,45 @@ export default function App() {
       }
     }
   };
+
+  if (!isAuthenticated && view !== 'shared-presentation') {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
+        <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl w-full max-w-sm text-center">
+          <img src="/wovn-logo.png" alt="WOVN" className="h-6 mx-auto mb-8 object-contain" />
+          <h2 className="font-serif text-2xl mb-2">Team Access</h2>
+          <p className="text-zinc-500 text-sm mb-8 leading-relaxed">Enter the team passcode to access the catalog dashboard.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            // Defaulting to "wovn2025" for easy testing, override in Vercel if wanted.
+            // @ts-ignore
+            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'wovn2025';
+            if (passwordInput === correctPass) {
+              setIsAuthenticated(true);
+              localStorage.setItem('wovn-auth', 'true');
+            } else {
+              alert('Incorrect passcode');
+            }
+          }}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Passcode"
+              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-center mb-4 focus:ring-2 ring-zinc-900 outline-none transition-all tracking-widest text-lg"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="w-full bg-zinc-900 text-white py-4 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+            >
+              Enter
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
