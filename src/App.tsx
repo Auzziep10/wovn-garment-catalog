@@ -445,7 +445,8 @@ export default function App() {
         body: JSON.stringify({
           garment_id: garment.id,
           mock_image: customImage || garment.image,
-          order_index: currentDeck?.items?.length || 0
+          order_index: currentDeck?.items?.length || 0,
+          variations: garment.images || []
         })
       });
 

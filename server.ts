@@ -381,12 +381,13 @@ app.get("/api/decks/:id", async (req, res) => {
 
 app.post("/api/decks/:id/items", async (req, res) => {
   try {
-    const { garment_id, mock_image, order_index } = req.body;
+    const { garment_id, mock_image, order_index, variations } = req.body;
     const itemData = {
       deck_id: req.params.id,
       garment_id,
       mock_image,
       order_index: order_index || 0,
+      variations: variations || [],
       created_at: new Date().toISOString()
     };
     const docRef = await addDoc(collection(db, "deck_items"), itemData);
