@@ -6,6 +6,7 @@ import {
   getFirestore, collection, getDocs, addDoc, doc, getDoc,
   updateDoc, deleteDoc, query, where, writeBatch
 } from "firebase/firestore";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -25,6 +26,25 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
+
+async function uploadBase64ToStorage(base64Str: string, folder: string = "uploads"): Promise<string> {
+  if (!firebaseConfig.storageBucket || firebaseConfig.storageBucket === "YOUR_STORAGE_BUCKET") return base64Str;
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith("data:image/")) return base64Str;
+
+  try {
+    const match = base64Str.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) return base64Str;
+    const ext = match[1].split('/')[1] || 'png';
+    const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const storageRef = ref(storage, fileName);
+    await uploadString(storageRef, base64Str, 'data_url');
+    return await getDownloadURL(storageRef);
+  } catch (error) {
+    console.error("Error uploading to Firebase Storage:", error);
+    return base64Str;
+  }
+}
 
 async function seedDatabaseIfEmpty() {
   if (firebaseConfig.projectId === "YOUR_PROJECT_ID") {
@@ -123,7 +143,12 @@ app.post("/api/garments", async (req, res) => {
   try {
     const data = req.body;
     data.created_at = new Date().toISOString();
-    if (!data.images && data.image) {
+    if (data.image) {
+      data.image = await uploadBase64ToStorage(data.image, "garments");
+    }
+    if (data.images && Array.isArray(data.images)) {
+      data.images = await Promise.all(data.images.map((img: string) => uploadBase64ToStorage(img, "garments")));
+    } else if (data.image) {
       data.images = [data.image];
     } else if (!data.images) {
       data.images = [];
@@ -138,6 +163,12 @@ app.post("/api/garments", async (req, res) => {
 app.put("/api/garments/:id", async (req, res) => {
   try {
     const updates = { ...req.body };
+    if (updates.image) {
+      updates.image = await uploadBase64ToStorage(updates.image, "garments");
+    }
+    if (updates.images && Array.isArray(updates.images)) {
+      updates.images = await Promise.all(updates.images.map((img: string) => uploadBase64ToStorage(img, "garments")));
+    }
     const docRef = doc(db, "garments", req.params.id);
     await updateDoc(docRef, updates);
     res.json({ status: "ok" });
@@ -222,7 +253,10 @@ app.get("/api/customers/:id/assets", async (req, res) => {
 
 app.post("/api/customers/:id/assets", async (req, res) => {
   try {
-    const { image } = req.body;
+    let { image } = req.body;
+    if (image) {
+      image = await uploadBase64ToStorage(image, `customers/${req.params.id}`);
+    }
     const data = { customer_id: req.params.id, image, created_at: new Date().toISOString() };
     const docRef = await addDoc(collection(db, "customer_assets"), data);
     res.json({ id: docRef.id, ...data });
@@ -334,7 +368,10 @@ app.get("/api/decks/:id", async (req, res) => {
 
 app.post("/api/decks/:id/items", async (req, res) => {
   try {
-    const { garment_id, mock_image, order_index } = req.body;
+    let { garment_id, mock_image, order_index } = req.body;
+    if (mock_image) {
+      mock_image = await uploadBase64ToStorage(mock_image, `decks/${req.params.id}`);
+    }
     const itemData = {
       deck_id: req.params.id,
       garment_id,
@@ -369,11 +406,18 @@ app.put("/api/decks/:id/reorder", async (req, res) => {
 app.put("/api/deck-items/:id", async (req, res) => {
   try {
     const updates = { ...req.body };
+    if (updates.mock_image) {
+      updates.mock_image = await uploadBase64ToStorage(updates.mock_image, `deck-items`);
+    }
+    if (updates.variations && Array.isArray(updates.variations)) {
+      updates.variations = await Promise.all(updates.variations.map((img: string) => uploadBase64ToStorage(img, `deck-items`)));
+    }
     const docRef = doc(db, "deck_items", req.params.id);
     await updateDoc(docRef, updates);
     res.json({ status: "ok" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update deck item" });
+  } catch (error: any) {
+    console.error("Error updating deck item:", error);
+    res.status(500).json({ error: "Failed to update deck item", details: error.message });
   }
 });
 

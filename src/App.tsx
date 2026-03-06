@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info, GripHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment } from './services/geminiService';
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -88,8 +88,8 @@ export interface DeckItem {
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
 
 const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
-  // If it's already under ~800KB (base64 length < 1M), return as-is
-  if (base64Str.length < 1000000) return base64Str;
+  // If it's a remote URL or a base64 string under ~2MB, return as-is
+  if (!base64Str.startsWith('data:image/') || base64Str.length < 2800000) return base64Str;
 
   return new Promise((resolve) => {
     const img = new Image();
@@ -97,7 +97,7 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
       const canvas = document.createElement('canvas');
       let { width, height } = img;
 
-      const maxDim = 1024;
+      const maxDim = 2000;
       if (width > maxDim || height > maxDim) {
         if (width > height) {
           height = (height / width) * maxDim;
@@ -114,8 +114,8 @@ const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
       if (ctx) {
         ctx.drawImage(img, 0, 0, width, height);
       }
-      // Compress to WebP to maintain transparency and reduce size
-      resolve(canvas.toDataURL('image/webp', 0.8));
+      // Compress to WebP to maintain transparency and reduce size while keeping high quality
+      resolve(canvas.toDataURL('image/webp', 0.9));
     };
     img.src = base64Str;
   });
@@ -2490,6 +2490,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   const [garmentColor, setGarmentColor] = useState('Original (No Change)');
   const [logoColor, setLogoColor] = useState('Original (No Change)');
   const [garmentView, setGarmentView] = useState('Front View (Default)');
+  const [isRotating, setIsRotating] = useState(false);
   const [logoScale, setLogoScale] = useState(1);
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
@@ -2588,6 +2589,21 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
     return canvas.toDataURL('image/png');
   };
 
+  const handleRotateGarment = async () => {
+    if (garmentView === 'Front View (Default)') return;
+    setIsRotating(true);
+    try {
+      const newGarment = await generateRotatedGarment(activeGarmentImage, garmentView);
+      setActiveGarmentImage(newGarment);
+      setResultImage(''); // Reset any existing mockup
+    } catch (err) {
+      console.error(err);
+      alert('Failed to rotate garment. Please try again.');
+    } finally {
+      setIsRotating(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!logo) {
       alert('Please upload a customer logo first');
@@ -2607,12 +2623,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
         prompt += ` Make the logo completely ${logoColor}.`;
       }
 
-      if (garmentView !== 'Front View (Default)') {
-        prompt += ` Rotate the garment to specifically display the ${garmentView.toLowerCase()} angle.`;
-      }
-
-      const isRotationRequested = garmentView !== 'Front View (Default)';
-      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt, isRotationRequested);
+      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt, false);
       setResultImage(mockup);
     } catch (err) {
       console.error(err);
@@ -2713,11 +2724,11 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               </motion.div>
             )}
 
-            {isGenerating && (
+            {(isGenerating || isRotating) && (
               <div className="absolute inset-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center z-50">
                 <div className="w-16 h-16 border-4 border-zinc-900 dark:border-zinc-50 border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="font-serif text-2xl mb-2">Creating Realistic Mockup</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 text-sm">Our AI is meticulously placing the logo and adjusting lighting for a perfect result...</p>
+                <h3 className="font-serif text-2xl mb-2">{isRotating ? 'Rotating Garment' : 'Creating Realistic Mockup'}</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm">{isRotating ? 'Our AI is generating a professional view from the requested perspective...' : 'Our AI is meticulously placing the logo and adjusting lighting for a perfect result...'}</p>
               </div>
             )}
           </div>
@@ -2910,10 +2921,10 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               </div>
 
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
-                4. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective to showcase sides or rear placements." />
+                4. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective before placing the logo." />
               </h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 space-y-2">
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-1 space-y-2 w-full">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 dark:text-zinc-500">Rotation / Perspective</label>
                   <select
                     value={garmentView}
@@ -2927,6 +2938,13 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                     ))}
                   </select>
                 </div>
+                <button
+                  onClick={handleRotateGarment}
+                  disabled={isRotating || garmentView === 'Front View (Default)'}
+                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap h-[52px] w-full sm:w-auto"
+                >
+                  <RotateCw size={16} /> {isRotating ? 'Rotating...' : 'Rotate Garment'}
+                </button>
               </div>
             </section>
 

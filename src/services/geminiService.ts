@@ -172,6 +172,59 @@ CRITICAL CONSTRAINTS:
   throw new Error("Failed to generate model scene image");
 }
 
+export async function generateRotatedGarment(baseImage: string, viewAngle: string) {
+  const model = "gemini-2.5-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/png";
+
+  if (baseImage.startsWith('http')) {
+    const result = await toBase64(baseImage);
+    baseImageData = result.data;
+    baseMimeType = result.mimeType;
+  } else {
+    baseImageData = baseImage.split(",")[1] || baseImage;
+    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
+    if (match) baseMimeType = match[1];
+  }
+
+  const modelObj = getGenerativeModel(ai, { model });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Rotate Garment
+CRITICAL CONSTRAINTS:
+1. COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO DISPLAY THE: ${viewAngle}.
+2. DO NOT KEEP IT FACING THE SAME DIRECTION as the original image. We want what this garment would realistically look like photographed from the new requested perspective/side.
+3. Keep the background color/lighting identical to the first image.
+4. Keep the same exact fabric, collar style, sleeve style, proportions, and details.
+5. Do NOT add any logos or graphics. Just the blank garment.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to generate rotated garment image");
+}
+
 export async function generateColorVariation(baseImage: string, colorHex: string) {
   const model = "gemini-2.5-flash-image";
 
