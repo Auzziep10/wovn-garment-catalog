@@ -115,8 +115,26 @@ app.post("/api/upload", async (req, res) => {
     const storageRef = ref(storage, fileName);
 
     const buffer = Buffer.from(match[2], 'base64');
-    await uploadBytes(storageRef, buffer, { contentType: `image/${ext}` });
-    const url = await getDownloadURL(storageRef);
+    const bucket = process.env.VITE_FIREBASE_STORAGE_BUCKET || "wovn-catalog.firebasestorage.app";
+    const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(fileName)}`;
+
+    const fireRestRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": `image/${ext}`,
+        "Content-Length": buffer.length.toString()
+      },
+      body: buffer
+    });
+
+    if (!fireRestRes.ok) {
+      const err = await fireRestRes.text();
+      throw new Error(`Firebase REST upload failed: ${fireRestRes.status} ${err}`);
+    }
+
+    const data = await fireRestRes.json();
+    const token = data.downloadTokens;
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
 
     res.json({ url });
   } catch (error: any) {
