@@ -5,11 +5,19 @@
         ],
         "method": [
             "GET",
+            "HEAD",
+            "DELETE",
             "PUT",
             "POST",
-            "DELETE",
-            "HEAD",
             "OPTIONS"
+        ],
+        "responseHeader": [
+            "Content-Type",
+            "Authorization",
+            "Content-Length",
+            "User-Agent",
+            "x-firebase-storage-version",
+            "x-goog-resumable"
         ],
         "maxAgeSeconds": 3600
     }
