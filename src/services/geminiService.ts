@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAI, getGenerativeModel } from "firebase/ai";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const getEnv = (key: string) => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
@@ -23,6 +24,26 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const ai = getAI(app);
+const storage = getStorage(app);
+
+export async function uploadImageToStorage(base64Str: string, folder: string = "uploads"): Promise<string> {
+  if (!firebaseConfig.storageBucket || firebaseConfig.storageBucket === "YOUR_STORAGE_BUCKET") return base64Str;
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith("data:image/")) return base64Str;
+
+  try {
+    const match = base64Str.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) return base64Str;
+    const ext = match[1].split('/')[1] || 'png';
+    const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const storageRef = ref(storage, fileName);
+    await uploadString(storageRef, base64Str, 'data_url');
+    return await getDownloadURL(storageRef);
+  } catch (error) {
+    console.error("Error uploading to Firebase Storage:", error);
+    // If we fail on frontend, alert so user knows why it may break Firestore later
+    return base64Str;
+  }
+}
 
 async function toBase64(url: string): Promise<{ data: string; mimeType: string }> {
   const response = await fetch(url);

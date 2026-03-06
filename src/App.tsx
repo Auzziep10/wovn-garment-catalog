@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Sun, Moon, Info, GripHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage } from './services/geminiService';
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -88,37 +88,44 @@ export interface DeckItem {
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
 
 const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
-  // If it's a remote URL or a base64 string under ~2MB, return as-is
-  if (!base64Str.startsWith('data:image/') || base64Str.length < 2800000) return base64Str;
+  if (!base64Str.startsWith('data:image/')) return base64Str;
 
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let { width, height } = img;
+  let finalImageStr = base64Str;
 
-      const maxDim = 2000;
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = (height / width) * maxDim;
-          width = maxDim;
-        } else {
-          width = (width / height) * maxDim;
-          height = maxDim;
+  // If it's a huge base64 string, compress it locally as a fallback
+  if (base64Str.length > 500000) {
+    finalImageStr = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = (height / width) * maxDim;
+            width = maxDim;
+          } else {
+            width = (width / height) * maxDim;
+            height = maxDim;
+          }
         }
-      }
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, width, height);
-      }
-      // Compress to WebP to maintain transparency and reduce size while keeping high quality
-      resolve(canvas.toDataURL('image/webp', 0.9));
-    };
-    img.src = base64Str;
-  });
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+        resolve(canvas.toDataURL('image/webp', 0.8));
+      };
+      img.src = base64Str;
+    });
+  }
+
+  // Attempt to upload to Firebase Storage to bypass 1MB Firestore limit, getting a URL back.
+  // If Firebase Storage is not configured or fails, it gracefully falls back to the compressed base64.
+  return await uploadImageToStorage(finalImageStr, 'mockups');
 };
 
 export default function App() {
