@@ -142,6 +142,13 @@ ${prompt}`
         mimeType: logoMimeType,
       }
     });
+
+    // We explicitly tell it the precise layout of the bounding box to prevent the garment 
+    // from shifting when the 3rd image is passed in without layout framing
+    parts[0].text = parts[0].text.replace(
+      '2. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the FIRST image. The garment should be in the exact same position and scale.',
+      '2. EXACT CROPPING & POSITION (CRITICAL): You MUST output an image with the EXACT same framing, dimensions, padding, zoom level, and centered placement as the FIRST image. The garment MUST perfectly overlap the first image pixel-for-pixel in scale and position.'
+    );
   }
 
   // We send both images (and optional logo) and a prompt to the model
