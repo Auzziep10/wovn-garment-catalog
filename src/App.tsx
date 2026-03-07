@@ -2654,7 +2654,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
         prompt += ` Make the logo completely ${logoColor}.`;
       }
 
-      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt, false);
+      const mockup = await generateMockup(activeGarmentImage, compositeImage, prompt, false, logo || null);
       setResultImage(mockup);
     } catch (err) {
       console.error(err);

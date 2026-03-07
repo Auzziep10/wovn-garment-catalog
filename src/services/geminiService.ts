@@ -64,7 +64,7 @@ async function toBase64(url: string): Promise<{ data: string; mimeType: string }
   });
 }
 
-export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string, isRotationRequested: boolean = false) {
+export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string, isRotationRequested: boolean = false, logoBase64: string | null = null) {
   // Nano Banana is the Gemini 2.5 Flash Image model
   const model = "gemini-2.5-flash-image";
 
@@ -95,8 +95,7 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
     // }
   });
 
-  // We send both images and a prompt to the model
-  const result = await modelObj.generateContent([
+  const parts: any[] = [
     {
       text: `TASK: Create a professional product mockup.
           
@@ -105,8 +104,8 @@ ${isRotationRequested ?
           '1. ROTATION REQUESTED: YOU MUST COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO THE REQUESTED ANGLE. DO NOT KEEP IT FACING FORWARD! Disregard the camera angle of the first image. We want what this garment would realistically look like photographed from the new requested perspective/side. \n2. BACKGROUND: Keep the background color/lighting identical to the first image.\n3. LOGO INTEGRATION: Use the second image ONLY to understand what the logo looks like. Disregard its exact 2D coordinates in the second image. Instead, place it realistically on the rotated garment where it would logically sit in 3D space.\n4. 3D WRAPPING: Ensure the logo perfectly contours to the folds and curves of the garment in its newly rotated viewpoint.'
           :
           '1. EXACT PHYSICAL PLACEMENT (CRITICAL): The second image provides the EXACT intended X/Y coordinates, scale, and location of the logo. You MUST place the logo in the exact same position and size. DO NOT move the logo. If it is on the bottom hem, keep it on the bottom hem. If it is large, keep it large.\n2. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the first image. The garment should be in the same position and scale.\n3. BACKGROUND: Keep the background from the first image identical.\n4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment at the provided exact location.'}
-5. TEXT & TYPOGRAPHY PRESERVATION (CRITICAL): You MUST perfectly protect and preserve the exact spelling, typography, and lettering in the logo! Do NOT blur, scramble, or hallucinate the text under any circumstances. Keep it perfectly sharp and completely legible.
-6. FINISH: Follow the fabric's lighting, shadows, and texture realistically.
+5. TEXT & TYPOGRAPHY PRESERVATION (CRITICAL): You MUST perfectly protect and preserve the exact spelling, typography, and lettering in the logo! Do NOT blur, scramble, or hallucinate the text under any circumstances. Keep it perfectly sharp and completely legible.${logoBase64 ? '\n6. The THIRD image provided is the original high-resolution logo artwork. Use it as the absolute source of truth for the exact shapes, text, and spelling to prevent jumbling!' : ''}
+${logoBase64 ? '7' : '6'}. FINISH: Follow the fabric's lighting, shadows, and texture realistically.
 
 USER PLACEMENT & FINISH INSTRUCTIONS:
 ${prompt}`
@@ -123,7 +122,30 @@ ${prompt}`
         mimeType: compositeMimeType,
       }
     }
-  ]);
+  ];
+
+  if (logoBase64) {
+    let logoData = logoBase64;
+    let logoMimeType = "image/png";
+    if (logoBase64.startsWith('http')) {
+      const result = await toBase64(logoBase64);
+      logoData = result.data;
+      logoMimeType = result.mimeType;
+    } else {
+      logoData = logoBase64.split(",")[1] || logoBase64;
+      const match = logoBase64.match(/^data:(image\/[a-z]+);base64,/);
+      if (match) logoMimeType = match[1];
+    }
+    parts.push({
+      inlineData: {
+        data: logoData,
+        mimeType: logoMimeType,
+      }
+    });
+  }
+
+  // We send both images (and optional logo) and a prompt to the model
+  const result = await modelObj.generateContent(parts);
 
   const response = result.response;
   const candidates = response.candidates;
