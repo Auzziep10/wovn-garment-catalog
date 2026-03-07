@@ -136,10 +136,55 @@ ${prompt}`
       const match = logoBase64.match(/^data:(image\/[a-z]+);base64,/);
       if (match) logoMimeType = match[1];
     }
+
+    // To prevent Gemini from altering the output aspect ratio when mixing images of different dimensions, we pad the high-res logo to perfectly match the base garment image's aspect ratio.
+    const paddedLogoBase64 = await new Promise<string>((resolve) => {
+      const baseImg = new Image();
+      baseImg.crossOrigin = "anonymous";
+      baseImg.onload = () => {
+        const targetAspect = baseImg.width / baseImg.height;
+
+        const lgImg = new Image();
+        lgImg.crossOrigin = "anonymous";
+        lgImg.onload = () => {
+          const logoAspect = lgImg.width / lgImg.height;
+          let drawW = lgImg.width;
+          let drawH = lgImg.height;
+          let canvasW = lgImg.width;
+          let canvasH = lgImg.height;
+
+          if (logoAspect > targetAspect) {
+            canvasH = canvasW / targetAspect;
+          } else {
+            canvasW = canvasH * targetAspect;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = canvasW;
+          canvas.height = canvasH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(`data:${logoMimeType};base64,${logoData}`);
+
+          // Center the logo on this properly proportioned transparent canvas
+          const x = (canvasW - drawW) / 2;
+          const y = (canvasH - drawH) / 2;
+          ctx.drawImage(lgImg, x, y);
+
+          resolve(canvas.toDataURL('image/png'));
+        };
+        lgImg.onerror = () => resolve(`data:${logoMimeType};base64,${logoData}`);
+        lgImg.src = `data:${logoMimeType};base64,${logoData}`;
+      };
+      baseImg.onerror = () => resolve(`data:${logoMimeType};base64,${logoData}`);
+      baseImg.src = baseImage;
+    });
+
+    const finalLogoData = paddedLogoBase64.split(",")[1] || paddedLogoBase64;
+
     parts.push({
       inlineData: {
-        data: logoData,
-        mimeType: logoMimeType,
+        data: finalLogoData,
+        mimeType: 'image/png',
       }
     });
 
