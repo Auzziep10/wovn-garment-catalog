@@ -2586,6 +2586,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
 
     // Draw logo
     const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous";
     logoImg.src = logo;
     await new Promise((resolve) => {
       logoImg.onload = resolve;
