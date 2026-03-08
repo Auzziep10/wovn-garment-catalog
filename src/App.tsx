@@ -91,10 +91,44 @@ type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 
 const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
   if (!base64Str.startsWith('data:image/')) return base64Str;
 
-  // Now that Firebase Storage proxying is working reliably, we no longer need to destructively 
-  // downscale the image on the client side before uploading. We simply pipe the raw 
-  // full-resolution image straight to the backend for storage.
-  return await uploadImageToStorage(base64Str, 'mockups');
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      const MAX_SIZE = 1200;
+
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#FFFFFF'; // ensure non-transparent bg for jpeg
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        // Heavily compress on client to stay well under Vercel 4.5mb limit
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        const url = await uploadImageToStorage(compressedBase64, 'mockups');
+        resolve(url);
+      } else {
+        resolve(base64Str);
+      }
+    };
+    img.onerror = () => resolve(base64Str);
+  });
 };
 
 export default function App() {
