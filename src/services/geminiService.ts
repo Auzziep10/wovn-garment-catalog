@@ -126,11 +126,11 @@ export async function generateMockup(baseImage: string, compositeImageBase64: st
           
 CRITICAL CONSTRAINTS:
 ${isRotationRequested ?
-          '1. ROTATION REQUESTED: YOU MUST COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO THE REQUESTED ANGLE. DO NOT KEEP IT FACING FORWARD! Disregard the camera angle of the first image. We want what this garment would realistically look like photographed from the new requested perspective/side. \n2. BACKGROUND: Keep the background EXACTLY identical to the first image. If the first image has a pure white background, it MUST remain pure white (#FFFFFF). DO NOT add colored gradients, studio lighting shadows, or vignette.\n3. LOGO INTEGRATION: Use the second image ONLY to understand what the logo looks like. Disregard its exact 2D coordinates in the second image. Instead, place it realistically on the rotated garment where it would logically sit in 3D space.\n4. 3D WRAPPING: Ensure the logo perfectly contours to the folds and curves of the garment in its newly rotated viewpoint.'
+          '1. ROTATION REQUESTED: YOU MUST COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO THE REQUESTED ANGLE. DO NOT KEEP IT FACING FORWARD! Disregard the camera angle of the first image. We want what this garment would realistically look like photographed from the new requested perspective/side. \n2. ISOLATE ON WHITE (CRITICAL): The garment MUST be completely isolated on a flat, solid, 100% pure white background (#FFFFFF). Absolutely NO shadows on the floor. NO grey gradients. NO studio walls. Erase all background context and replace it entirely with #FFFFFF.\n3. LOGO INTEGRATION: Use the second image ONLY to understand what the logo looks like. Disregard its exact 2D coordinates in the second image. Instead, place it realistically on the rotated garment where it would logically sit in 3D space.\n4. 3D WRAPPING: Ensure the logo perfectly contours to the folds and curves of the garment in its newly rotated viewpoint.'
           :
-          '1. EXACT PHYSICAL PLACEMENT (CRITICAL): The SECOND image provides the EXACT intended X/Y coordinates, scale, and location of the logo relative to the garment. You MUST place the logo EXACTLY where it is in the second image. DO NOT move the logo. DO NOT resize or shrink the logo. If it is large and off-centered in the second image, keep it large and off-centered.\n2. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the FIRST image. The garment should be in the exact same position and scale.\n3. BACKGROUND: Keep the background EXACTLY identical to the first image. If the first image has a pure white background, it MUST remain pure white (#FFFFFF). DO NOT add colored gradients, studio lighting shadows, or vignette.\n4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment at the provided exact location.'}
+          '1. EXACT PHYSICAL PLACEMENT (CRITICAL): The SECOND image provides the EXACT intended X/Y coordinates, scale, and location of the logo relative to the garment. You MUST place the logo EXACTLY where it is in the second image. DO NOT move the logo. DO NOT resize or shrink the logo. If it is large and off-centered in the second image, keep it large and off-centered.\n2. NO CROPPING: You MUST preserve the exact same framing, zoom level, and camera angle as the FIRST image. The garment should be in the exact same position and scale.\n3. ISOLATE ON WHITE (CRITICAL): The garment MUST be completely isolated on a flat, solid, 100% pure white background (#FFFFFF). Absolutely NO shadows on the floor. NO grey gradients. NO studio walls. Erase all background context and replace it entirely with #FFFFFF.\n4. 3D WRAPPING & PERSPECTIVE: Do NOT leave the logo perfectly flat. You MUST warp, curve, and distort the logo so that it perfectly wraps around the 3D contours, folds, and cylindrical shapes of the garment at the provided exact location.'}
 5. TEXT & TYPOGRAPHY PRESERVATION (CRITICAL): You MUST perfectly protect and preserve the exact spelling, typography, and lettering in the logo! Do NOT blur, scramble, or hallucinate the text under any circumstances. Keep it perfectly sharp and completely legible.${logoBase64 ? '\n6. The THIRD image provided is the original high-resolution logo artwork. Use it as the absolute source of truth for the exact shapes, text, and spelling to prevent jumbling!' : ''}
-${logoBase64 ? '7' : '6'}. FINISH: Follow the fabric's lighting, shadows, and texture realistically.
+${logoBase64 ? '7' : '6'}. FINISH: Follow the fabric's lighting, shadows, and texture realistically ON THE GARMENT ONLY.
 
 USER PLACEMENT & FINISH INSTRUCTIONS:
 ${prompt}`
@@ -320,7 +320,7 @@ export async function generateRotatedGarment(baseImage: string, viewAngle: strin
 CRITICAL CONSTRAINTS:
 1. COMPLETELY ROTATE THE GARMENT IN 3D SPACE TO DISPLAY THE: ${viewAngle}.
 2. DO NOT KEEP IT FACING THE SAME DIRECTION as the original image. We want what this garment would realistically look like photographed from the new requested perspective/side.
-3. BACKGROUND: Keep the background EXACTLY identical to the first image. If the first image has a pure white background, it MUST remain pure white (#FFFFFF). DO NOT add colored gradients, studio lighting shadows, or vignette.
+3. ISOLATE ON WHITE (CRITICAL): The garment MUST be completely isolated on a flat, solid, 100% pure white background (#FFFFFF). Absolutely NO shadows on the floor. NO grey gradients. NO studio walls. Erase all background context and replace it entirely with #FFFFFF.
 4. Keep the same exact fabric, collar style, sleeve style, proportions, and details.
 5. Do NOT add any logos or graphics. Just the blank garment.`
     },
@@ -374,8 +374,8 @@ export async function generateColorVariation(baseImage: string, colorHex: string
       text: `TASK: Recoloring
 CRITICAL CONSTRAINTS:
 1. ONLY change the color of the garment in the image to exactly match this hex color code: ${colorHex}.
-2. Preserve all lighting, shadows, fabric textures, folds, and details authentically.
-3. BACKGROUND: Keep the background EXACTLY identical to the first image. If the first image has a pure white background, it MUST remain pure white (#FFFFFF). DO NOT add colored gradients, studio lighting shadows, or vignette.
+2. Preserve all lighting, shadows, fabric textures, folds, and details authentically ON THE GARMENT ONLY.
+3. ISOLATE ON WHITE (CRITICAL): The garment MUST be completely isolated on a flat, solid, 100% pure white background (#FFFFFF). Absolutely NO shadows on the floor. NO grey gradients. NO studio walls. Erase all background context and replace it entirely with #FFFFFF.
 4. Do NOT change the framing, zoom, or crop.`
     },
     {
