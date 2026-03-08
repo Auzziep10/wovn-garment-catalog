@@ -301,8 +301,8 @@ app.get("/api/customers/:id/decks", async (req, res) => {
 
 app.post("/api/decks", async (req, res) => {
   try {
-    const { customer_id, name } = req.body;
-    const data = { customer_id, name, created_at: new Date().toISOString() };
+    const { customer_id, name, cover_images } = req.body;
+    const data = { customer_id, name, cover_images: cover_images || [], created_at: new Date().toISOString() };
     const docRef = await addDoc(collection(db, "decks"), data);
     res.json({ id: docRef.id });
   } catch (error) {
@@ -312,9 +312,12 @@ app.post("/api/decks", async (req, res) => {
 
 app.put("/api/decks/:id", async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, cover_images } = req.body;
     const deckRef = doc(db, "decks", req.params.id);
-    await updateDoc(deckRef, { name });
+    const updates: any = {};
+    if (name !== undefined) updates.name = name;
+    if (cover_images !== undefined) updates.cover_images = cover_images;
+    await updateDoc(deckRef, updates);
     res.json({ status: "ok" });
   } catch (error) {
     res.status(500).json({ error: "Failed to update deck" });

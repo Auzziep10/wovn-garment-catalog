@@ -62,6 +62,7 @@ export interface Deck {
   name: string;
   customer_name?: string;
   items?: DeckItem[];
+  cover_images?: string[];
 }
 
 export interface DeckItem {
@@ -396,14 +397,15 @@ export default function App() {
     }
   };
 
-  const handleCreateDeck = async (customerId: number, name: string) => {
+  const handleCreateDeck = async (customerId: number, name: string, rawCoverImages: string[] = []) => {
     if (!name || name.trim() === '') return;
 
     try {
+      const coverImages = await Promise.all(rawCoverImages.map(img => compressImageIfNeeded(img)));
       const res = await fetch('/api/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_id: customerId, name: name.trim() })
+        body: JSON.stringify({ customer_id: customerId, name: name.trim(), cover_images: coverImages })
       });
 
       if (!res.ok) {
@@ -786,7 +788,7 @@ export default function App() {
         {isNewDeckModalOpen && selectedCustomer && (
           <DeckModal
             onClose={() => setIsNewDeckModalOpen(false)}
-            onConfirm={(name) => handleCreateDeck(selectedCustomer.id, name)}
+            onConfirm={(name, coverImages) => handleCreateDeck(selectedCustomer.id, name, coverImages)}
           />
         )}
         {isDeckSelectorOpen && garmentToAddToDeck && (
@@ -1377,16 +1379,17 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
     }
   };
 
-  const handleRenameDeck = async (newName: string) => {
+  const handleRenameDeck = async (newName: string, rawCoverImages: string[] = []) => {
     if (!editingDeck) return;
     try {
+      const coverImages = await Promise.all(rawCoverImages.map(img => compressImageIfNeeded(img)));
       const res = await fetch(`/api/decks/${editingDeck.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName })
+        body: JSON.stringify({ name: newName, cover_images: coverImages })
       });
       if (res.ok) {
-        setDecks(prev => prev.map(d => d.id === editingDeck.id ? { ...d, name: newName } : d));
+        setDecks(prev => prev.map(d => d.id === editingDeck.id ? { ...d, name: newName, cover_images: coverImages } : d));
         setEditingDeck(null);
       } else {
         alert('Failed to rename deck');
@@ -1651,6 +1654,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
         {editingDeck && (
           <DeckModal
             initialName={editingDeck.name}
+            initialCoverImages={editingDeck.cover_images}
             onClose={() => setEditingDeck(null)}
             onConfirm={handleRenameDeck}
           />
@@ -3294,7 +3298,7 @@ function DeckSelectorModal({ decks, garment, onClose, onSelect }: {
   );
 }
 
-function ImageMagnifier({ src }: { src: string }) {
+function ImageMagnifier({ src, isCoverSlide = false }: { src: string, isCoverSlide?: boolean }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -3357,7 +3361,24 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
   useEffect(() => {
     fetch(`/api/decks/${deck.id}`)
       .then(res => res.json())
-      .then(data => setItems(data.items));
+      .then(data => {
+        const fetchedItems = data.items || [];
+        if (data.cover_images && data.cover_images.length > 0) {
+          const coverItem = {
+            id: -999, // fake id
+            deck_id: deck.id,
+            mock_image: data.cover_images[0],
+            variations: data.cover_images.slice(1),
+            custom_name: data.name,
+            custom_description: `Welcome to the presentation for ${data.customer_name || 'this collection'}.`,
+            custom_price: 0,
+            isCoverSlide: true
+          } as any;
+          setItems([coverItem, ...fetchedItems]);
+        } else {
+          setItems(fetchedItems);
+        }
+      });
 
     // Lock scroll
     document.body.style.overflow = 'hidden';
@@ -3415,9 +3436,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             exit={{ opacity: 0, x: -20 }}
             className="flex flex-col md:flex-row items-center gap-6 md:gap-20 max-w-6xl w-full my-4 md:my-0 px-4 md:px-0"
           >
-            <div className="flex flex-col flex-1 w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto gap-4">
-              <div className="aspect-[4/5] md:aspect-[3/4] max-h-[50vh] md:max-h-[60vh] w-full mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center p-4 md:p-12 relative border border-zinc-100 md:border-none">
-                <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} />
+            <div className={`flex flex-col flex-1 ${currentItem.isCoverSlide ? 'w-full mx-auto max-w-[80vw] lg:max-w-[70vw]' : 'w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto'} gap-4`}>
+              <div className={`${currentItem.isCoverSlide ? 'w-auto h-auto max-w-full shrink p-2' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-12 w-full'} max-h-[50vh] md:max-h-[60vh] mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
+                <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} isCoverSlide={currentItem.isCoverSlide} />
               </div>
 
               {currentItem.variations && currentItem.variations.length > 0 && (
@@ -3442,16 +3463,16 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             </div>
             <div className="flex-1 space-y-3 md:space-y-8 w-full mt-4 md:mt-0">
               <div className="space-y-2 md:space-y-4 text-center md:text-left">
-                <p className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-zinc-400">Item {currentIndex + 1} of {items.length}</p>
-                <h2 className="font-serif text-3xl md:text-7xl leading-tight">{currentItem.custom_name || currentItem.garment_name}</h2>
+                <p className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-zinc-400">{currentItem.isCoverSlide ? 'Presentation Cover' : `Item ${currentIndex + (items[0]?.isCoverSlide ? 0 : 1)} of ${items[0]?.isCoverSlide ? items.length - 1 : items.length}`}</p>
+                <h2 className={`font-serif leading-tight ${currentItem.isCoverSlide ? 'text-4xl md:text-6xl' : 'text-3xl md:text-7xl'}`}>{currentItem.custom_name || currentItem.garment_name}</h2>
                 <p className="text-zinc-500 text-sm md:text-xl leading-relaxed">
                   {currentItem.custom_description || currentItem.garment_description}
                 </p>
               </div>
               <div className="pt-6 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-                {showPricing ? <p className="text-2xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
+                {showPricing && !currentItem.isCoverSlide && currentItem.custom_price !== 0 ? <p className="text-2xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
                 <div className="flex flex-wrap justify-center md:justify-start gap-1.5 md:gap-2 max-w-full">
-                  {(currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
+                  {!currentItem.isCoverSlide && (currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map((size: string) => (
                     <span key={size} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
                       {size}
                     </span>
@@ -3482,14 +3503,34 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
   );
 }
 
-function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => void, onConfirm: (name: string) => void, initialName?: string }) {
+function DeckModal({ onClose, onConfirm, initialName = '', initialCoverImages = [] }: { onClose: () => void, onConfirm: (name: string, coverImages: string[]) => void, initialName?: string, initialCoverImages?: string[] }) {
   const [name, setName] = useState(initialName);
+  const [coverImages, setCoverImages] = useState<string[]>(initialCoverImages);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onConfirm(name.trim());
+      onConfirm(name.trim(), coverImages);
     }
+  };
+
+  const handleUploadCover = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files as unknown as File[]).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setCoverImages(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveCover = (index: number) => {
+    setCoverImages(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -3517,7 +3558,7 @@ function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => vo
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6 max-h-[80vh] overflow-y-auto">
           <div>
             <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Deck Name</label>
             <input
@@ -3529,7 +3570,39 @@ function DeckModal({ onClose, onConfirm, initialName = '' }: { onClose: () => vo
             />
           </div>
 
-          <div className="flex gap-3">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 block">Cover Photos</label>
+              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-full text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer">
+                <Upload size={12} /> Upload
+                <input type="file" className="hidden" accept="image/*" multiple onChange={handleUploadCover} />
+              </label>
+            </div>
+            <p className="text-xs text-zinc-500 mb-4">First image will be the primary presentation slide. Others will be shown as slide variants.</p>
+            {coverImages.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {coverImages.map((img, i) => (
+                  <div key={i} className="aspect-square relative rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50 group">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCover(i)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-white/90 shadow-sm rounded-full text-zinc-500 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                    {i === 0 && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/60 backdrop-blur-sm p-1 text-center">
+                        <p className="text-[8px] uppercase tracking-widest font-bold text-white">Primary</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-zinc-100">
             <button
               type="button"
               onClick={onClose}
