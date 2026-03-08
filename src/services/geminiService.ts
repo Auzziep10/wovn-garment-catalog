@@ -30,21 +30,46 @@ export async function uploadImageToStorage(base64Str: string, folder: string = "
   if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith("data:image/")) return base64Str;
 
   try {
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64Str, folder })
+    const match = base64Str.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) return base64Str;
+
+    const ext = match[1].split('/')[1] || 'png';
+    const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+    // Decode base64
+    const binaryString = window.atob(match[2]);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: match[1] });
+
+    // Hardcode the correct bucket
+    const bucket = "wovn-catalog.firebasestorage.app";
+    const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(fileName)}`;
+
+    const fireRestRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": match[1]
+      },
+      body: blob
     });
 
-    if (!response.ok) {
-      throw new Error(`Upload failed with status ${response.status}`);
+    if (!fireRestRes.ok) {
+      const err = await fireRestRes.text();
+      console.error(`Firebase REST upload failed: ${fireRestRes.status} ${err}`);
+      throw new Error(`Firebase REST upload failed`);
     }
 
-    const data = await response.json();
-    return data.url || base64Str;
+    const data = await fireRestRes.json();
+    const token = data.downloadTokens;
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
+
+    return url;
   } catch (error) {
-    console.error("Error uploading to backend:", error);
-    // If we fail on backend API, return default compressed string so it can still try caching
+    console.error("Error uploading directly to Firebase:", error);
     return base64Str;
   }
 }
