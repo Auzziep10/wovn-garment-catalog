@@ -95,6 +95,7 @@ const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Seeding prevents Vercel from duplicating items on concurrent launches, commented out.
 // seedDatabaseIfEmpty().catch(console.warn);
