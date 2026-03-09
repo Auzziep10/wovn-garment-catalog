@@ -3434,10 +3434,10 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col md:flex-row items-center gap-6 md:gap-20 max-w-6xl w-full my-4 md:my-0 px-4 md:px-0"
+            className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-6xl'} w-full my-4 md:my-0 px-4 md:px-0`}
           >
-            <div className={`flex flex-col flex-1 ${currentItem.isCoverSlide ? 'w-full mx-auto max-w-[80vw] lg:max-w-[70vw]' : 'w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto'} gap-4`}>
-              <div className={`${currentItem.isCoverSlide ? 'w-auto h-auto max-w-full shrink p-0 max-h-[70vh] md:max-h-[75vh]' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-12 w-full max-h-[50vh] md:max-h-[60vh]'} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
+            <div className={`flex flex-col ${currentItem.isCoverSlide ? 'flex-[1.5] w-full mx-auto' : 'flex-1 w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto'} gap-4`}>
+              <div className={`${currentItem.isCoverSlide ? 'w-full h-full aspect-[4/3] lg:aspect-[16/10] shrink p-0 max-h-[80vh] md:max-h-[85vh]' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-12 w-full max-h-[50vh] md:max-h-[60vh]'} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
                 <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} isCoverSlide={currentItem.isCoverSlide} />
               </div>
 
