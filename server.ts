@@ -302,8 +302,8 @@ app.get("/api/customers/:id/decks", async (req, res) => {
 
 app.post("/api/decks", async (req, res) => {
   try {
-    const { customer_id, name, cover_images } = req.body;
-    const data = { customer_id, name, cover_images: cover_images || [], created_at: new Date().toISOString() };
+    const { customer_id, name, cover_images, show_pricing } = req.body;
+    const data = { customer_id, name, cover_images: cover_images || [], show_pricing: show_pricing !== undefined ? show_pricing : true, created_at: new Date().toISOString() };
     const docRef = await addDoc(collection(db, "decks"), data);
     res.json({ id: docRef.id });
   } catch (error) {
@@ -313,11 +313,12 @@ app.post("/api/decks", async (req, res) => {
 
 app.put("/api/decks/:id", async (req, res) => {
   try {
-    const { name, cover_images } = req.body;
+    const { name, cover_images, show_pricing } = req.body;
     const deckRef = doc(db, "decks", req.params.id);
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (cover_images !== undefined) updates.cover_images = cover_images;
+    if (show_pricing !== undefined) updates.show_pricing = show_pricing;
     await updateDoc(deckRef, updates);
     res.json({ status: "ok" });
   } catch (error) {

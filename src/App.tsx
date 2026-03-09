@@ -63,6 +63,7 @@ export interface Deck {
   customer_name?: string;
   items?: DeckItem[];
   cover_images?: string[];
+  show_pricing?: boolean;
 }
 
 export interface DeckItem {
@@ -165,6 +166,20 @@ export default function App() {
   const [isGeneratingGlobalColors, setIsGeneratingGlobalColors] = useState(false);
 
   useEffect(() => {
+    if (currentDeck) {
+      const params = new URLSearchParams(window.location.search);
+      const pricingParam = params.get('pricing');
+      if (pricingParam === 'off') {
+        setShowPricing(false);
+      } else if (pricingParam === 'on') {
+        setShowPricing(true);
+      } else {
+        setShowPricing(currentDeck.show_pricing !== false);
+      }
+    }
+  }, [currentDeck?.id, currentDeck?.show_pricing]);
+
+  useEffect(() => {
     fetchGarments();
     fetchCustomers();
 
@@ -179,9 +194,6 @@ export default function App() {
             if (deck && deck.id) {
               setCurrentDeck(deck);
               setView('shared-presentation');
-              if (params.get('pricing') === 'off') {
-                setShowPricing(false);
-              }
             }
           })
           .catch(err => console.error("Could not load shared deck:", err));
@@ -702,7 +714,15 @@ export default function App() {
             deck={currentDeck}
             customer={customers.find(c => c.id === currentDeck.customer_id) || null}
             showPricing={showPricing}
-            setShowPricing={setShowPricing}
+            setShowPricing={(newPricing) => {
+              setShowPricing(newPricing);
+              setCurrentDeck(prev => prev ? { ...prev, show_pricing: newPricing } : null);
+              fetch(`/api/decks/${currentDeck.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ show_pricing: newPricing })
+              }).catch(err => console.error(err));
+            }}
             onBack={() => setView('customers')}
             onGarmentClick={(g, item) => {
               setSelectedGarment(g);
