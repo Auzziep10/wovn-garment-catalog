@@ -3419,7 +3419,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
         )}
       </div>
 
-      <div className="flex-1 flex items-start md:items-center justify-center relative px-2 md:px-20 overflow-y-auto overflow-x-hidden pt-6 pb-32 md:py-0 w-full scrolling-touch">
+      <div className="flex-1 flex items-start justify-center relative px-2 md:px-20 overflow-y-auto overflow-x-hidden pt-6 pb-32 md:py-8 w-full scrolling-touch">
         <button
           onClick={prev}
           className="fixed md:absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/80 backdrop-blur shadow-md md:shadow-none md:bg-transparent md:backdrop-blur-none"
@@ -3433,7 +3433,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-7xl'} w-full my-4 md:my-0 px-4 md:px-0`}
+            className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-7xl'} w-full my-4 md:my-auto px-4 md:px-0`}
           >
             <div className={`flex flex-col ${currentItem.isCoverSlide ? 'flex-[1.5] w-full mx-auto' : 'flex-[1.2] lg:flex-[1.5] w-full max-w-md lg:max-w-2xl xl:max-w-3xl mx-auto'} gap-4`}>
               {(() => {
