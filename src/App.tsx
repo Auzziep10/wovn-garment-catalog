@@ -3436,12 +3436,21 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-7xl'} w-full my-4 md:my-0 px-4 md:px-0`}
           >
             <div className={`flex flex-col ${currentItem.isCoverSlide ? 'flex-[1.5] w-full mx-auto' : 'flex-[1.2] lg:flex-[1.5] w-full max-w-md lg:max-w-2xl xl:max-w-3xl mx-auto'} gap-4`}>
-              <div className={`${currentItem.isCoverSlide ? 'w-full h-full aspect-[4/3] lg:aspect-[16/10] shrink p-0 max-h-[80vh] md:max-h-[85vh]' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-8 w-full max-h-[60vh] md:max-h-[75vh]'} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
-                <ImageMagnifier 
-                  src={activeVariations[currentItem.id] || currentItem.mock_image} 
-                  isCoverSlide={currentItem.isCoverSlide || (activeVariations[currentItem.id] && activeVariations[currentItem.id] !== currentItem.mock_image)} 
-                />
-              </div>
+              {(() => {
+                const isActiveVariant = Boolean(activeVariations[currentItem.id] && activeVariations[currentItem.id] !== currentItem.mock_image);
+                const containerClasses = currentItem.isCoverSlide 
+                  ? 'w-full h-full aspect-[4/3] lg:aspect-[16/10] shrink p-0 max-h-[80vh] md:max-h-[85vh]' 
+                  : `aspect-[4/5] md:aspect-[3/4] ${isActiveVariant ? 'p-0' : 'p-4 md:p-8'} w-full max-h-[60vh] md:max-h-[75vh]`;
+                
+                return (
+                  <div className={`${containerClasses} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
+                    <ImageMagnifier 
+                      src={activeVariations[currentItem.id] || currentItem.mock_image} 
+                      isCoverSlide={currentItem.isCoverSlide || isActiveVariant} 
+                    />
+                  </div>
+                );
+              })()}
 
               {currentItem.variations && currentItem.variations.length > 0 && (
                 <div className="flex gap-2 lg:gap-3 flex-wrap justify-center">
