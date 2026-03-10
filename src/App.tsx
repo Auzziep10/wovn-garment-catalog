@@ -1055,35 +1055,14 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const MAX_SIZE = 800; // Compress image to fit well within limits
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
-          }
-          setImages(prev => [...prev, canvas.toDataURL('image/jpeg', 0.8)]);
-        };
-        img.src = reader.result as string;
+      reader.onloadend = async () => {
+        try {
+          const compressed = await compressImageIfNeeded(reader.result as string);
+          setImages(prev => [...prev, compressed]);
+        } catch (err) {
+          console.error("Failed to upload image", err);
+          alert("Failed to upload image");
+        }
       };
       reader.readAsDataURL(file);
     }
