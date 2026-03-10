@@ -3454,11 +3454,14 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-6xl'} w-full my-4 md:my-0 px-4 md:px-0`}
+            className={`flex flex-col md:flex-row items-center gap-6 md:gap-20 ${currentItem.isCoverSlide ? 'max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw]' : 'max-w-7xl'} w-full my-4 md:my-0 px-4 md:px-0`}
           >
-            <div className={`flex flex-col ${currentItem.isCoverSlide ? 'flex-[1.5] w-full mx-auto' : 'flex-1 w-full max-w-xs md:max-w-sm lg:max-w-md mx-auto'} gap-4`}>
-              <div className={`${currentItem.isCoverSlide ? 'w-full h-full aspect-[4/3] lg:aspect-[16/10] shrink p-0 max-h-[80vh] md:max-h-[85vh]' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-12 w-full max-h-[50vh] md:max-h-[60vh]'} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
-                <ImageMagnifier src={activeVariations[currentItem.id] || currentItem.mock_image} isCoverSlide={currentItem.isCoverSlide} />
+            <div className={`flex flex-col ${currentItem.isCoverSlide ? 'flex-[1.5] w-full mx-auto' : 'flex-[1.2] lg:flex-[1.5] w-full max-w-md lg:max-w-2xl xl:max-w-3xl mx-auto'} gap-4`}>
+              <div className={`${currentItem.isCoverSlide ? 'w-full h-full aspect-[4/3] lg:aspect-[16/10] shrink p-0 max-h-[80vh] md:max-h-[85vh]' : 'aspect-[4/5] md:aspect-[3/4] p-4 md:p-8 w-full max-h-[60vh] md:max-h-[75vh]'} mx-auto rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl bg-white flex items-center justify-center relative border border-zinc-100 md:border-none`}>
+                <ImageMagnifier 
+                  src={activeVariations[currentItem.id] || currentItem.mock_image} 
+                  isCoverSlide={currentItem.isCoverSlide || (activeVariations[currentItem.id] && activeVariations[currentItem.id] !== currentItem.mock_image)} 
+                />
               </div>
 
               {currentItem.variations && currentItem.variations.length > 0 && (
@@ -3473,9 +3476,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                     <button
                       key={idx}
                       onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
-                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-0 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                     >
-                      <img src={v} className="w-full h-full object-contain" />
+                      <img src={v} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
