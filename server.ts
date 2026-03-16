@@ -300,10 +300,9 @@ app.get("/api/customers/:id/decks", async (req, res) => {
   }
 });
 
-import decksVercelHandler from "./api/decks.ts";
-
 app.get("/api/decks", async (req, res) => {
   // Pass to the same handler defined for Vercel so local dev matches prod logic
+  const { default: decksVercelHandler } = await import("./api/decks.ts");
   await decksVercelHandler(req as any, res as any);
 });
 
