@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getFirestore, collection, getDocs, addDoc, doc, getDoc,
   updateDoc, deleteDoc, query, where, writeBatch
@@ -24,7 +24,7 @@ const firebaseConfig = {
   appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || "YOUR_APP_ID"
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
+const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
 
@@ -298,6 +298,13 @@ app.get("/api/customers/:id/decks", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch decks" });
   }
+});
+
+import decksVercelHandler from "./api/decks.ts";
+
+app.get("/api/decks", async (req, res) => {
+  // Pass to the same handler defined for Vercel so local dev matches prod logic
+  await decksVercelHandler(req as any, res as any);
 });
 
 app.post("/api/decks", async (req, res) => {
