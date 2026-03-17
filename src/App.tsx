@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage } from './services/geminiService';
@@ -1916,6 +1916,41 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     }
   };
 
+  const handleDownloadItem = async (e: React.MouseEvent, item: DeckItem) => {
+    e.stopPropagation();
+    const url = activeVariations[item.id] || item.mock_image;
+    const name = item.custom_name || item.garment_name || 'deck-item';
+    try {
+      if (url.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${name.replace(/\\s+/g, '_')}.png`;
+        link.click();
+      } else {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `${name.replace(/\\s+/g, '_')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+      console.error('Failed to download image:', err);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${name.replace(/\\s+/g, '_')}.png`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50/50">
       <AnimatePresence>
@@ -2061,6 +2096,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       >
                         <Trash2 size={20} />
                       </button>
+                      <button
+                        onClick={(e) => handleDownloadItem(e, item)}
+                        className="bg-white/90 backdrop-blur p-4 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors pointer-events-auto"
+                        title="Download as PNG"
+                      >
+                        <Download size={20} />
+                      </button>
 
                       {sortBy === 'default' && (
                         <>
@@ -2189,6 +2231,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         title="Remove from Deck"
                       >
                         <Trash2 size={18} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDownloadItem(e, item)}
+                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                        title="Download as PNG"
+                      >
+                        <Download size={18} />
                       </button>
 
                     </div>
