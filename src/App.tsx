@@ -2202,8 +2202,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
                     className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
-                    <div className="flex flex-wrap justify-center gap-2 pointer-events-auto px-4 w-full">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
+                    <div className="absolute top-1/2 right-4 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
                       <button
                         onClick={() => handleMockupEdit(item)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
