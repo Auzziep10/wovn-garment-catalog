@@ -1040,7 +1040,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                     )}
                     {viewingGarment.cost_price && (
                       <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Internal Cost</span>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Cost</span>
                         <span className="font-serif text-2xl text-zinc-300">${viewingGarment.cost_price.toFixed(2)}</span>
                       </div>
                     )}
@@ -1527,7 +1527,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3 flex items-center gap-2">Pricing Strategy</label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Internal Cost (USD)</label>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
                               <input name="cost_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.cost_price || ""} placeholder="65.00" />
