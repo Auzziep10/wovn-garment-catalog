@@ -400,9 +400,22 @@ app.get("/api/decks/:id", async (req, res) => {
         garment_price: itemData.custom_price || (garmentData ? garmentData.price : 0),
         original_image: garmentData ? garmentData.image : null,
         category: garmentData ? garmentData.category : null,
+        categories: garmentData ? garmentData.categories : null,
         gender: garmentData ? garmentData.gender : null,
         type: garmentData ? garmentData.type : null,
+        types: garmentData ? garmentData.types : null,
         supplier_link: garmentData ? garmentData.supplier_link : null,
+        fabric_details: garmentData ? garmentData.fabric_details : null,
+        fabric_finish: garmentData ? garmentData.fabric_finish : null,
+        fit: garmentData ? garmentData.fit : null,
+        fabric_weight_gsm: garmentData ? garmentData.fabric_weight_gsm : null,
+        decoration_method: garmentData ? garmentData.decoration_method : null,
+        sizes: garmentData ? garmentData.sizes : null,
+        available_colors: garmentData ? garmentData.available_colors : null,
+        wholesale_price: garmentData ? garmentData.wholesale_price : null,
+        msrp: garmentData ? garmentData.msrp : null,
+        moq: garmentData ? garmentData.moq : null,
+        turn_time: garmentData ? garmentData.turn_time : null,
         order_index: itemData.order_index || 0
       };
     }));

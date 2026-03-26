@@ -114,9 +114,22 @@ export interface DeckItem {
   variations?: string[];
   order_index?: number;
   category?: string;
+  categories?: Category[];
   gender?: string;
   type?: string;
+  types?: GarmentType[];
   supplier_link?: string | null;
+  fabric_details?: string | null;
+  fabric_finish?: string | null;
+  fit?: 'Slim' | 'Regular' | 'Loose' | 'Oversize' | '' | null;
+  fabric_weight_gsm?: string | null;
+  decoration_method?: string | null;
+  sizes?: string[] | null;
+  available_colors?: string | null;
+  wholesale_price?: number | null;
+  msrp?: number | null;
+  moq?: number | null;
+  turn_time?: string | null;
 }
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
