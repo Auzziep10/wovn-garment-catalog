@@ -21,9 +21,9 @@ function HoverTooltip({ content }: { content: string }) {
   );
 }
 
-export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear';
+export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear' | 'Swimwear' | 'Elevated Basics';
 export type Gender = 'Male' | 'Female' | 'Accessories';
-export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other';
+export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other' | 'T-Shirt' | 'Hoodie' | 'Polo' | 'Pants' | 'Outerwear' | 'Swim' | 'Quarter Zip';
 
 export interface Garment {
   id: number;
@@ -31,8 +31,10 @@ export interface Garment {
   description: string;
   price: number;
   category: Category;
+  categories?: Category[];
   gender: Gender;
   type: GarmentType;
+  types?: GarmentType[];
   image: string;
   images?: string[];
   supplier_link?: string;
@@ -616,7 +618,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
-                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear'].map((cat) => (
+                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map((cat) => (
                       <button
                         key={cat}
                         onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setView('catalog'); }}
@@ -646,7 +648,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Type</h3>
                   <div className="flex flex-col gap-4">
-                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other'].map((t) => (
+                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map((t) => (
                       <button
                         key={t}
                         onClick={() => { setSelectedType(selectedType === t ? '' : t as GarmentType); setView('catalog'); }}
@@ -923,7 +925,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-serif text-xl mb-1">{garment.name}</h3>
-                <p className="text-zinc-400 text-xs uppercase tracking-widest">{garment.category}</p>
+                <p className="text-zinc-400 text-xs uppercase tracking-widest">{garment.categories?.join(', ') || garment.category}</p>
               </div>
               <p className="font-medium">${garment.price}</p>
             </div>
@@ -975,7 +977,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   </button>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.category} / {viewingGarment.type} / {viewingGarment.gender}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.categories?.join(', ') || viewingGarment.category} / {viewingGarment.types?.join(', ') || viewingGarment.type} / {viewingGarment.gender}</p>
                   <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
                   <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.price}</p>
 
@@ -1021,9 +1023,9 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
   const filteredAndSortedGarments = [...existingGarments]
     .filter(g => {
-      if (filterCategory && g.category !== filterCategory) return false;
+      if (filterCategory && g.category !== filterCategory && !(g.categories && g.categories.includes(filterCategory as any))) return false;
       if (filterGender && g.gender !== filterGender) return false;
-      if (filterType && g.type !== filterType) return false;
+      if (filterType && g.type !== filterType && !(g.types && g.types.includes(filterType as any))) return false;
       return true;
     })
     .sort((a, b) => {
@@ -1095,9 +1097,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       name: formData.get('name'),
       description: formData.get('description'),
       price: parseFloat(formData.get('price') as string),
-      category: formData.get('category'),
+      categories: formData.getAll('categories'),
+      category: formData.getAll('categories')[0] || 'Athleisure',
       gender: formData.get('gender'),
-      type: formData.get('type'),
+      types: formData.getAll('types'),
+      type: formData.getAll('types')[0] || 'Tops',
       supplier_link: formData.get('supplier_link'),
       image: images[0],
       images: images
@@ -1173,6 +1177,8 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <option value="Auto-Industry">Auto-Industry</option>
                 <option value="Golf">Golf</option>
                 <option value="Streetwear">Streetwear</option>
+                <option value="Swimwear">Swimwear</option>
+                <option value="Elevated Basics">Elevated Basics</option>
               </select>
               <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
                 <option value="">All Genders</option>
@@ -1188,6 +1194,13 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <option value="Bags">Bags</option>
                 <option value="Tumblers">Tumblers</option>
                 <option value="Other">Other</option>
+                <option value="T-Shirt">T-Shirt</option>
+                <option value="Hoodie">Hoodie</option>
+                <option value="Polo">Polo</option>
+                <option value="Pants">Pants</option>
+                <option value="Outerwear">Outerwear</option>
+                <option value="Swim">Swim</option>
+                <option value="Quarter Zip">Quarter Zip</option>
               </select>
             </div>
           </div>
@@ -1197,7 +1210,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
                 <div>
                   <p className="font-serif text-sm truncate">{g.name}</p>
-                  <p className="text-[10px] uppercase text-zinc-500">{g.category}</p>
+                  <p className="text-[10px] uppercase text-zinc-500">{g.categories?.join(', ') || g.category}</p>
                 </div>
               </div>
             ))}
@@ -1263,14 +1276,15 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                   <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.price || ""} placeholder="219.00" />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Category</label>
-                  <select name="category" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.category || "Athleisure"}>
-                    <option>Athleisure</option>
-                    <option>Executive</option>
-                    <option>Auto-Industry</option>
-                    <option>Golf</option>
-                    <option>Streetwear</option>
-                  </select>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Categories</label>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
+                      <label key={cat} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
+                        <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="accent-zinc-900 w-4 h-4" />
+                        {cat}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1284,15 +1298,15 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Type</label>
-                  <select name="type" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.type || "Tops"}>
-                    <option>Tops</option>
-                    <option>Bottom</option>
-                    <option>Headwear</option>
-                    <option>Bags</option>
-                    <option>Tumblers</option>
-                    <option>Other</option>
-                  </select>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Types</label>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map(t => (
+                      <label key={t} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
+                        <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="accent-zinc-900 w-4 h-4" />
+                        {t}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 

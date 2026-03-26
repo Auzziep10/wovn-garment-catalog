@@ -167,14 +167,25 @@ app.get("/api/garments", async (req, res) => {
     let garmentsRef = collection(db, "garments");
     let conditions = [];
 
-    if (category) conditions.push(where("category", "==", category));
     if (gender) conditions.push(where("gender", "==", gender));
-    if (type) conditions.push(where("type", "==", type));
 
     const q = conditions.length > 0 ? query(garmentsRef, ...conditions) : garmentsRef;
     const snapshot = await getDocs(q);
 
-    const garments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let garments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+    if (category) {
+      garments = garments.filter((g: any) => 
+        g.category === category || (g.categories && g.categories.includes(category))
+      );
+    }
+
+    if (type) {
+      garments = garments.filter((g: any) => 
+        g.type === type || (g.types && g.types.includes(type))
+      );
+    }
+
     res.json(garments);
   } catch (error) {
     console.error("Error fetching garments from Firebase:", error);
