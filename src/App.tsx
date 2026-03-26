@@ -1440,7 +1440,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div>
-                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Departments</label>
+                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Categories</label>
                                 <div className="flex flex-wrap gap-2">
                                   {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
                                     <label key={cat} className="relative cursor-pointer">
