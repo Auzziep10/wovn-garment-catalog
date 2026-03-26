@@ -1277,11 +1277,13 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Categories</label>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
-                      <label key={cat} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                        <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="accent-zinc-900 w-4 h-4" />
-                        {cat}
+                      <label key={cat} className="relative cursor-pointer">
+                        <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="peer sr-only" />
+                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                          {cat}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -1291,19 +1293,26 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
-                  <select name="gender" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.gender || "Male"}>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Accessories</option>
-                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    {['Male', 'Female', 'Accessories'].map(gen => (
+                      <label key={gen} className="relative cursor-pointer">
+                        <input type="radio" name="gender" value={gen} defaultChecked={editingGarment?.gender === gen || (!editingGarment && gen === 'Male')} className="peer sr-only" />
+                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                          {gen}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Types</label>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map(t => (
-                      <label key={t} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                        <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="accent-zinc-900 w-4 h-4" />
-                        {t}
+                      <label key={t} className="relative cursor-pointer">
+                        <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="peer sr-only" />
+                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                          {t}
+                        </span>
                       </label>
                     ))}
                   </div>
