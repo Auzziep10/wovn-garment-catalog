@@ -1056,6 +1056,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const [images, setImages] = useState<string[]>([]);
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [librarySortBy, setLibrarySortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterGender, setFilterGender] = useState<string>('');
@@ -1091,6 +1092,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const handleCancelEdit = () => {
     setEditingGarment(null);
     setImages([]);
+    setIsModalOpen(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1167,6 +1169,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
         onGarmentAdded();
         fetchExisting();
         handleCancelEdit();
+        setIsModalOpen(false);
       } else {
         const errText = await res.text();
         alert(`Failed to update garment: ${res.status} ${errText}`);
@@ -1184,6 +1187,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
         fetchExisting();
         setImages([]);
         form.reset();
+        setIsModalOpen(false);
       } else {
         const errText = await res.text();
         alert(`Failed to add garment: ${res.status} ${errText}`);
@@ -1193,250 +1197,353 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <div className="flex justify-between items-center mb-8 md:mb-12">
-        <h2 className="editorial-title">{editingGarment ? 'Edit Garment' : 'New Garment'}</h2>
-        {editingGarment && (
-          <button type="button" onClick={handleCancelEdit} className="text-zinc-500 hover:text-zinc-900 transition-colors uppercase text-xs tracking-widest font-bold">
-            Cancel Edit
-          </button>
+      <div className="flex justify-between items-end mb-8 md:mb-12">
+        <div>
+          <h2 className="editorial-title">Garment Library</h2>
+          <p className="text-zinc-500 text-sm mt-2 font-medium">Manage the catalog of base garments and styles.</p>
+        </div>
+        <button 
+          onClick={() => {
+            setEditingGarment(null);
+            setImages([]);
+            setIsModalOpen(true);
+          }}
+          className="bg-zinc-900 text-white px-6 py-3 text-[10px] md:text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors rounded-full flex items-center gap-2 shadow-sm"
+        >
+          <Plus size={16} /> New Garment
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-4 mb-8">
+        <div className="flex flex-wrap gap-3 text-[10px] uppercase font-bold text-zinc-500 w-full md:w-3/4 lg:w-1/2">
+          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[120px]">
+            <option value="">All Categories</option>
+            <option value="Athleisure">Athleisure</option>
+            <option value="Executive">Executive</option>
+            <option value="Auto-Industry">Auto-Industry</option>
+            <option value="Golf">Golf</option>
+            <option value="Streetwear">Streetwear</option>
+            <option value="Swimwear">Swimwear</option>
+            <option value="Elevated Basics">Elevated Basics</option>
+          </select>
+          <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[120px]">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[120px]">
+            <option value="">All Types</option>
+            <option value="Tops">Tops</option>
+            <option value="Bottom">Bottom</option>
+            <option value="Headwear">Headwear</option>
+            <option value="Bags">Bags</option>
+            <option value="Tumblers">Tumblers</option>
+            <option value="Other">Other</option>
+            <option value="T-Shirt">T-Shirt</option>
+            <option value="Hoodie">Hoodie</option>
+            <option value="Polo">Polo</option>
+            <option value="Pants">Pants</option>
+            <option value="Outerwear">Outerwear</option>
+            <option value="Swim">Swim</option>
+            <option value="Quarter Zip">Quarter Zip</option>
+          </select>
+          <select
+            value={librarySortBy}
+            onChange={(e) => setLibrarySortBy(e.target.value as any)}
+            className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 min-w-[120px]"
+          >
+            <option value="default">Sort: Default</option>
+            <option value="category">Sort: Category</option>
+            <option value="gender">Sort: Gender</option>
+            <option value="type">Sort: Type</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+        {filteredAndSortedGarments.map(g => (
+          <div key={g.id} onClick={() => { handleEditClick(g); setIsModalOpen(true); }} className="group cursor-pointer">
+            <div className="aspect-[3/4] bg-white border border-zinc-100 rounded-2xl mb-3 overflow-hidden relative shadow-sm hover:shadow-md transition-all">
+              <img src={g.image} alt={g.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border border-black/5 text-zinc-400 hover:text-zinc-900 shadow-sm">
+                <Edit2 size={14} />
+              </div>
+            </div>
+            <h3 className="font-serif text-sm md:text-md leading-tight mb-1 truncate pr-2" title={g.name}>{g.name}</h3>
+            <p className="text-[9px] uppercase tracking-widest text-zinc-400 font-bold truncate">{g.categories?.join(', ') || g.category}</p>
+          </div>
+        ))}
+
+        {filteredAndSortedGarments.length === 0 && (
+          <div className="col-span-full py-20 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
+            <ImageIcon className="mx-auto text-zinc-200 mb-4" size={48} />
+            <p className="text-zinc-400 font-serif italic mb-4">No garments found matching filters.</p>
+          </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
-        <div className="lg:col-span-1 border-r border-zinc-100 pr-0 lg:pr-8">
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs uppercase tracking-widest font-bold">Existing Library</h3>
-              <select
-                value={librarySortBy}
-                onChange={(e) => setLibrarySortBy(e.target.value as any)}
-                className="bg-transparent border-b border-zinc-200 py-1 text-[10px] uppercase font-bold focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 w-24"
-              >
-                <option value="default">Sort: Default</option>
-                <option value="category">Sort: Category</option>
-                <option value="gender">Sort: Gender</option>
-                <option value="type">Sort: Type</option>
-              </select>
-            </div>
-            <div className="flex gap-2 text-[9px] uppercase font-bold text-zinc-500">
-              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
-                <option value="">All Categories</option>
-                <option value="Athleisure">Athleisure</option>
-                <option value="Executive">Executive</option>
-                <option value="Auto-Industry">Auto-Industry</option>
-                <option value="Golf">Golf</option>
-                <option value="Streetwear">Streetwear</option>
-                <option value="Swimwear">Swimwear</option>
-                <option value="Elevated Basics">Elevated Basics</option>
-              </select>
-              <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
-                <option value="">All Genders</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Accessories">Accessories</option>
-              </select>
-              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer">
-                <option value="">All Types</option>
-                <option value="Tops">Tops</option>
-                <option value="Bottom">Bottom</option>
-                <option value="Headwear">Headwear</option>
-                <option value="Bags">Bags</option>
-                <option value="Tumblers">Tumblers</option>
-                <option value="Other">Other</option>
-                <option value="T-Shirt">T-Shirt</option>
-                <option value="Hoodie">Hoodie</option>
-                <option value="Polo">Polo</option>
-                <option value="Pants">Pants</option>
-                <option value="Outerwear">Outerwear</option>
-                <option value="Swim">Swim</option>
-                <option value="Quarter Zip">Quarter Zip</option>
-              </select>
-            </div>
-          </div>
-          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-            {filteredAndSortedGarments.map(g => (
-              <div key={g.id} onClick={() => handleEditClick(g)} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-colors ${editingGarment?.id === g.id ? 'bg-zinc-100 border border-zinc-200' : 'hover:bg-zinc-50'}`}>
-                <img src={g.image} alt={g.name} className="w-12 h-12 object-cover rounded-md bg-white border border-zinc-200" />
-                <div>
-                  <p className="font-serif text-sm truncate">{g.name}</p>
-                  <p className="text-[10px] uppercase text-zinc-500">{g.categories?.join(', ') || g.category}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 md:p-6 overflow-y-auto pt-safe pb-safe outline-none"
+            onClick={handleCancelEdit}
+          >
+             <motion.div
+               initial={{ scale: 0.98, opacity: 0, y: 15 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               exit={{ scale: 0.98, opacity: 0, y: 15 }}
+               transition={{ type: "spring", stiffness: 350, damping: 30 }}
+               onClick={e => e.stopPropagation()}
+               className="bg-[#fafafa] w-full max-w-6xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] md:max-h-[95vh] outline-none relative"
+             >
+               <div className="flex items-center justify-between px-6 md:px-8 py-4 bg-white rounded-t-2xl border-b border-zinc-100 shrink-0 sticky top-0 z-20">
+                 <h2 className="font-serif text-xl md:text-2xl">{editingGarment ? 'Edit Item Specs' : 'New Garment'}</h2>
+                 <button type="button" onClick={handleCancelEdit} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900">
+                   <X size={20} />
+                 </button>
+               </div>
 
-        <div className="lg:col-span-2">
-          <form key={editingGarment?.id || 'new'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 block">Garment Images</label>
-              <div className="grid grid-cols-2 gap-4">
-                {images.map((img, i) => (
-                  <div key={i} className="aspect-[3/4] bg-white border-2 border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group">
-                    <img src={img} className="w-full h-full object-contain p-2" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(i)}
-                      className="absolute top-2 right-2 bg-white/80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={16} className="text-red-500" />
-                    </button>
-                    {i === 0 ? (
-                      <div className="absolute bottom-2 left-2 bg-zinc-900 text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest z-10 shadow-md">Main</div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSetMainImage(i)}
-                        className="absolute bottom-2 left-2 bg-white border border-zinc-200 text-zinc-900 text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-zinc-50 shadow-md"
-                      >
-                        Set Main
-                      </button>
-                    )}
-                  </div>
-                ))}
+               <form id="garment-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 shrink min-h-0 custom-scrollbar">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+                   
+                   {/* LEFT COLUMN: Imagery */}
+                   <div className="lg:col-span-1 flex flex-col gap-6">
+                      <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-4 block border-b border-zinc-100 pb-3">Item Imagery</label>
+                        <div className="space-y-4">
+                          {images.map((img, i) => (
+                            <div key={i} className={`bg-zinc-50 border-2 ${i === 0 ? 'border-zinc-200' : 'border-zinc-100'} rounded-lg flex flex-col items-center justify-center relative overflow-hidden group ${i === 0 ? 'aspect-[3/4]' : 'aspect-square w-1/2'}`}>
+                              <img src={img} className="w-full h-full object-contain p-2" />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(i)}
+                                className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-black/5"
+                              >
+                                <Trash2 size={14} className="text-red-500" />
+                              </button>
+                              {i === 0 ? (
+                                <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-zinc-900/90 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">
+                                  <ImageIcon size={10} /> Main Mockup
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetMainImage(i)}
+                                  className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm border border-black/10 text-zinc-900 text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-white shadow-sm"
+                                >
+                                  Make Main
+                                </button>
+                              )}
+                            </div>
+                          ))}
 
-                <label className="aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-2xl cursor-pointer hover:bg-zinc-100 transition-colors flex flex-col items-center justify-center p-4">
-                  <Upload className="mx-auto text-zinc-400 mb-2" size={24} />
-                  <span className="text-xs text-zinc-500 font-medium text-center">Add Photo</span>
-                  <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                </label>
-              </div>
-            </div>
+                          <label className="flex items-center justify-center gap-2 w-full py-4 bg-transparent border-2 border-dashed border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 hover:border-zinc-300 transition-colors">
+                            <Upload size={16} className="text-zinc-400" />
+                            <span className="text-xs uppercase tracking-widest font-bold text-zinc-500">Upload Media</span>
+                            <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                          </label>
+                        </div>
+                      </div>
+                   </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Name</label>
-                <input name="name" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
-              </div>
+                   {/* RIGHT COLUMN: Details */}
+                   <div className="lg:col-span-2 space-y-6">
+                      
+                      {/* CARD 1: Core Details */}
+                      <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Core Details</label>
+                        <div className="space-y-5">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Item Name</label>
+                            <input name="name" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.name || ""} placeholder="e.g. Camo Lightweight Puffer" />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Supplier Link</label>
+                              <input name="supplier_link" type="url" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Garment Supplier Fit</label>
+                              <select name="fit" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.fit || "Regular"}>
+                                <option value="Slim">Slim Fit</option>
+                                <option value="Regular">Regular Fit</option>
+                                <option value="Loose">Loose Fit</option>
+                                <option value="Oversize">Oversized</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MOQ</label>
+                              <input name="moq" type="number" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.moq || ""} placeholder="e.g. 50" />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Turn Time</label>
+                              <input name="turn_time" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.turn_time || ""} placeholder="e.g. 4-6 Weeks" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-              <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Supplier Link (Optional)</label>
-                <input name="supplier_link" type="url" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
-              </div>
+                      {/* CARD 2: Fabric & Options */}
+                      <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Fabric & Finish</label>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Details</label>
+                              <textarea name="fabric_details" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.fabric_details || editingGarment?.description || ""} placeholder="e.g. 100% Organic Cotton" />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Finish</label>
+                              <textarea name="fabric_finish" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.fabric_finish || ""} placeholder="e.g. Enzyme wash" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Weight (GSM)</label>
+                              <input name="fabric_weight_gsm" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.fabric_weight_gsm || ""} placeholder="e.g. 250 GSM" />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Decoration Method</label>
+                              <input name="decoration_method" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.decoration_method || ""} placeholder="e.g. Screen Print..." />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Colors (CSV)</label>
+                              <input name="available_colors" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.available_colors || ""} placeholder="Black, Navy, White" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Details</label>
-                  <textarea name="fabric_details" rows={2} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.fabric_details || editingGarment?.description || ""} placeholder="e.g. 100% Organic Cotton" />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Finish</label>
-                  <textarea name="fabric_finish" rows={2} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.fabric_finish || ""} placeholder="e.g. Enzyme wash" />
-                </div>
-              </div>
+                      {/* CARD 3: Classifications */}
+                      <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Classification Matrix</label>
+                        <div className="space-y-6">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Available Sizes</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['XXS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'OSFA'].map(size => (
+                                  <label key={size} className="relative cursor-pointer">
+                                    <input type="checkbox" name="sizes" value={size} defaultChecked={editingGarment?.sizes?.includes(size)} className="peer sr-only" />
+                                    <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900 min-w-[3rem] text-center">
+                                      {size}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fit</label>
-                  <select name="fit" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.fit || "Regular"}>
-                    <option value="Slim">Slim</option>
-                    <option value="Regular">Regular</option>
-                    <option value="Loose">Loose</option>
-                    <option value="Oversize">Oversize</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Weight (GSM)</label>
-                  <input name="fabric_weight_gsm" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.fabric_weight_gsm || ""} placeholder="e.g. 250 GSM" />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">MOQ</label>
-                  <input name="moq" type="number" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.moq || ""} placeholder="e.g. 50" />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Turn Time</label>
-                  <input name="turn_time" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.turn_time || ""} placeholder="e.g. 4-6 Weeks" />
-                </div>
-              </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Departments</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
+                                    <label key={cat} className="relative cursor-pointer">
+                                      <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="peer sr-only" />
+                                      <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                                        {cat}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Garment Type</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map(t => (
+                                    <label key={t} className="relative cursor-pointer">
+                                      <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="peer sr-only" />
+                                      <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                                        {t}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Target Gender</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {['Male', 'Female', 'Accessories'].map(gen => (
+                                    <label key={gen} className="relative cursor-pointer">
+                                      <input type="radio" name="gender" value={gen} defaultChecked={editingGarment?.gender === gen || (!editingGarment && gen === 'Male')} className="peer sr-only" />
+                                      <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                                        {gen}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                            </div>
+                        </div>
+                      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Decoration Method</label>
-                  <input name="decoration_method" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.decoration_method || ""} placeholder="e.g. Screen Print, Embroidery" />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Colors (Comma separated)</label>
-                  <input name="available_colors" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.available_colors || ""} placeholder="e.g. Black, Navy, White" />
-                </div>
-              </div>
+                      {/* CARD 4: Pricing */}
+                      <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3 flex items-center gap-2">Pricing Strategy</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price (USD)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
+                              <input name="wholesale_price" type="number" step="0.01" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MSRP (USD)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
+                              <input name="msrp" type="number" step="0.01" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.msrp || editingGarment?.price || ""} placeholder="219.00" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 p-3 bg-zinc-50 rounded-lg flex items-start gap-2 border border-zinc-100">
+                          <Info size={14} className="text-zinc-400 shrink-0 mt-0.5" />
+                          <p className="text-[10px] text-zinc-500 leading-relaxed">Ensure prices are accurate and reflect final agreed-upon rates for complete decoration and fulfillment packages per unit.</p>
+                        </div>
+                      </div>
 
-              <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Sizes</label>
-                <div className="flex flex-wrap gap-2">
-                  {['XXS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map(size => (
-                    <label key={size} className="relative cursor-pointer">
-                      <input type="checkbox" name="sizes" value={size} defaultChecked={editingGarment?.sizes?.includes(size)} className="peer sr-only" />
-                      <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
-                        {size}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+                   </div>
+                 </div>
+               </form>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Wholesale Price (USD)</label>
-                  <input name="wholesale_price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">MSRP (USD)</label>
-                  <input name="msrp" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.msrp || editingGarment?.price || ""} placeholder="219.00" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Categories</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
-                      <label key={cat} className="relative cursor-pointer">
-                        <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="peer sr-only" />
-                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
-                          {cat}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Male', 'Female', 'Accessories'].map(gen => (
-                      <label key={gen} className="relative cursor-pointer">
-                        <input type="radio" name="gender" value={gen} defaultChecked={editingGarment?.gender === gen || (!editingGarment && gen === 'Male')} className="peer sr-only" />
-                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
-                          {gen}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Types</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map(t => (
-                      <label key={t} className="relative cursor-pointer">
-                        <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="peer sr-only" />
-                        <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
-                          {t}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" className="w-full bg-zinc-900 text-white py-4 text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors mt-8">
-                {editingGarment ? 'Save Changes' : 'Add to Catalog'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+               {/* Modal Footer */}
+               <div className="flex items-center justify-between px-6 md:px-10 py-4 bg-white rounded-b-2xl border-t border-zinc-100 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] sticky bottom-0 z-20">
+                 {editingGarment ? (
+                   <button type="button" onClick={async () => {
+                     if (confirm("Are you sure you want to delete this garment? This action cannot be undone.")) {
+                       try {
+                         const res = await fetch(`/api/garments/${editingGarment.id}`, { method: 'DELETE' });
+                         if (res.ok) {
+                           onGarmentAdded();
+                           fetchExisting();
+                           handleCancelEdit();
+                         }
+                       } catch (err) { console.error(err); }
+                     }
+                   }} className="text-[10px] uppercase font-bold tracking-widest text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                     <Trash2 size={12} /> Delete Record
+                   </button>
+                 ) : (
+                   <div />
+                 )}
+                 <div className="flex gap-4 items-center">
+                   <button type="button" onClick={handleCancelEdit} className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors hidden sm:block">
+                     Cancel
+                   </button>
+                   <button type="submit" form="garment-form" className="bg-zinc-900 text-white px-8 py-3 text-[10px] md:text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors rounded-full shadow-md">
+                     Save Specifications
+                   </button>
+                 </div>
+               </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
