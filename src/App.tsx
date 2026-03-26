@@ -38,6 +38,17 @@ export interface Garment {
   image: string;
   images?: string[];
   supplier_link?: string;
+  fabric_details?: string;
+  fabric_finish?: string;
+  fit?: 'Slim' | 'Regular' | 'Loose' | 'Oversize' | '';
+  fabric_weight_gsm?: string;
+  decoration_method?: string;
+  sizes?: string[];
+  available_colors?: string;
+  wholesale_price?: number;
+  msrp?: number;
+  moq?: number;
+  turn_time?: string;
 }
 
 export interface BrandColor {
@@ -947,7 +958,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                 <h3 className="font-serif text-xl mb-1">{garment.name}</h3>
                 <p className="text-zinc-400 text-xs uppercase tracking-widest">{garment.categories?.join(', ') || garment.category}</p>
               </div>
-              <p className="font-medium">${garment.price}</p>
+              <p className="font-medium">${garment.msrp || garment.price}</p>
             </div>
           </motion.div>
         ))}
@@ -999,7 +1010,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                 <div className="flex-1">
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.categories?.join(', ') || viewingGarment.category} / {viewingGarment.types?.join(', ') || viewingGarment.type} / {viewingGarment.gender}</p>
                   <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
-                  <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.price}</p>
+                  <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.msrp || viewingGarment.price}</p>
 
                   {viewingGarment.supplier_link && (
                     <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-6 border-b border-zinc-200 hover:border-zinc-900 pb-1">
@@ -1007,9 +1018,18 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                     </a>
                   )}
 
-                  <p className="text-zinc-500 text-sm md:text-lg leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100">
-                    {viewingGarment.description}
-                  </p>
+                  <div className="text-zinc-500 text-sm md:text-md leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100 grid grid-cols-2 gap-y-6 gap-x-8">
+                    {viewingGarment.fabric_details && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fabric</strong>{viewingGarment.fabric_details}</div>}
+                    {viewingGarment.fabric_finish && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Finish</strong>{viewingGarment.fabric_finish}</div>}
+                    {viewingGarment.fabric_weight_gsm && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Weight</strong>{viewingGarment.fabric_weight_gsm}</div>}
+                    {viewingGarment.fit && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fit</strong>{viewingGarment.fit}</div>}
+                    {viewingGarment.moq && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">MOQ</strong>{viewingGarment.moq} Units</div>}
+                    {viewingGarment.turn_time && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Turn Time</strong>{viewingGarment.turn_time}</div>}
+                    {viewingGarment.decoration_method && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Decoration</strong>{viewingGarment.decoration_method}</div>}
+                    {viewingGarment.sizes && viewingGarment.sizes.length > 0 && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Sizes</strong>{viewingGarment.sizes.join(', ')}</div>}
+                    {viewingGarment.available_colors && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Colors</strong>{viewingGarment.available_colors}</div>}
+                    {viewingGarment.description && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Notes</strong>{viewingGarment.description}</div>}
+                  </div>
 
                   <div className="flex flex-col gap-4">
                     <button
@@ -1115,8 +1135,17 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     const formData = new FormData(form);
     const data = {
       name: formData.get('name'),
-      description: formData.get('description'),
-      price: parseFloat(formData.get('price') as string),
+      fabric_details: formData.get('fabric_details'),
+      fabric_finish: formData.get('fabric_finish'),
+      fit: formData.get('fit'),
+      fabric_weight_gsm: formData.get('fabric_weight_gsm'),
+      decoration_method: formData.get('decoration_method'),
+      sizes: formData.getAll('sizes'),
+      available_colors: formData.get('available_colors'),
+      wholesale_price: parseFloat(formData.get('wholesale_price') as string),
+      msrp: parseFloat(formData.get('msrp') as string),
+      moq: parseInt(formData.get('moq') as string, 10),
+      turn_time: formData.get('turn_time'),
       categories: formData.getAll('categories'),
       category: formData.getAll('categories')[0] || 'Athleisure',
       gender: formData.get('gender'),
@@ -1285,16 +1314,78 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                 <input name="supplier_link" type="url" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.supplier_link || ""} placeholder="https://supplier.com/item" />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Details</label>
+                  <textarea name="fabric_details" rows={2} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.fabric_details || editingGarment?.description || ""} placeholder="e.g. 100% Organic Cotton" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Finish</label>
+                  <textarea name="fabric_finish" rows={2} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.fabric_finish || ""} placeholder="e.g. Enzyme wash" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fit</label>
+                  <select name="fit" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors bg-transparent" defaultValue={editingGarment?.fit || "Regular"}>
+                    <option value="Slim">Slim</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Loose">Loose</option>
+                    <option value="Oversize">Oversize</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Fabric Weight (GSM)</label>
+                  <input name="fabric_weight_gsm" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.fabric_weight_gsm || ""} placeholder="e.g. 250 GSM" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">MOQ</label>
+                  <input name="moq" type="number" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.moq || ""} placeholder="e.g. 50" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Turn Time</label>
+                  <input name="turn_time" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.turn_time || ""} placeholder="e.g. 4-6 Weeks" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Decoration Method</label>
+                  <input name="decoration_method" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.decoration_method || ""} placeholder="e.g. Screen Print, Embroidery" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Colors (Comma separated)</label>
+                  <input name="available_colors" type="text" className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.available_colors || ""} placeholder="e.g. Black, Navy, White" />
+                </div>
+              </div>
+
               <div>
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Description</label>
-                <textarea name="description" rows={3} className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors resize-none" defaultValue={editingGarment?.description || ""} placeholder="Garment details..." />
+                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Sizes</label>
+                <div className="flex flex-wrap gap-2">
+                  {['XXS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map(size => (
+                    <label key={size} className="relative cursor-pointer">
+                      <input type="checkbox" name="sizes" value={size} defaultChecked={editingGarment?.sizes?.includes(size)} className="peer sr-only" />
+                      <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                        {size}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Price (USD)</label>
-                  <input name="price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.price || ""} placeholder="219.00" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Wholesale Price (USD)</label>
+                  <input name="wholesale_price" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
                 </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">MSRP (USD)</label>
+                  <input name="msrp" type="number" step="0.01" required className="w-full border-b border-zinc-200 py-2 focus:border-zinc-900 outline-none transition-colors" defaultValue={editingGarment?.msrp || editingGarment?.price || ""} placeholder="219.00" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Categories</label>
                   <div className="flex flex-wrap gap-2">
