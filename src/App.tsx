@@ -585,8 +585,9 @@ export default function App() {
               </div>
             </div>
 
-            <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-              <img src="/wovn-logo.png" alt="WOVN" className="h-6 object-contain" />
+            <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center">
+              <img src="/wovn-logo.png" alt="WOVN" className="h-5 object-contain" />
+              <span className="text-[8px] uppercase tracking-[0.25em] font-bold text-zinc-400 mt-1">Design Studio</span>
             </div>
 
             <div className="flex items-center gap-4">
