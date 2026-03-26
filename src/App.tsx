@@ -40,10 +40,16 @@ export interface Garment {
   supplier_link?: string;
 }
 
+export interface BrandColor {
+  hex: string;
+  pantone: string;
+}
+
 export interface Customer {
   id: number;
   name: string;
   company: string;
+  colors?: BrandColor[];
   color1?: string;
   color2?: string;
   color3?: string;
@@ -51,6 +57,19 @@ export interface Customer {
   pantone2?: string;
   pantone3?: string;
 }
+
+export const getCustomerColors = (c: Customer): BrandColor[] => {
+  if (c.colors && c.colors.length > 0) return c.colors;
+  const legacy: BrandColor[] = [];
+  if (c.color1 || c.pantone1) legacy.push({ hex: c.color1 || '#f4f4f5', pantone: c.pantone1 || '' });
+  if (c.color2 || c.pantone2) legacy.push({ hex: c.color2 || '#f4f4f5', pantone: c.pantone2 || '' });
+  if (c.color3 || c.pantone3) legacy.push({ hex: c.color3 || '#f4f4f5', pantone: c.pantone3 || '' });
+  
+  while (legacy.length < 3) {
+    legacy.push({ hex: '#f4f4f5', pantone: '' });
+  }
+  return legacy;
+};
 
 export interface CustomerAsset {
   id: string;
@@ -1348,6 +1367,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
   const [resolvingPantone, setResolvingPantone] = useState<Record<number, boolean>>({});
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (selectedCustId) {
@@ -1426,7 +1446,8 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
     const cust = customers.find(c => c.id === selectedCustId);
     if (!cust) return;
 
-    const colorsToGen = [cust.color1, cust.color2, cust.color3].filter(c => c && c !== '#f4f4f5') as string[];
+    const currentColors = getCustomerColors(cust);
+    const colorsToGen = currentColors.map(c => c.hex).filter(hex => hex && hex !== '#f4f4f5');
     if (colorsToGen.length === 0) {
       alert("Please set at least one brand color first.");
       return;
@@ -1549,26 +1570,77 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 <div className="mb-14">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="editorial-title text-2xl">Color Palette</h3>
+                    <button
+                      onClick={() => {
+                        const c = customers.find(cust => cust.id === selectedCustId);
+                        if (!c) return;
+                        const newColors = [...getCustomerColors(c), { hex: '#f4f4f5', pantone: '' }];
+                        onUpdateCustomer(c.id, { colors: newColors });
+                      }}
+                      className="flex items-center gap-1 bg-white border border-zinc-200 text-zinc-900 px-3 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors shadow-sm"
+                    >
+                      <Plus size={14} /> Add Color
+                    </button>
                   </div>
-                  <p className="text-zinc-500 text-sm mb-6">Select up to 3 brand colors for {customers.find(c => c.id === selectedCustId)?.company}.</p>
-                  <div className="flex gap-6">
-                    {[1, 2, 3].map(i => {
-                      const colorField = `color${i}` as keyof Customer;
-                      const pantoneField = `pantone${i}` as keyof Customer;
-                      const c = customers.find(cust => cust.id === selectedCustId);
-                      let colorVal = c?.[colorField] as string || '#f4f4f5';
+                  <p className="text-zinc-500 text-sm mb-6">Select brand colors for {customers.find(c => c.id === selectedCustId)?.company}. Drag to reorder.</p>
+                  <div className="flex gap-6 flex-wrap">
+                    {getCustomerColors(customers.find(c => c.id === selectedCustId)!).map((colorObj, i) => {
+                      let colorVal = colorObj.hex;
                       if (colorVal !== '#f4f4f5' && !colorVal.startsWith('#')) {
-                        colorVal = '#' + colorVal;
+                        colorVal = '#' + colorVal; // Fallback for old corrupt data
                       }
-                      const pantoneVal = c?.[pantoneField] as string || '';
+                      const pantoneVal = colorObj.pantone;
+                      const currentColors = getCustomerColors(customers.find(c => c.id === selectedCustId)!);
 
                       return (
-                        <div key={i} className="flex flex-col gap-3 group bg-white p-4 border border-zinc-100 rounded-2xl w-40 hover:border-zinc-300 transition-colors shadow-sm">
+                        <div 
+                           key={i} 
+                           draggable
+                           onDragStart={(e) => {
+                             setDraggedIdx(i);
+                             e.dataTransfer.setData('text/plain', i.toString());
+                           }}
+                           onDragOver={(e) => e.preventDefault()}
+                           onDrop={(e) => {
+                             e.preventDefault();
+                             if (draggedIdx === null || draggedIdx === i) return;
+                             const c = customers.find(cust => cust.id === selectedCustId);
+                             if (!c) return;
+                             const newColors = [...getCustomerColors(c)];
+                             const [moved] = newColors.splice(draggedIdx, 1);
+                             newColors.splice(i, 0, moved);
+                             setDraggedIdx(null);
+                             onUpdateCustomer(c.id, { colors: newColors });
+                           }}
+                           className={`flex flex-col gap-3 group bg-white p-4 border border-zinc-100 rounded-2xl w-40 hover:border-zinc-300 transition-all shadow-sm cursor-grab active:cursor-grabbing ${draggedIdx === i ? 'opacity-50 scale-95' : ''}`}
+                        >
+                          <div className="flex justify-between items-center px-1 mb-[-4px]">
+                            <GripHorizontal size={14} className="text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                            {currentColors.length > 1 && (
+                              <button 
+                                onClick={() => {
+                                  const c = customers.find(cust => cust.id === selectedCustId);
+                                  if (!c) return;
+                                  const newColors = currentColors.filter((_, idx) => idx !== i);
+                                  onUpdateCustomer(c.id, { colors: newColors });
+                                }}
+                                className="text-zinc-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
                           <label className="w-full h-20 rounded-xl overflow-hidden cursor-pointer border-2 border-zinc-200 shadow-sm transition-all hover:scale-105 hover:border-zinc-900 relative flex items-center justify-center bg-checkerboard mx-auto">
                             <input
                               type="color"
                               value={colorVal}
-                              onChange={(e) => onUpdateCustomer(selectedCustId!, { [colorField]: e.target.value })}
+                              onChange={(e) => {
+                                const c = customers.find(cust => cust.id === selectedCustId);
+                                if (!c) return;
+                                const newColors = [...getCustomerColors(c)];
+                                newColors[i] = { ...newColors[i], hex: e.target.value };
+                                onUpdateCustomer(c.id, { colors: newColors });
+                              }}
                               className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0"
                             />
                             <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: colorVal !== '#f4f4f5' ? colorVal : 'transparent' }} />
@@ -1582,7 +1654,11 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                                 onChange={(e) => {
                                   let val = e.target.value.trim();
                                   if (val && !val.startsWith('#')) val = '#' + val;
-                                  onUpdateCustomer(selectedCustId!, { [colorField]: val });
+                                  const c = customers.find(cust => cust.id === selectedCustId);
+                                  if (!c) return;
+                                  const newColors = [...getCustomerColors(c)];
+                                  newColors[i] = { ...newColors[i], hex: val };
+                                  onUpdateCustomer(c.id, { colors: newColors });
                                 }}
                                 placeholder="#HEX"
                                 className="w-full bg-transparent border-b border-zinc-200 py-1 text-xs outline-none focus:border-zinc-900 font-mono"
@@ -1596,13 +1672,24 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                               <input
                                 type="text"
                                 value={pantoneVal}
-                                onChange={(e) => onUpdateCustomer(selectedCustId!, { [pantoneField]: e.target.value })}
+                                onChange={(e) => {
+                                  const c = customers.find(cust => cust.id === selectedCustId);
+                                  if (!c) return;
+                                  const newColors = [...getCustomerColors(c)];
+                                  newColors[i] = { ...newColors[i], pantone: e.target.value };
+                                  onUpdateCustomer(c.id, { colors: newColors });
+                                }}
                                 onBlur={async () => {
                                   if (pantoneVal && pantoneVal.trim().length > 2) {
                                     setResolvingPantone(prev => ({ ...prev, [i]: true }));
                                     const hex = await convertColorToHex(pantoneVal);
                                     if (hex) {
-                                      onUpdateCustomer(selectedCustId!, { [colorField]: hex });
+                                      const c = customers.find(cust => cust.id === selectedCustId);
+                                      if (c) {
+                                        const newColors = [...getCustomerColors(c)];
+                                        newColors[i] = { ...newColors[i], hex };
+                                        onUpdateCustomer(c.id, { colors: newColors });
+                                      }
                                     }
                                     setResolvingPantone(prev => ({ ...prev, [i]: false }));
                                   }
