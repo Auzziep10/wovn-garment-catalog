@@ -1303,7 +1303,6 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 md:p-6 overflow-y-auto pt-safe pb-safe outline-none"
-            onClick={handleCancelEdit}
           >
              <motion.div
                initial={{ scale: 0.98, opacity: 0, y: 15 }}
