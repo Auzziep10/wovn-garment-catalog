@@ -40,12 +40,14 @@ export interface Garment {
   supplier_link?: string;
   fabric_details?: string;
   fabric_finish?: string;
+  care_instructions?: string;
   fit?: 'Slim' | 'Regular' | 'Loose' | 'Oversize' | '';
   fabric_weight_gsm?: string;
   decoration_method?: string;
   sizes?: string[];
   available_colors?: string;
   wholesale_price?: number;
+  cost_price?: number;
   msrp?: number;
   moq?: number;
   turn_time?: string;
@@ -121,12 +123,14 @@ export interface DeckItem {
   supplier_link?: string | null;
   fabric_details?: string | null;
   fabric_finish?: string | null;
+  care_instructions?: string | null;
   fit?: 'Slim' | 'Regular' | 'Loose' | 'Oversize' | '' | null;
   fabric_weight_gsm?: string | null;
   decoration_method?: string | null;
   sizes?: string[] | null;
   available_colors?: string | null;
   wholesale_price?: number | null;
+  cost_price?: number | null;
   msrp?: number | null;
   moq?: number | null;
   turn_time?: string | null;
@@ -1023,7 +1027,24 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                 <div className="flex-1">
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2 md:mb-3">{viewingGarment.categories?.join(', ') || viewingGarment.category} / {viewingGarment.types?.join(', ') || viewingGarment.type} / {viewingGarment.gender}</p>
                   <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6 leading-tight">{viewingGarment.name}</h2>
-                  <p className="text-2xl md:text-3xl font-medium mb-6 md:mb-8">${viewingGarment.msrp || viewingGarment.price}</p>
+                  <div className="flex items-center gap-6 mb-8 pb-8 border-b border-zinc-100">
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">MSRP</span>
+                      <span className="font-serif text-2xl">${viewingGarment.msrp?.toFixed(2) || viewingGarment.price.toFixed(2)}</span>
+                    </div>
+                    {viewingGarment.wholesale_price && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Wholesale</span>
+                        <span className="font-serif text-2xl text-zinc-500">${viewingGarment.wholesale_price.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {viewingGarment.cost_price && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Internal Cost</span>
+                        <span className="font-serif text-2xl text-zinc-300">${viewingGarment.cost_price.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
 
                   {viewingGarment.supplier_link && (
                     <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-6 border-b border-zinc-200 hover:border-zinc-900 pb-1">
@@ -1034,6 +1055,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   <div className="text-zinc-500 text-sm md:text-md leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100 grid grid-cols-2 gap-y-6 gap-x-8">
                     {viewingGarment.fabric_details && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fabric</strong>{viewingGarment.fabric_details}</div>}
                     {viewingGarment.fabric_finish && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Finish</strong>{viewingGarment.fabric_finish}</div>}
+                    {viewingGarment.care_instructions && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Care</strong>{viewingGarment.care_instructions}</div>}
                     {viewingGarment.fabric_weight_gsm && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Weight</strong>{viewingGarment.fabric_weight_gsm}</div>}
                     {viewingGarment.fit && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fit</strong>{viewingGarment.fit}</div>}
                     {viewingGarment.moq && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">MOQ</strong>{viewingGarment.moq} Units</div>}
@@ -1152,13 +1174,15 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       name: formData.get('name'),
       fabric_details: formData.get('fabric_details'),
       fabric_finish: formData.get('fabric_finish'),
+      care_instructions: formData.get('care_instructions'),
       fit: formData.get('fit'),
       fabric_weight_gsm: formData.get('fabric_weight_gsm'),
       decoration_method: formData.get('decoration_method'),
       sizes: formData.getAll('sizes'),
       available_colors: formData.get('available_colors'),
-      wholesale_price: parseFloat(formData.get('wholesale_price') as string),
-      msrp: parseFloat(formData.get('msrp') as string),
+      cost_price: parseFloat(formData.get('cost_price') as string) || 0,
+      wholesale_price: parseFloat(formData.get('wholesale_price') as string) || 0,
+      msrp: parseFloat(formData.get('msrp') as string) || 0,
       moq: parseInt(formData.get('moq') as string, 10),
       turn_time: formData.get('turn_time'),
       categories: formData.getAll('categories'),
@@ -1415,6 +1439,10 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                               <textarea name="fabric_finish" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.fabric_finish || ""} placeholder="e.g. Enzyme wash" />
                             </div>
                           </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Care Instructions</label>
+                            <textarea name="care_instructions" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.care_instructions || ""} placeholder="e.g. Machine wash cold, tumble dry low" />
+                          </div>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                               <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Weight (GSM)</label>
@@ -1497,12 +1525,19 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                       {/* CARD 4: Pricing */}
                       <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3 flex items-center gap-2">Pricing Strategy</label>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Internal Cost (USD)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
+                              <input name="cost_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.cost_price || ""} placeholder="65.00" />
+                            </div>
+                          </div>
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
-                              <input name="wholesale_price" type="number" step="0.01" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
+                              <input name="wholesale_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
                             </div>
                           </div>
                           <div>
