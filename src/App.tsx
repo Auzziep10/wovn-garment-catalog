@@ -617,8 +617,7 @@ export default function App() {
             </div>
 
             <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center">
-              <img src="/wovn-logo.png" alt="WOVN" className="h-5 object-contain" />
-              <span className="text-[8px] uppercase tracking-[0.25em] font-bold text-zinc-400 mt-1">Design Studio</span>
+              <img src="/wovn-logo.png" alt="WOVN DESIGN STUDIO" className="h-7 md:h-8 object-contain" />
             </div>
 
             <div className="flex items-center gap-4">
