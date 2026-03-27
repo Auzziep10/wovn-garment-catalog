@@ -181,7 +181,11 @@ export default function App() {
         return 'shared-presentation';
       }
       const saved = localStorage.getItem('lastView');
-      if (saved === 'admin' || saved === 'customers' || saved === 'catalog') {
+      // Gracefully downgrade deeply nested views missing volatile state on refresh
+      if (saved === 'mockup-studio') {
+        return localStorage.getItem('lastDeckId') ? 'deck-view' : 'catalog';
+      }
+      if (saved) {
         return saved as View;
       }
     }
@@ -189,10 +193,11 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (view === 'admin' || view === 'customers' || view === 'catalog') {
+    if (typeof window !== 'undefined' && view !== 'shared-presentation') {
       localStorage.setItem('lastView', view);
     }
   }, [view]);
+
 
   const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
   const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
@@ -204,6 +209,29 @@ export default function App() {
   const [currentDeck, setCurrentDeck] = useState<Deck | null>(null);
   const [selectedGarment, setSelectedGarment] = useState<Garment | null>(null);
   const [selectedDeckItem, setSelectedDeckItem] = useState<DeckItem | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentDeck?.id) {
+      localStorage.setItem('lastDeckId', currentDeck.id.toString());
+    }
+  }, [currentDeck?.id]);
+
+  useEffect(() => {
+    if ((view === 'deck-view' || view === 'presentation') && !currentDeck) {
+      const savedId = localStorage.getItem('lastDeckId');
+      if (savedId) {
+        fetch(`/api/decks/${savedId}`)
+          .then(res => res.json())
+          .then(deck => {
+            if (deck && deck.id) setCurrentDeck(deck);
+            else setView('catalog');
+          })
+          .catch(() => setView('catalog'));
+      } else {
+        setView('catalog');
+      }
+    }
+  }, [view]);
 
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -4001,64 +4029,8 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                 placeholder="e.g. High-quality silver embroidery, screen printed with a vintage fade..."
               />
 
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
-                3. Color Options <HoverTooltip content="Prompt the AI to realistically change the base color of the garment or graphic." />
-              </h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Garment Color</label>
-                    {brandColors.length > 0 && (
-                      <div className="flex gap-1.5">
-                        {brandColors.map(c => (
-                          <button
-                            key={c}
-                            onClick={() => setGarmentColor(c)}
-                            className={`w-4 h-4 rounded-full border border-zinc-200 ${garmentColor === c ? 'ring-2 ring-zinc-900 ring-offset-1 scale-110' : 'hover:scale-110'} transition-all`}
-                            style={{ backgroundColor: c }}
-                            title={c}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    value={garmentColor}
-                    onChange={(e) => setGarmentColor(e.target.value)}
-                    placeholder="e.g. Navy Blue, #FF0000"
-                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all font-mono"
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Logo Color</label>
-                    {brandColors.length > 0 && (
-                      <div className="flex gap-1.5">
-                        {brandColors.map(c => (
-                          <button
-                            key={c}
-                            onClick={() => setLogoColor(c)}
-                            className={`w-4 h-4 rounded-full border border-zinc-200 ${logoColor === c ? 'ring-2 ring-zinc-900 ring-offset-1 scale-110' : 'hover:scale-110'} transition-all`}
-                            style={{ backgroundColor: c }}
-                            title={c}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    value={logoColor}
-                    onChange={(e) => setLogoColor(e.target.value)}
-                    placeholder="e.g. White, Black, #000000"
-                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all font-mono"
-                  />
-                </div>
-              </div>
-
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
-                4. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective before placing the logo." />
+                3. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective before placing the logo." />
               </h3>
               <div className="flex flex-col sm:flex-row gap-4 items-end">
                 <div className="flex-1 space-y-2 w-full">
