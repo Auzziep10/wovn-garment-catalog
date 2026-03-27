@@ -2310,6 +2310,10 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [libraryGarments, setLibraryGarments] = useState<Garment[]>([]);
   const [expandedSelectorGarmentId, setExpandedSelectorGarmentId] = useState<number | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [filterGender, setFilterGender] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -2565,19 +2569,67 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
               className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh]"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-8 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+              <div className="p-8 border-b border-zinc-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-zinc-50/50 gap-4">
                 <div>
                   <h2 className="font-serif text-3xl mb-1">Garment Library</h2>
                   <p className="text-zinc-500 text-sm">Select items to add or remove them from <strong>{deck.name}</strong></p>
                 </div>
-                <button onClick={() => setIsGarmentSelectorOpen(false)} className="p-3 bg-white hover:bg-zinc-100 rounded-full transition-colors shadow-sm">
+                <button onClick={() => setIsGarmentSelectorOpen(false)} className="p-3 bg-white hover:bg-zinc-100 rounded-full transition-colors shadow-sm self-end md:self-auto">
                   <X size={24} />
                 </button>
+              </div>
+
+              <div className="px-8 py-4 border-b border-zinc-100 bg-white flex flex-col md:flex-row items-start md:items-center gap-4 shrink-0">
+                <div className="relative w-full md:w-auto md:min-w-[240px] shrink-0">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                    <Search size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search Garments..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs focus:bg-white focus:border-zinc-400 outline-none transition-all placeholder:text-zinc-400"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold text-zinc-500 w-full md:w-auto flex-1">
+                  <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[100px]">
+                    <option value="">All Categories</option>
+                    <option value="Athleisure">Athleisure</option>
+                    <option value="Executive">Executive</option>
+                    <option value="Auto-Industry">Auto-Industry</option>
+                    <option value="Golf">Golf</option>
+                    <option value="Streetwear">Streetwear</option>
+                    <option value="Swimwear">Swimwear</option>
+                    <option value="Elevated Basics">Elevated Basics</option>
+                  </select>
+                  <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[100px]">
+                    <option value="">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                  <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[100px]">
+                    <option value="">All Types</option>
+                    <option value="Tops">Tops</option>
+                    <option value="Bottom">Bottom</option>
+                    <option value="Headwear">Headwear</option>
+                    <option value="Bags">Bags</option>
+                    <option value="Tumblers">Tumblers</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
               
               <div className="p-8 overflow-y-auto bg-zinc-50 flex-1 hide-scrollbar">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {libraryGarments.map((garment, idx) => {
+                  {libraryGarments.filter(g => {
+                    if (searchQuery && (!g.name || !g.name.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
+                    if (filterCategory && g.category !== filterCategory && !(g.categories && g.categories.includes(filterCategory as any))) return false;
+                    if (filterGender && g.gender !== filterGender) return false;
+                    if (filterType && g.type !== filterType && !(g.types && g.types.includes(filterType as any))) return false;
+                    return true;
+                  }).map((garment, idx) => {
                     const isInDeck = items.some(i => i.garment_id === garment.id);
                     const isExpanded = expandedSelectorGarmentId === garment.id;
                     // Determine safe side to expand: expand left if in last column of a 4/3 col layout
