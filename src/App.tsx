@@ -2724,19 +2724,17 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             </div>
 
             {/* Action Buttons Group */}
-            <div className="flex flex-wrap items-center gap-1 bg-white border border-zinc-200 p-1.5 rounded-full shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setIsGarmentSelectorOpen(true)}
-                className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors flex items-center gap-2"
+                className="bg-white border border-zinc-200 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:text-zinc-900 hover:border-zinc-400 transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Plus size={14} /> Add Library Item
               </button>
-              <label className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer flex items-center gap-2">
+              <label className="bg-white border border-zinc-200 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:text-zinc-900 hover:border-zinc-400 transition-colors cursor-pointer flex items-center gap-2 shadow-sm">
                 <Upload size={14} /> Custom Item
                 <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
               </label>
-              
-              <div className="w-[1px] h-6 bg-zinc-200 mx-1 hidden sm:block" />
               
               <button
                 onClick={async () => {
@@ -2763,13 +2761,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     });
                   }
                 }}
-                className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+                className="bg-white border border-zinc-200 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:text-zinc-900 hover:border-zinc-400 transition-colors shadow-sm"
               >
                 Share Link
               </button>
               <button
                 onClick={() => onPresent()}
-                className="bg-zinc-900 text-white px-6 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                className="bg-zinc-900 text-white px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Presentation size={14} /> Present View
               </button>
