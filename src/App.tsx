@@ -3147,6 +3147,18 @@ function EditItemModal({ item, customer, onClose, onSave }: {
     (item.mockup_status as 'New Mock Needed' | 'Working' | 'Final Mock Uploaded') || 'Final Mock Uploaded'
   );
 
+  const [fabricDetails, setFabricDetails] = useState(item.fabric_details || '');
+  const [fabricFinish, setFabricFinish] = useState(item.fabric_finish || '');
+  const [careInstructions, setCareInstructions] = useState(item.care_instructions || '');
+  const [fit, setFit] = useState(item.fit || '');
+  const [fabricWeightGsm, setFabricWeightGsm] = useState(item.fabric_weight_gsm || '');
+  const [decorationMethod, setDecorationMethod] = useState(item.decoration_method || '');
+  const [availableColors, setAvailableColors] = useState(item.available_colors || '');
+  const [costPrice, setCostPrice] = useState(item.cost_price?.toString() || '');
+  const [wholesalePrice, setWholesalePrice] = useState(item.wholesale_price?.toString() || '');
+  const [moq, setMoq] = useState(item.moq?.toString() || '');
+  const [turnTime, setTurnTime] = useState(item.turn_time || '');
+
   const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
 
   const handleGenerateVariationForColor = async (color: string) => {
@@ -3355,6 +3367,76 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               </div>
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Material & Build</label>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Details</label>
+                      <input value={fabricDetails} onChange={e => setFabricDetails(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Finish</label>
+                      <input value={fabricFinish} onChange={e => setFabricFinish(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fit / Cut</label>
+                      <input value={fit} onChange={e => setFit(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Weight (GSM)</label>
+                      <input value={fabricWeightGsm} onChange={e => setFabricWeightGsm(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Care Instructions</label>
+                    <input value={careInstructions} onChange={e => setCareInstructions(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Customization & Production</label>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Decorating Methods</label>
+                      <input value={decorationMethod} onChange={e => setDecorationMethod(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
+                      <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Turnaround Time</label>
+                      <input value={turnTime} onChange={e => setTurnTime(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MOQ</label>
+                      <input type="number" value={moq} onChange={e => setMoq(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Backend Pricing</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost Price ($)</label>
+                    <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price ($)</label>
+                    <input type="number" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] hidden">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Item Description</label>
                 <textarea
                   value={description}
@@ -3380,11 +3462,22 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 await onSave({
                   custom_name: name,
                   custom_description: description,
-                  custom_price: parseFloat(price),
+                  custom_price: parseFloat(price) || null,
                   custom_sizes: sizes,
                   mock_image: mockImage,
                   variations: variations,
-                  mockup_status: mockupStatus
+                  mockup_status: mockupStatus,
+                  custom_fabric_details: fabricDetails,
+                  custom_fabric_finish: fabricFinish,
+                  custom_care_instructions: careInstructions,
+                  custom_fit: fit,
+                  custom_fabric_weight_gsm: fabricWeightGsm,
+                  custom_decoration_method: decorationMethod,
+                  custom_available_colors: availableColors,
+                  custom_cost_price: parseFloat(costPrice) || null,
+                  custom_wholesale_price: parseFloat(wholesalePrice) || null,
+                  custom_moq: parseInt(moq, 10) || null,
+                  custom_turn_time: turnTime
                 });
               } catch (err: any) {
                 console.error(err);
