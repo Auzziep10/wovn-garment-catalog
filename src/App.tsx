@@ -1336,7 +1336,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       care_instructions: formData.get('care_instructions'),
       fit: formData.get('fit'),
       fabric_weight_gsm: formData.get('fabric_weight_gsm'),
-      decoration_method: formData.get('decoration_method'),
+      decoration_method: formData.getAll('decoration_method').join(', '),
       sizes: formData.getAll('sizes'),
       available_colors: formData.get('available_colors'),
       cost_price: parseFloat(formData.get('cost_price') as string) || 0,
