@@ -1255,9 +1255,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterGender, setFilterGender] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredAndSortedGarments = [...existingGarments]
     .filter(g => {
+      if (searchQuery && (!g.name || !g.name.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
       if (filterCategory && g.category !== filterCategory && !(g.categories && g.categories.includes(filterCategory as any))) return false;
       if (filterGender && g.gender !== filterGender) return false;
       if (filterType && g.type !== filterType && !(g.types && g.types.includes(filterType as any))) return false;
@@ -1411,8 +1413,20 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex flex-wrap gap-3 text-[10px] uppercase font-bold text-zinc-500 w-full md:w-3/4 lg:w-1/2">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+        <div className="relative w-full md:w-auto md:min-w-[280px] shrink-0">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+            <Search size={16} />
+          </div>
+          <input
+            type="text"
+            placeholder="Search Garment Library..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:bg-white focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition-all placeholder:text-zinc-400"
+          />
+        </div>
+        <div className="flex flex-wrap gap-3 text-[10px] uppercase font-bold text-zinc-500 w-full md:w-auto flex-1">
           <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[120px]">
             <option value="">All Categories</option>
             <option value="Athleisure">Athleisure</option>
@@ -2867,9 +2881,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
                     {showPricing ? <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p> : <div />}
                     <div className="flex flex-wrap gap-2">
-                      {(item.custom_sizes || 'XS,S,M,L,XL').split(',').map(size => (
-                        <span key={size} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
-                          {size}
+                      {((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(',') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(',') : item.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
+                        <span key={idx} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
+                          {size.trim()}
                         </span>
                       ))}
                     </div>
@@ -4471,9 +4485,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
               <div className="pt-6 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
                 {showPricing && !currentItem.isCoverSlide && currentItem.custom_price !== 0 ? <p className="text-2xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
                 <div className="flex flex-wrap justify-center md:justify-start gap-1.5 md:gap-2 max-w-full">
-                  {!currentItem.isCoverSlide && (currentItem.custom_sizes || 'XS,S,M,L,XL').split(',').map((size: string) => (
-                    <span key={size} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
-                      {size}
+                  {!currentItem.isCoverSlide && ((Array.isArray(currentItem.custom_sizes) ? currentItem.custom_sizes.join(',') : currentItem.custom_sizes) || (Array.isArray(currentItem.sizes) ? currentItem.sizes.join(',') : currentItem.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
+                    <span key={idx} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
+                      {size.trim()}
                     </span>
                   ))}
                 </div>
