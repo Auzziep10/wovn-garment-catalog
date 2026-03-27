@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage } from './services/geminiService';
@@ -1848,6 +1848,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
+  const [recoloringAssetId, setRecoloringAssetId] = useState<string | null>(null);
   const [resolvingPantone, setResolvingPantone] = useState<Record<number, boolean>>({});
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
 
@@ -1862,6 +1863,50 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       });
     }
   }, [selectedCustId]);
+
+  const handleRecolorAsset = async (assetImageUrl: string, hexColor: string) => {
+    if (!selectedCustId) return;
+    setIsUploadingAsset(true);
+    try {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = assetImageUrl.startsWith('http') ? `/api/cors-proxy?url=${encodeURIComponent(assetImageUrl)}` : assetImageUrl; // Handled proxy or generic depending on server setup... wait, let's just assume Firebase works with Anonymous.
+
+        // Standard anonymous fallback
+        img.src = assetImageUrl;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No canvas context');
+
+      ctx.drawImage(img, 0, 0);
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.fillStyle = hexColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const recoloredDataUrl = canvas.toDataURL('image/png');
+
+      const res = await fetch(`/api/customers/${selectedCustId}/assets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: recoloredDataUrl })
+      });
+      if (res.ok) {
+        const newAsset = await res.json();
+        setAssets(prev => [...prev, newAsset]);
+      }
+    } catch (err) {
+      alert('Failed to recolor asset. Ensure image origin accepts CORS requests.');
+    } finally {
+      setIsUploadingAsset(false);
+    }
+  };
 
   const handleUploadAsset = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2201,11 +2246,38 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {assets.map(asset => (
-                    <div key={asset.id} className="aspect-square bg-checkerboard border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group hover:border-zinc-300 transition-colors">
+                    <div key={asset.id} className="aspect-square bg-checkerboard border border-zinc-100 rounded-2xl flex flex-col items-center justify-center relative overflow-visible group hover:border-zinc-300 transition-colors">
                       <img src={asset.image} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
+
+                      <div className="absolute top-2 left-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all z-20">
+                        <div className="relative">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setRecoloringAssetId(recoloringAssetId === asset.id ? null : asset.id); }}
+                            className="p-2 bg-white/90 backdrop-blur shadow-sm rounded-full text-zinc-400 hover:text-zinc-900 transition-all pointer-events-auto"
+                            title="Recolor Asset"
+                          >
+                            <Palette size={14} />
+                          </button>
+                          {recoloringAssetId === asset.id && (
+                            <div className="absolute top-full mt-2 left-0 w-[140px] bg-white p-3 rounded-xl shadow-xl border border-zinc-100 grid grid-cols-4 gap-2 z-50">
+                              <p className="col-span-4 text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Recolor</p>
+                              {getCustomerColors(customers.find(c => c.id === selectedCustId)!).map(fc => (
+                                <button
+                                  key={fc.hex}
+                                  onClick={(e) => { e.stopPropagation(); handleRecolorAsset(asset.image, fc.hex); setRecoloringAssetId(null); }}
+                                  className="w-full aspect-square rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] hover:scale-110 hover:shadow-md transition-all border border-black/5"
+                                  style={{ backgroundColor: fc.hex }}
+                                  title={`Recolor to ${fc.hex}`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}
-                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur shadow-sm rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all pointer-events-auto"
+                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur shadow-sm rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all pointer-events-auto z-20"
                         title="Remove Asset"
                       >
                         <Trash2 size={14} />
