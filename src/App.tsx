@@ -1063,13 +1063,13 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                       <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">MSRP</span>
                       <span className="font-serif text-2xl">${viewingGarment.msrp?.toFixed(2) || viewingGarment.price.toFixed(2)}</span>
                     </div>
-                    {viewingGarment.wholesale_price && (
+                    {(viewingGarment.wholesale_price ?? 0) > 0 && (
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Wholesale</span>
                         <span className="font-serif text-2xl text-zinc-500">${viewingGarment.wholesale_price.toFixed(2)}</span>
                       </div>
                     )}
-                    {viewingGarment.cost_price && (
+                    {(viewingGarment.cost_price ?? 0) > 0 && (
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Cost</span>
                         <span className="font-serif text-2xl text-zinc-300">${viewingGarment.cost_price.toFixed(2)}</span>
@@ -1097,12 +1097,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                         <span className="text-sm font-medium text-zinc-900">{viewingGarment.turn_time}</span>
                       </div>
                     )}
-                    {viewingGarment.fit && (
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Fit</span>
-                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.fit}</span>
-                      </div>
-                    )}
+
                     {viewingGarment.fabric_weight_gsm && (
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Weight</span>
@@ -1128,6 +1123,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                               <div className="pb-6 text-sm text-zinc-500 leading-relaxed space-y-4">
                                 {viewingGarment.fabric_details && <div><strong className="text-zinc-900 block mb-1">Material</strong>{viewingGarment.fabric_details}</div>}
                                 {viewingGarment.fabric_finish && <div><strong className="text-zinc-900 block mb-1">Finish</strong>{viewingGarment.fabric_finish}</div>}
+                                {viewingGarment.fit && <div><strong className="text-zinc-900 block mb-1">Fit</strong>{viewingGarment.fit}</div>}
                               </div>
                             </motion.div>
                           )}
@@ -1533,13 +1529,26 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                           {images.map((img, i) => (
                             <div key={i} className={`bg-zinc-50 border-2 ${i === 0 ? 'border-zinc-200' : 'border-zinc-100'} rounded-lg flex flex-col items-center justify-center relative overflow-hidden group ${i === 0 ? 'aspect-[3/4]' : 'aspect-square w-1/2'}`}>
                               <img src={img} className="w-full h-full object-contain p-2" />
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveImage(i)}
-                                className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-black/5"
-                              >
-                                <Trash2 size={14} className="text-red-500" />
-                              </button>
+                              <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a
+                                  href={img}
+                                  download={`mockup-${i}.jpg`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Download Image"
+                                  className="bg-white/90 p-1.5 rounded-full border border-black/5 text-zinc-500 hover:text-zinc-900 shadow-sm flex items-center justify-center cursor-pointer"
+                                >
+                                  <Download size={14} />
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(i)}
+                                  title="Remove Image"
+                                  className="bg-white/90 p-1.5 rounded-full border border-black/5 flex items-center justify-center shadow-sm"
+                                >
+                                  <Trash2 size={14} className="text-red-500" />
+                                </button>
+                              </div>
                               {i === 0 ? (
                                 <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-zinc-900/90 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">
                                   <ImageIcon size={10} /> Main Mockup
