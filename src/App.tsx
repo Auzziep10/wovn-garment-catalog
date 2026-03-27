@@ -4493,9 +4493,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-white z-[100] flex flex-col h-[100dvh]"
+      className="fixed inset-0 bg-[#fafafa] z-[100] h-[100dvh] overflow-hidden"
     >
-      <div className="flex flex-none items-start md:items-center justify-between p-4 md:p-8 pb-2 md:pb-8 border-b md:border-none border-zinc-100 shrink-0 bg-white z-10 w-full">
+      <div className="fixed top-0 inset-x-0 flex items-start md:items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-black/5 bg-white/70 backdrop-blur-xl z-50">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-1.5 md:gap-4 overflow-hidden">
           <img src="/wovn-logo.png" alt="WOVN" className="h-5 md:h-6 object-contain" />
           <div className="w-px h-8 bg-zinc-200 hidden md:block" />
@@ -4503,20 +4503,20 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             <p className="text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-zinc-400 truncate">
               Presentation Mode {deck.customer_name ? `• ${deck.customer_name}` : ''}
             </p>
-            <h3 className="font-serif text-lg md:text-xl truncate">{deck.name}</h3>
+            <h3 className="font-serif text-lg md:text-xl truncate leading-tight">{deck.name}</h3>
           </div>
         </div>
         {!isSharedView && (
           <button
             onClick={onClose}
-            className="p-2 md:p-4 hover:bg-zinc-50 rounded-full transition-colors shrink-0 ml-2"
+            className="p-2 md:p-3 hover:bg-black/5 rounded-full transition-colors shrink-0 ml-2"
           >
             <X size={20} className="md:w-6 md:h-6" />
           </button>
         )}
       </div>
 
-      <div className="flex-1 flex items-start justify-center relative px-2 md:px-20 overflow-y-auto overflow-x-hidden pt-6 pb-32 md:py-8 w-full scrolling-touch">
+      <div className="h-full flex items-start justify-center relative px-2 md:px-20 overflow-y-auto overflow-x-hidden pt-24 pb-32 md:pb-8 w-full scrolling-touch">
         <button
           onClick={prev}
           className="fixed md:absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 hover:bg-zinc-50 rounded-full transition-colors bg-white/80 backdrop-blur shadow-md md:shadow-none md:bg-transparent md:backdrop-blur-none"
