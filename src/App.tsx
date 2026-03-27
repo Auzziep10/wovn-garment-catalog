@@ -3251,7 +3251,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [moq, setMoq] = useState(item.moq?.toString() || '');
   const [turnTime, setTurnTime] = useState(item.turn_time || '');
 
-  const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
+  const brandColors = customer ? getCustomerColors(customer).map(c => c.hex).filter(h => h && h !== '#f4f4f5') : [];
 
   const handleGenerateVariationForColor = async (color: string) => {
     setGeneratingColor(color);
@@ -3631,7 +3631,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   const [logoRotation, setLogoRotation] = useState(0);
   const [containerRef, bounds] = useMeasure();
 
-  const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
+  const brandColors = customer ? getCustomerColors(customer).map(c => c.hex).filter(h => h && h !== '#f4f4f5') : [];
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
