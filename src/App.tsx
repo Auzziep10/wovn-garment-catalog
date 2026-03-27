@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage } from './services/geminiService';
@@ -620,11 +620,14 @@ export default function App() {
 
             <div className="flex items-center gap-4">
               {currentDeck && (
-                <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-full border border-zinc-100">
+                <button 
+                  onClick={() => setView('deck-view')}
+                  className="hidden lg:flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer rounded-full border border-zinc-100"
+                >
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Active Deck:</span>
                   <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-900">{currentDeck.name}</span>
-                </div>
+                </button>
               )}
 
               <Search size={20} className="text-zinc-400 cursor-pointer hover:text-zinc-900 transition-colors" />
@@ -892,6 +895,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
+  const [expandedSection, setExpandedSection] = useState<string | null>('fabric');
 
   const displayedGarments = [...garments];
   if (sortOrder === 'asc') {
@@ -1047,23 +1051,151 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   </div>
 
                   {viewingGarment.supplier_link && (
-                    <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-block text-xs uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-6 border-b border-zinc-200 hover:border-zinc-900 pb-1">
+                    <a href={viewingGarment.supplier_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold text-zinc-500 hover:text-zinc-900 transition-colors mb-8 border border-zinc-200 hover:border-zinc-900 px-4 py-2 rounded-full">
                       Procurement Source ↗
                     </a>
                   )}
 
-                  <div className="text-zinc-500 text-sm md:text-md leading-relaxed mb-8 md:mb-12 py-4 md:py-6 border-t border-zinc-100 grid grid-cols-2 gap-y-6 gap-x-8">
-                    {viewingGarment.fabric_details && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fabric</strong>{viewingGarment.fabric_details}</div>}
-                    {viewingGarment.fabric_finish && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Finish</strong>{viewingGarment.fabric_finish}</div>}
-                    {viewingGarment.care_instructions && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Care</strong>{viewingGarment.care_instructions}</div>}
-                    {viewingGarment.fabric_weight_gsm && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Weight</strong>{viewingGarment.fabric_weight_gsm}</div>}
-                    {viewingGarment.fit && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Fit</strong>{viewingGarment.fit}</div>}
-                    {viewingGarment.moq && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">MOQ</strong>{viewingGarment.moq} Units</div>}
-                    {viewingGarment.turn_time && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Turn Time</strong>{viewingGarment.turn_time}</div>}
-                    {viewingGarment.decoration_method && <div><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Decoration</strong>{viewingGarment.decoration_method}</div>}
-                    {viewingGarment.sizes && viewingGarment.sizes.length > 0 && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Sizes</strong>{viewingGarment.sizes.join(', ')}</div>}
-                    {viewingGarment.available_colors && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Colors</strong>{viewingGarment.available_colors}</div>}
-                    {viewingGarment.description && <div className="col-span-2"><strong className="text-zinc-900 text-xs uppercase tracking-widest block mb-1">Notes</strong>{viewingGarment.description}</div>}
+                  {/* At a Glance Specs */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 bg-zinc-50 rounded-2xl p-6">
+                    {viewingGarment.moq && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">MOQ</span>
+                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.moq} Units</span>
+                      </div>
+                    )}
+                    {viewingGarment.turn_time && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Turn Time</span>
+                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.turn_time}</span>
+                      </div>
+                    )}
+                    {viewingGarment.fit && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Fit</span>
+                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.fit}</span>
+                      </div>
+                    )}
+                    {viewingGarment.fabric_weight_gsm && (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Weight</span>
+                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.fabric_weight_gsm}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Collapsible Sections */}
+                  <div className="mb-10 border-t border-zinc-100">
+                    {(viewingGarment.fabric_details || viewingGarment.fabric_finish) && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === 'fabric' ? null : 'fabric')}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Fabric & Finish</span>
+                          {expandedSection === 'fabric' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === 'fabric' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed space-y-4">
+                                {viewingGarment.fabric_details && <div><strong className="text-zinc-900 block mb-1">Material</strong>{viewingGarment.fabric_details}</div>}
+                                {viewingGarment.fabric_finish && <div><strong className="text-zinc-900 block mb-1">Finish</strong>{viewingGarment.fabric_finish}</div>}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {viewingGarment.care_instructions && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === 'care' ? null : 'care')}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Care Instructions</span>
+                          {expandedSection === 'care' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === 'care' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed">
+                                {viewingGarment.care_instructions}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {(viewingGarment.decoration_method || viewingGarment.available_colors) && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === 'customization' ? null : 'customization')}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Customization</span>
+                          {expandedSection === 'customization' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === 'customization' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed space-y-4">
+                                {viewingGarment.decoration_method && <div><strong className="text-zinc-900 block mb-1">Decoration Methods</strong>{viewingGarment.decoration_method}</div>}
+                                {viewingGarment.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Colors</strong>{viewingGarment.available_colors}</div>}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {viewingGarment.sizes && viewingGarment.sizes.length > 0 && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === 'sizing' ? null : 'sizing')}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Sizing</span>
+                          {expandedSection === 'sizing' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === 'sizing' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed">
+                                <div className="flex flex-wrap gap-2">
+                                  {viewingGarment.sizes.map(size => (
+                                    <span key={size} className="px-3 py-1 bg-zinc-100 rounded text-xs font-bold text-zinc-700 uppercase tracking-wider">{size}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {viewingGarment.description && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === 'notes' ? null : 'notes')}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Notes</span>
+                          {expandedSection === 'notes' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === 'notes' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed">
+                                {viewingGarment.description}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-4">
@@ -2108,6 +2240,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [activeVariations, setActiveVariations] = useState<Record<number, string>>({});
   const [generatingSceneForItem, setGeneratingSceneForItem] = useState<DeckItem | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
+  const [isGarmentSelectorOpen, setIsGarmentSelectorOpen] = useState(false);
+  const [libraryGarments, setLibraryGarments] = useState<Garment[]>([]);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -2118,6 +2252,36 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   useEffect(() => {
     fetchItems();
   }, [deck.id]);
+
+  useEffect(() => {
+    if (isGarmentSelectorOpen && libraryGarments.length === 0) {
+      fetch('/api/garments').then(res => res.json()).then(setLibraryGarments);
+    }
+  }, [isGarmentSelectorOpen]);
+
+  const toggleGarmentInDeck = async (garment: Garment) => {
+    const existingItem = items.find(i => i.garment_id === garment.id);
+    if (existingItem) {
+      // Remove it
+      await fetch(`/api/deck-items/${existingItem.id}`, { method: 'DELETE' });
+      setItems(prev => prev.filter(i => i.id !== existingItem.id));
+    } else {
+      // Add it
+      const res = await fetch(`/api/decks/${deck.id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          garment_id: garment.id,
+          mock_image: garment.image,
+          order_index: items.length,
+          variations: garment.images || []
+        })
+      });
+      if (res.ok) {
+        fetchItems(); // refresh to get the new item with ID
+      }
+    }
+  };
 
   const [sortBy, setSortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
 
@@ -2318,6 +2482,73 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             onSave={handleSaveModelScene}
           />
         )}
+        {isGarmentSelectorOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 md:p-6"
+            onClick={() => setIsGarmentSelectorOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-8 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                <div>
+                  <h2 className="font-serif text-3xl mb-1">Garment Library</h2>
+                  <p className="text-zinc-500 text-sm">Select items to add or remove them from <strong>{deck.name}</strong></p>
+                </div>
+                <button onClick={() => setIsGarmentSelectorOpen(false)} className="p-3 bg-white hover:bg-zinc-100 rounded-full transition-colors shadow-sm">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto bg-zinc-50 flex-1 hide-scrollbar">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {libraryGarments.map(garment => {
+                    const isInDeck = items.some(i => i.garment_id === garment.id);
+                    return (
+                      <div 
+                        key={garment.id}
+                        onClick={() => toggleGarmentInDeck(garment)}
+                        className={`bg-white rounded-2xl cursor-pointer transition-all duration-300 relative border-2 overflow-hidden ${isInDeck ? 'border-emerald-500 shadow-md ring-4 ring-emerald-500/20' : 'border-transparent hover:border-zinc-300 hover:shadow-lg'}`}
+                      >
+                        <div className="aspect-[4/5] p-6 relative">
+                          <img src={garment.image} alt={garment.name} className="w-full h-full object-contain mix-blend-multiply" />
+                          <div className={`absolute inset-0 bg-black/5 transition-opacity ${isInDeck ? 'opacity-0' : 'opacity-0 hover:opacity-100'}`} />
+                        </div>
+                        <div className="p-5 border-t border-zinc-100 bg-white">
+                          <h3 className="font-serif text-lg leading-tight mb-1 line-clamp-1">{garment.name}</h3>
+                          <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">{garment.category}</p>
+                        </div>
+                        
+                        {/* Status indicators */}
+                        <div className="absolute top-3 right-3 z-10">
+                          {isInDeck ? (
+                            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-md">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 bg-white/80 border border-zinc-200 rounded-full flex items-center justify-center text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-900 hover:text-white hover:border-zinc-900 group-hover:opacity-100 shadow-sm backdrop-blur-md">
+                              <Plus size={16} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {libraryGarments.length === 0 && (
+                  <div className="text-center py-20 text-zinc-400 italic font-serif">Loading library...</div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
@@ -2363,7 +2594,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 <Grid size={14} /> Grid
               </button>
             </div>
-            <label className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors cursor-pointer flex items-center gap-2">
+            <button
+              onClick={() => setIsGarmentSelectorOpen(true)}
+              className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Plus size={14} /> Add Library Item
+            </button>
+            <label className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors cursor-pointer flex items-center gap-2 shadow-sm">
               <Upload size={14} /> Custom Item
               <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
             </label>
