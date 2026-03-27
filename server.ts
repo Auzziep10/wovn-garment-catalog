@@ -398,6 +398,7 @@ app.get("/api/decks/:id", async (req, res) => {
         garment_name: itemData.custom_name || (garmentData ? garmentData.name : "Unknown"),
         garment_description: itemData.custom_description || (garmentData ? garmentData.description : ""),
         garment_price: itemData.custom_price || (garmentData ? garmentData.price : 0),
+        mockup_status: itemData.mockup_status || (garmentData ? garmentData.mockup_status : null),
         original_image: garmentData ? garmentData.image : null,
         category: garmentData ? garmentData.category : null,
         categories: garmentData ? garmentData.categories : null,

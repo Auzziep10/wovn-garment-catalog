@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import useMeasure from 'react-use-measure';
 import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
-  Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft,
+  Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp
 } from 'lucide-react';
@@ -116,6 +116,7 @@ export interface DeckItem {
   custom_sizes?: string;
   variations?: string[];
   order_index?: number;
+  mockup_status?: 'New Mock Needed' | 'Working' | 'Final Mock Uploaded' | null;
   category?: string;
   categories?: Category[];
   gender?: string;
@@ -2315,7 +2316,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           garment_id: garment.id,
           mock_image: garment.image,
           order_index: items.length,
-          variations: garment.images || []
+          variations: Array.from(new Set(garment.images || []))
         })
       });
       if (res.ok) {
@@ -2679,85 +2680,100 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2 font-bold">Presentation Deck</p>
             <h2 className="editorial-title">{deck.name}</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
-            <div className="flex items-center gap-2 mr-4">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent border-b border-zinc-200 py-1 text-sm font-medium focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-700"
-              >
-                <option value="default">Custom Order</option>
-                <option value="category">Category</option>
-                <option value="gender">Gender</option>
-                <option value="type">Type</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2 mr-4 bg-white border border-zinc-200 p-1 rounded-full shadow-sm">
-              <button
-                onClick={() => setShowPricing(!showPricing)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${showPricing ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
-              >
-                {showPricing ? 'Pricing On' : 'Pricing Off'}
-              </button>
-              <button
-                onClick={() => setDisplayMode('presentation')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
-              >
-                <List size={14} /> Presentation
-              </button>
-              <button
-                onClick={() => setDisplayMode('grid')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'grid' ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
-              >
-                <Grid size={14} /> Grid
-              </button>
-            </div>
-            <button
-              onClick={() => setIsGarmentSelectorOpen(true)}
-              className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors flex items-center gap-2 shadow-sm"
-            >
-              <Plus size={14} /> Add Library Item
-            </button>
-            <label className="bg-white border border-zinc-200 px-6 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors cursor-pointer flex items-center gap-2 shadow-sm">
-              <Upload size={14} /> Custom Item
-              <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
-            </label>
-            <button
-              onClick={async () => {
-                try {
-                  // @ts-ignore
-                  const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
-                  const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
-                  const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+          <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between w-full gap-4 mt-8">
+            
+            {/* View Controls Group */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 bg-white border border-zinc-200 px-4 py-2 rounded-full shadow-sm">
+                <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent text-[10px] uppercase tracking-widest font-bold focus:outline-none cursor-pointer text-zinc-900 min-w-[110px]"
+                >
+                  <option value="default">Custom Order</option>
+                  <option value="category">Category</option>
+                  <option value="gender">Gender</option>
+                  <option value="type">Type</option>
+                </select>
+              </div>
 
-                  if (!response.ok) throw new Error('Shortening failed');
+              <div className="flex items-center gap-1 bg-white border border-zinc-200 p-1.5 rounded-full shadow-sm">
+                <button
+                  onClick={() => setShowPricing(!showPricing)}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${showPricing ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                >
+                  {showPricing ? 'Pricing On' : 'Pricing Off'}
+                </button>
+              </div>
 
-                  const shortUrl = await response.text();
-                  await navigator.clipboard.writeText(shortUrl);
-                  alert('Anonymous share link copied to clipboard!');
-                } catch (err) {
-                  // Fallback if the shortener API fails
-                  // @ts-ignore
-                  const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
-                  const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
-                  navigator.clipboard.writeText(url).then(() => {
-                    alert('Share link copied to clipboard! (Fallback original URL)');
-                  }).catch(() => {
-                    alert('Failed to copy link. Please manually copy:' + url);
-                  });
-                }
-              }}
-              className="bg-white border border-zinc-200 px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:border-zinc-900 transition-colors"
-            >
-              Share Link
-            </button>
-            <button
-              onClick={() => onPresent()}
-              className="bg-zinc-900 text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
-            >
-              Present View
-            </button>
+              <div className="flex items-center gap-1 bg-white border border-zinc-200 p-1.5 rounded-full shadow-sm">
+                <button
+                  onClick={() => setDisplayMode('presentation')}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'presentation' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                >
+                  <List size={14} /> List
+                </button>
+                <button
+                  onClick={() => setDisplayMode('grid')}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-[10px] uppercase tracking-widest font-bold ${displayMode === 'grid' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                >
+                  <Grid size={14} /> Grid
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons Group */}
+            <div className="flex flex-wrap items-center gap-1 bg-white border border-zinc-200 p-1.5 rounded-full shadow-sm">
+              <button
+                onClick={() => setIsGarmentSelectorOpen(true)}
+                className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors flex items-center gap-2"
+              >
+                <Plus size={14} /> Add Library Item
+              </button>
+              <label className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer flex items-center gap-2">
+                <Upload size={14} /> Custom Item
+                <input type="file" className="hidden" accept="image/*" onChange={handleUploadExternal} />
+              </label>
+              
+              <div className="w-[1px] h-6 bg-zinc-200 mx-1 hidden sm:block" />
+              
+              <button
+                onClick={async () => {
+                  try {
+                    // @ts-ignore
+                    const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                    const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
+                    const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+
+                    if (!response.ok) throw new Error('Shortening failed');
+
+                    const shortUrl = await response.text();
+                    await navigator.clipboard.writeText(shortUrl);
+                    alert('Anonymous share link copied to clipboard!');
+                  } catch (err) {
+                    // Fallback
+                    // @ts-ignore
+                    const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                    const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      alert('Share link copied to clipboard! (Fallback original URL)');
+                    }).catch(() => {
+                      alert('Failed to copy link. Please manually copy:' + url);
+                    });
+                  }
+                }}
+                className="px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+              >
+                Share Link
+              </button>
+              <button
+                onClick={() => onPresent()}
+                className="bg-zinc-900 text-white px-6 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2"
+              >
+                <Presentation size={14} /> Present View
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2860,21 +2876,15 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </div>
                   </div>
 
-                  {item.variations && item.variations.length > 0 && (
+                  {Array.from(new Set([item.mock_image, ...(item.variations || [])])).length > 1 && (
                     <div className="pt-8 border-t border-zinc-200">
                       <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-4">View Variation</p>
                       <div className="flex gap-2 lg:gap-3 flex-wrap">
-                        <button
-                          onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
-                          className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
-                        >
-                          <img src={item.mock_image} className="w-full h-full object-contain" />
-                        </button>
-                        {item.variations.map((v, idx) => (
+                        {Array.from(new Set([item.mock_image, ...(item.variations || [])])).map((v, idx) => (
                           <button
                             key={idx}
                             onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
-                            className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
+                            className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${(!activeVariations[item.id] && v === item.mock_image) || activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm scale-105' : 'border-zinc-200 hover:border-zinc-400'}`}
                           >
                             <img src={v} className="w-full h-full object-contain" />
                           </button>
@@ -2896,43 +2906,40 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                className={`group relative rounded-2xl ${sortBy === 'default' ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
-                draggable={sortBy === 'default'}
-                onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
-                onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent)}
-                onDrop={(e) => handleDrop(e as unknown as React.DragEvent, item.id)}
-                onDragEnd={handleDragEnd}
+                className={`group relative rounded-2xl transition-all duration-300 ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
               >
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
-                  {sortBy === 'default' && (
-                    <div className="absolute top-3 left-3 z-10 px-3 py-1.5 bg-black/40 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1.5 backdrop-blur-sm text-[10px] uppercase font-bold tracking-widest">
-                      <GripHorizontal size={14} /> Drag to Reorder
+                  <div className="absolute top-4 right-4 z-10 pointer-events-auto">
+                    <div className="relative flex h-3 w-3 group/status">
+                      {(item.mockup_status === 'Working' || item.mockup_status === 'New Mock Needed') && (
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${item.mockup_status === 'New Mock Needed' ? 'bg-red-400' : 'bg-yellow-400'}`} />
+                      )}
+                      <span className={`relative inline-flex rounded-full h-3 w-3 border border-white/50 shadow-sm ${item.mockup_status === 'New Mock Needed' ? 'bg-red-500' : item.mockup_status === 'Working' ? 'bg-yellow-500' : 'bg-emerald-500'}`} />
+                      <div className="absolute top-full right-0 mt-2 whitespace-nowrap bg-zinc-900 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover/status:opacity-100 transition-opacity pointer-events-none z-50">
+                        {item.mockup_status || 'Final Mock Uploaded'}
+                      </div>
                     </div>
-                  )}
+                  </div>
                   <img
                     src={activeVariations[item.id] || item.mock_image}
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
                     className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
+                    {sortBy === 'default' && (
+                      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
+                        <button onClick={() => handleMoveItem(item.id, 'up')} className="bg-white/90 text-zinc-900 p-2 rounded-full shadow hover:bg-white hover:scale-110 transition-all" title="Move Left"><ArrowLeft size={16} /></button>
+                        <button onClick={() => handleMoveItem(item.id, 'down')} className="bg-white/90 text-zinc-900 p-2 rounded-full shadow hover:bg-white hover:scale-110 transition-all" title="Move Right"><ArrowRight size={16} /></button>
+                      </div>
+                    )}
                     <div className="absolute top-1/2 right-4 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
-                      <button
-                        onClick={() => handleMockupEdit(item)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
-                        title="Edit Mockup"
-                      >
-                        <Wand2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => setGeneratingSceneForItem(item)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
-                        title="Generate Scene"
-                      >
-                        <Camera size={18} />
-                      </button>
+                      {/* Generative tools hidden per user request:
+                      <button onClick={() => handleMockupEdit(item)} className="..." title="Edit Mockup"><Wand2 size={18} /></button>
+                      <button onClick={() => setGeneratingSceneForItem(item)} className="..." title="Generate Scene"><Camera size={18} /></button>
+                      */}
                       <button
                         onClick={() => setEditingItem(item)}
-                        className="bg-white text-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="bg-white text-zinc-900 p-3 rounded-full shadow hover:bg-zinc-900 hover:text-white transition-colors"
                         title="Edit Details"
                       >
                         <Edit2 size={18} />
@@ -2956,19 +2963,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   </div>
                 </div>
 
-                {item.variations && item.variations.length > 0 && (
+                {Array.from(new Set([item.mock_image, ...(item.variations || [])])).length > 1 && (
                   <div className="flex gap-1.5 mb-3 px-1 overflow-x-auto hide-scrollbar">
-                    <button
-                      onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: item.mock_image }))}
-                      className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${(!activeVariations[item.id] || activeVariations[item.id] === item.mock_image) ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
-                    >
-                      <img src={item.mock_image} className="w-full h-full object-contain" />
-                    </button>
-                    {item.variations.map((v, idx) => (
+                    {Array.from(new Set([item.mock_image, ...(item.variations || [])])).map((v, idx) => (
                       <button
                         key={idx}
                         onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
-                        className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
+                        className={`w-8 h-8 rounded border overflow-hidden p-0.5 transition-all flex-shrink-0 ${(!activeVariations[item.id] && v === item.mock_image) || activeVariations[item.id] === v ? 'border-zinc-900 shadow-sm' : 'border-zinc-200 hover:border-zinc-400'}`}
                       >
                         <img src={v} className="w-full h-full object-contain" />
                       </button>
@@ -3048,6 +3049,10 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [variations, setVariations] = useState<string[]>(item.variations || []);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
+  const [mockupStatus, setMockupStatus] = useState<'New Mock Needed' | 'Working' | 'Final Mock Uploaded'>(
+    (item.mockup_status as 'New Mock Needed' | 'Working' | 'Final Mock Uploaded') || 'Final Mock Uploaded'
+  );
+
   const brandColors = customer ? [customer.color1, customer.color2, customer.color3].filter(c => c && c !== '#f4f4f5') as string[] : [];
 
   const handleGenerateVariationForColor = async (color: string) => {
@@ -3103,141 +3108,175 @@ function EditItemModal({ item, customer, onClose, onSave }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-6"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 md:p-6 overflow-y-auto pt-safe pb-safe outline-none"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-[#fafafa] rounded-[2rem] shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] md:max-h-[95vh] relative"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+        <div className="flex items-center justify-between px-6 md:px-8 py-4 bg-white rounded-t-2xl border-b border-zinc-100 shrink-0 sticky top-0 z-20">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Client Customization</p>
-            <h3 className="font-serif text-2xl">Edit Item Details</h3>
+            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Client Customization</p>
+            <h2 className="font-serif text-xl md:text-2xl">Edit Item Details</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+          <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900">
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div className="space-y-6">
-              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center p-4 relative group">
-                <img src={mockImage} className="w-full h-full object-contain" />
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <div className="bg-white text-zinc-900 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
-                    <Upload size={14} /> Replace Main Photo
-                  </div>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
-                </label>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Variations (Colors/Mockups)</p>
-                  {brandColors.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Auto-Bake:</span>
-                      <div className="flex gap-1.5">
-                        {brandColors.map(c => (
-                          <button
-                            key={c}
-                            onClick={() => handleGenerateVariationForColor(c)}
-                            disabled={generatingColor !== null}
-                            className="w-5 h-5 rounded-full border border-zinc-200 hover:scale-110 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
-                            style={{ backgroundColor: c }}
-                            title={`Generate ${c} variant`}
-                          >
-                            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                            {generatingColor === c && <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin mix-blend-difference absolute z-10" />}
-                          </button>
-                        ))}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 shrink min-h-0 custom-scrollbar">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+            
+            {/* LEFT COLUMN */}
+            <div className="lg:col-span-1 flex flex-col gap-6">
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-4 block border-b border-zinc-100 pb-3">Item Imagery</label>
+                
+                <div className="space-y-6">
+                  <div className="aspect-[3/4] bg-zinc-50 rounded-lg overflow-hidden border-2 border-zinc-200 flex items-center justify-center p-4 relative group">
+                    <img src={mockImage} className="w-full h-full object-contain" />
+                    <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
+                      <div className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm">
+                        <Upload size={14} /> Replace
                       </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
+                    </label>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Variations (Colors/Mockups)</p>
+                      {brandColors.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400">Auto-Bake:</span>
+                          <div className="flex gap-1.5">
+                            {brandColors.map(c => (
+                              <button
+                                key={c}
+                                onClick={() => handleGenerateVariationForColor(c)}
+                                disabled={generatingColor !== null}
+                                className="w-4 h-4 rounded-full border border-zinc-200 hover:scale-125 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
+                                style={{ backgroundColor: c }}
+                                title={`Generate ${c} variant`}
+                              >
+                                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                                {generatingColor === c && <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin mix-blend-difference absolute z-10" />}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {variations.map((v, i) => (
-                    <div key={i} className="w-16 h-16 border border-zinc-200 rounded-xl overflow-hidden relative group">
-                      <img src={v} className="w-full h-full object-contain p-1" />
-                      <button
-                        title="Remove Variation"
-                        onClick={() => setVariations(variations.filter((_, index) => index !== i))}
-                        className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                      <button
-                        title="Set as Main Image"
-                        onClick={() => {
-                          setMockImage(v);
-                          setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
-                        }}
-                        className="absolute top-0 right-0 p-1 bg-zinc-900 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl text-[8px] uppercase font-bold tracking-widest"
-                      >
-                        Main
-                      </button>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="w-12 h-12 border-2 border-zinc-900 rounded-lg overflow-hidden shrink-0 flex items-center justify-center relative group p-0.5">
+                         <img src={mockImage} className="w-full h-full object-contain" />
+                         <div className="absolute bottom-1 right-1">
+                           <div className="w-2 h-2 bg-emerald-500 rounded-full border border-white" />
+                         </div>
+                      </div>
+                      {variations.map((v, i) => (
+                        <div key={i} className="w-12 h-12 border border-zinc-200 rounded-lg overflow-hidden shrink-0 relative group p-0.5">
+                          <img src={v} className="w-full h-full object-contain" />
+                          <button
+                            title="Remove Variation"
+                            onClick={() => setVariations(variations.filter((_, index) => index !== i))}
+                            className="absolute inset-0 bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                          <button
+                            title="Set as Main Image"
+                            onClick={() => {
+                              setMockImage(v);
+                              setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
+                            }}
+                            className="absolute top-0 right-0 p-1 bg-zinc-900 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-lg text-[8px] uppercase font-bold tracking-widest"
+                          >
+                            Main
+                          </button>
+                        </div>
+                      ))}
+                      <label className="w-12 h-12 border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-zinc-400 hover:bg-zinc-50 shrink-0 transition-colors text-zinc-400 hover:text-zinc-600" title="Add Variation">
+                        <Plus size={14} />
+                        <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
+                      </label>
                     </div>
-                  ))}
-                  <label className="w-16 h-16 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center cursor-pointer hover:border-zinc-900 transition-colors text-zinc-400 hover:text-zinc-900" title="Add Variation">
-                    <Plus size={16} />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Display Name</label>
-                <input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
-                />
+            {/* RIGHT COLUMN */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Core Details</label>
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Display Name</label>
+                    <input
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Mockup Status</label>
+                      <select 
+                        value={mockupStatus}
+                        onChange={e => setMockupStatus(e.target.value as any)}
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                      >
+                        <option value="New Mock Needed">New Mock Needed</option>
+                        <option value="Working">Working</option>
+                        <option value="Final Mock Uploaded">Final Mock Uploaded</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Price ($)</label>
+                      <input
+                        type="number"
+                        value={price}
+                        onChange={e => setPrice(e.target.value)}
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Size Spread</label>
+                      <input
+                        value={sizes}
+                        onChange={e => setSizes(e.target.value)}
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                        placeholder="XS, S, M, L, XL"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Price ($)</label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Size Spread (comma separated)</label>
-                <input
-                  value={sizes}
-                  onChange={e => setSizes(e.target.value)}
-                  className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all"
-                  placeholder="XS, S, M, L, XL"
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Item Description</label>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none"
+                  rows={4}
                 />
               </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Description</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none"
-              rows={4}
-            />
           </div>
         </div>
 
-        <div className="p-6 md:p-8 border-t border-zinc-100 flex gap-4">
+        <div className="px-6 md:px-8 py-5 bg-white border-t border-zinc-100 flex gap-4 shrink-0 sm:justify-end">
           <button
             onClick={onClose}
-            className="flex-1 bg-zinc-50 text-zinc-900 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
+            className="flex-1 sm:flex-none sm:w-32 bg-zinc-50 text-zinc-900 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-100 transition-colors"
           >
             Cancel
           </button>
@@ -3250,14 +3289,15 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_price: parseFloat(price),
                   custom_sizes: sizes,
                   mock_image: mockImage,
-                  variations: variations
+                  variations: variations,
+                  mockup_status: mockupStatus
                 });
               } catch (err: any) {
                 console.error(err);
                 alert("Failed to save changes:" + (err.message || 'Unknown error'));
               }
             }}
-            className="flex-1 bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
+            className="flex-1 sm:flex-none sm:min-w-[160px] bg-zinc-900 text-white py-3 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors"
           >
             Save Changes
           </button>
