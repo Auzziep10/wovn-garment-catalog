@@ -23,7 +23,7 @@ function HoverTooltip({ content }: { content: string }) {
 
 export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear' | 'Swimwear' | 'Elevated Basics';
 export type Gender = 'Male' | 'Female' | 'Accessories';
-export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other' | 'T-Shirt' | 'Hoodie' | 'Polo' | 'Pants' | 'Outerwear' | 'Swim' | 'Quarter Zip';
+export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other' | 'T-Shirt' | 'Hoodie' | 'Polo' | 'Pants' | 'Outerwear' | 'Swim' | 'Quarter Zip' | 'Long Sleeve';
 
 export interface Garment {
   id: number;
@@ -721,7 +721,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Type</h3>
                   <div className="flex flex-col gap-4">
-                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map((t) => (
+                    {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip', 'Long Sleeve'].map((t) => (
                       <button
                         key={t}
                         onClick={() => { setSelectedType(selectedType === t ? '' : t as GarmentType); setView('catalog'); }}
@@ -1456,6 +1456,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
             <option value="Outerwear">Outerwear</option>
             <option value="Swim">Swim</option>
             <option value="Quarter Zip">Quarter Zip</option>
+            <option value="Long Sleeve">Long Sleeve</option>
           </select>
           <select
             value={librarySortBy}
@@ -1702,7 +1703,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                               <div>
                                 <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Garment Type</label>
                                 <div className="flex flex-wrap gap-2">
-                                  {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip'].map(t => (
+                                  {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip', 'Long Sleeve'].map(t => (
                                     <label key={t} className="relative cursor-pointer">
                                       <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="peer sr-only" />
                                       <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
