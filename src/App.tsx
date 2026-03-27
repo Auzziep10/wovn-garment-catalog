@@ -1084,27 +1084,29 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   )}
 
                   {/* At a Glance Specs */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 bg-zinc-50 rounded-2xl p-6">
-                    {viewingGarment.moq && (
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">MOQ</span>
-                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.moq} Units</span>
-                      </div>
-                    )}
-                    {viewingGarment.turn_time && (
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Turn Time</span>
-                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.turn_time}</span>
-                      </div>
-                    )}
+                  {(viewingGarment.moq || viewingGarment.turn_time || viewingGarment.fabric_weight_gsm) && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 bg-zinc-50 rounded-2xl p-6">
+                      {viewingGarment.moq && (
+                        <div>
+                          <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">MOQ</span>
+                          <span className="text-sm font-medium text-zinc-900">{viewingGarment.moq} Units</span>
+                        </div>
+                      )}
+                      {viewingGarment.turn_time && (
+                        <div>
+                          <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Turn Time</span>
+                          <span className="text-sm font-medium text-zinc-900">{viewingGarment.turn_time}</span>
+                        </div>
+                      )}
 
-                    {viewingGarment.fabric_weight_gsm && (
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Weight</span>
-                        <span className="text-sm font-medium text-zinc-900">{viewingGarment.fabric_weight_gsm}</span>
-                      </div>
-                    )}
-                  </div>
+                      {viewingGarment.fabric_weight_gsm && (
+                        <div>
+                          <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Weight</span>
+                          <span className="text-sm font-medium text-zinc-900">{viewingGarment.fabric_weight_gsm}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Collapsible Sections */}
                   <div className="mb-10 border-t border-zinc-100">
