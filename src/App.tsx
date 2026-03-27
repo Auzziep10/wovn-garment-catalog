@@ -203,6 +203,9 @@ export default function App() {
   const [selectedGarment, setSelectedGarment] = useState<Garment | null>(null);
   const [selectedDeckItem, setSelectedDeckItem] = useState<DeckItem | null>(null);
 
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
   const [isNewDeckModalOpen, setIsNewDeckModalOpen] = useState(false);
   const [garmentToAddToDeck, setGarmentToAddToDeck] = useState<Garment | null>(null);
@@ -630,16 +633,34 @@ export default function App() {
                 </button>
               )}
 
-              <Search size={20} className="text-zinc-400 cursor-pointer hover:text-zinc-900 transition-colors" />
-              <div
-                className="relative cursor-pointer group"
-                onClick={() => { if (currentDeck) setView('deck-view'); else setView('customers'); }}
-              >
-                <ShoppingBag size={20} className="text-zinc-400 group-hover:text-zinc-900 transition-colors" />
-                {currentDeck && (
-                  <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {currentDeck.items?.length || 0}
-                  </span>
+              <div className="flex items-center gap-2">
+                {isSearchOpen || globalSearchQuery ? (
+                  <div className="flex items-center gap-2 border border-zinc-200 rounded-full px-4 py-2 bg-white flex-1 max-w-[200px] md:max-w-xs transition-all duration-300">
+                    <Search size={14} className="text-zinc-400" />
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Search catalog..."
+                      value={globalSearchQuery}
+                      onChange={(e) => {
+                        setGlobalSearchQuery(e.target.value);
+                        if (view !== 'catalog') setView('catalog');
+                      }}
+                      onBlur={(e) => {
+                        if (!e.target.value) setIsSearchOpen(false);
+                      }}
+                      className="bg-transparent border-none outline-none text-xs w-28 md:w-48 transition-all text-zinc-900 placeholder:text-zinc-400 font-medium"
+                    />
+                    {globalSearchQuery && (
+                      <button onMouseDown={(e) => { e.preventDefault(); setGlobalSearchQuery(''); setIsSearchOpen(false); }}>
+                        <X size={14} className="text-zinc-400 hover:text-zinc-900" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+                    <Search size={20} className="text-zinc-400" />
+                  </button>
                 )}
               </div>
             </div>
@@ -737,7 +758,12 @@ export default function App() {
       <main className="flex-1">
         {view === 'catalog' && (
           <CatalogView
-            garments={garments}
+            garments={garments.filter(g => 
+              !globalSearchQuery || 
+              g.name.toLowerCase().includes(globalSearchQuery.toLowerCase()) || 
+              (g.category && g.category.toLowerCase().includes(globalSearchQuery.toLowerCase())) ||
+              (g.description && g.description.toLowerCase().includes(globalSearchQuery.toLowerCase()))
+            )}
             category={selectedCategory}
             gender={selectedGender}
             type={selectedType}
