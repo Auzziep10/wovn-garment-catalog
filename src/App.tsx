@@ -2933,8 +2933,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
                     )}
                     <div className="absolute top-1/2 right-4 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
-                      {/* Generative tools hidden per user request:
-                      <button onClick={() => handleMockupEdit(item)} className="..." title="Edit Mockup"><Wand2 size={18} /></button>
+                      <button
+                        onClick={() => handleMockupEdit(item)}
+                        className="bg-white text-zinc-900 p-3 rounded-full shadow hover:bg-zinc-900 hover:text-white transition-colors"
+                        title="Edit Mockup"
+                      >
+                        <Wand2 size={18} />
+                      </button>
+                      {/* Generative scene hidden per user request:
                       <button onClick={() => setGeneratingSceneForItem(item)} className="..." title="Generate Scene"><Camera size={18} /></button>
                       */}
                       <button
