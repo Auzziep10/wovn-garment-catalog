@@ -51,6 +51,7 @@ export interface Garment {
   msrp?: number;
   moq?: number;
   turn_time?: string;
+  mockup_status?: 'New Mock Needed' | 'Working' | 'Final Mock Uploaded';
 }
 
 export interface BrandColor {
@@ -1348,6 +1349,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       types: formData.getAll('types'),
       type: formData.getAll('types')[0] || 'Tops',
       supplier_link: formData.get('supplier_link'),
+      mockup_status: formData.get('mockup_status'),
       image: images[0],
       images: images
     };
@@ -1460,7 +1462,15 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
           <div key={g.id} onClick={() => { handleEditClick(g); setIsModalOpen(true); }} className="group cursor-pointer">
             <div className="aspect-[3/4] bg-white border border-zinc-100 rounded-2xl mb-3 overflow-hidden relative shadow-sm hover:shadow-md transition-all">
               <img src={g.image} alt={g.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border border-black/5 text-zinc-400 hover:text-zinc-900 shadow-sm">
+              
+              {/* Mockup Status Indicator */}
+              {g.mockup_status && (
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                  <div className={`w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.15)] ${g.mockup_status === 'New Mock Needed' ? 'bg-red-500 animate-pulse' : g.mockup_status === 'Working' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} title={g.mockup_status} />
+                </div>
+              )}
+
+              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border border-black/5 text-zinc-400 hover:text-zinc-900 shadow-sm z-10">
                 <Edit2 size={14} />
               </div>
             </div>
@@ -1569,7 +1579,15 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                               </select>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Mockup Status</label>
+                              <select name="mockup_status" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.mockup_status || "Final Mock Uploaded"}>
+                                <option value="New Mock Needed">New Mock Needed</option>
+                                <option value="Working">Working</option>
+                                <option value="Final Mock Uploaded">Final Mock Uploaded</option>
+                              </select>
+                            </div>
                             <div>
                               <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MOQ</label>
                               <input name="moq" type="number" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.moq || ""} placeholder="e.g. 50" />
