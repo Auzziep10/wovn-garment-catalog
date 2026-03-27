@@ -2762,7 +2762,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     });
                   }
                 }}
-                className="bg-white border border-zinc-200 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold text-zinc-600 hover:text-zinc-900 hover:border-zinc-400 transition-colors shadow-sm"
+                className="bg-zinc-900 text-white px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors shadow-sm"
               >
                 Share Link
               </button>
