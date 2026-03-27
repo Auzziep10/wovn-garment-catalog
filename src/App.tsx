@@ -2348,6 +2348,22 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       setItems(prev => prev.filter(i => i.id !== existingItem.id));
     } else {
       // Add it
+      // Deduplicate variations by URL base path to prevent dynamic Firebase token mismatches creating phantom duplicates
+      const uniqueVariations: string[] = [];
+      const seenBases = new Set<string>();
+      
+      const mainBase = garment.image?.split('?')[0];
+      if (mainBase) seenBases.add(mainBase);
+
+      for (const img of (garment.images || [])) {
+        if (!img) continue;
+        const base = img.split('?')[0];
+        if (!seenBases.has(base)) {
+          seenBases.add(base);
+          uniqueVariations.push(img);
+        }
+      }
+
       const res = await fetch(`/api/decks/${deck.id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2355,7 +2371,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           garment_id: garment.id,
           mock_image: garment.image,
           order_index: items.length,
-          variations: Array.from(new Set(garment.images?.filter(img => img !== garment.image) || []))
+          variations: uniqueVariations
         })
       });
       if (res.ok) {
