@@ -2284,6 +2284,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [isGarmentSelectorOpen, setIsGarmentSelectorOpen] = useState(false);
   const [libraryGarments, setLibraryGarments] = useState<Garment[]>([]);
   const [expandedSelectorGarmentId, setExpandedSelectorGarmentId] = useState<number | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -2891,6 +2892,95 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </div>
                   )}
 
+                  {/* Collapsible Sections */}
+                  <div className="pt-8 border-t border-zinc-200">
+                    {(item.fabric_details || item.fabric_finish) && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === `${item.id}-fabric` ? null : `${item.id}-fabric`)}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Fabric & Finish</span>
+                          {expandedSection === `${item.id}-fabric` ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === `${item.id}-fabric` && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed space-y-4">
+                                {item.fabric_details && <div><strong className="text-zinc-900 block mb-1">Material</strong>{item.fabric_details}</div>}
+                                {item.fabric_finish && <div><strong className="text-zinc-900 block mb-1">Finish</strong>{item.fabric_finish}</div>}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {item.care_instructions && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === `${item.id}-care` ? null : `${item.id}-care`)}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Care Instructions</span>
+                          {expandedSection === `${item.id}-care` ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === `${item.id}-care` && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed">
+                                {item.care_instructions}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {(item.decoration_method || item.available_colors) && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === `${item.id}-customization` ? null : `${item.id}-customization`)}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Customization Options</span>
+                          {expandedSection === `${item.id}-customization` ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === `${item.id}-customization` && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed grid grid-cols-2 gap-6">
+                                {item.decoration_method && <div><strong className="text-zinc-900 block mb-1">Techniques</strong>{item.decoration_method}</div>}
+                                {item.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Thread/Ink Colors</strong>{item.available_colors}</div>}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {item.turn_time && (
+                      <div className="border-b border-zinc-100">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === `${item.id}-production` ? null : `${item.id}-production`)}
+                          className="w-full flex items-center justify-between py-5 text-xs uppercase tracking-widest font-bold text-zinc-900 hover:text-zinc-500 transition-colors"
+                        >
+                          <span>Production Details</span>
+                          {expandedSection === `${item.id}-production` ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <AnimatePresence>
+                          {expandedSection === `${item.id}-production` && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pb-6 text-sm text-zinc-500 leading-relaxed">
+                                <div><strong className="text-zinc-900 block mb-1">Estimated Turnaround</strong>{item.turn_time}</div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </motion.div>
             ))}
@@ -3046,9 +3136,9 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   onSave: (details: any) => void
 }) {
   const [name, setName] = useState(item.custom_name || item.garment_name || '');
-  const [description, setDescription] = useState(item.custom_description || item.garment_description || '');
-  const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || '');
-  const [sizes, setSizes] = useState(item.custom_sizes || 'XS,S,M,L,XL');
+  const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
+  const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || item.msrp?.toString() || item.cost_price?.toString() || '');
+  const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(item.variations || []);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
