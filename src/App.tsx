@@ -2242,6 +2242,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
   const [isGarmentSelectorOpen, setIsGarmentSelectorOpen] = useState(false);
   const [libraryGarments, setLibraryGarments] = useState<Garment[]>([]);
+  const [expandedSelectorGarmentId, setExpandedSelectorGarmentId] = useState<number | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -2509,35 +2510,113 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
               
               <div className="p-8 overflow-y-auto bg-zinc-50 flex-1 hide-scrollbar">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {libraryGarments.map(garment => {
+                  {libraryGarments.map((garment, idx) => {
                     const isInDeck = items.some(i => i.garment_id === garment.id);
+                    const isExpanded = expandedSelectorGarmentId === garment.id;
+                    // Determine safe side to expand: expand left if in last column of a 4/3 col layout
+                    const isRightEdge = (idx + 1) % 4 === 0 || ((idx + 1) % 3 === 0 && window.innerWidth < 1024);
+                    
                     return (
-                      <div 
-                        key={garment.id}
-                        onClick={() => toggleGarmentInDeck(garment)}
-                        className={`bg-white rounded-2xl cursor-pointer transition-all duration-300 relative border-2 overflow-hidden ${isInDeck ? 'border-emerald-500 shadow-md ring-4 ring-emerald-500/20' : 'border-transparent hover:border-zinc-300 hover:shadow-lg'}`}
-                      >
-                        <div className="aspect-[4/5] p-6 relative">
-                          <img src={garment.image} alt={garment.name} className="w-full h-full object-contain mix-blend-multiply" />
-                          <div className={`absolute inset-0 bg-black/5 transition-opacity ${isInDeck ? 'opacity-0' : 'opacity-0 hover:opacity-100'}`} />
+                      <div key={garment.id} className="relative z-0">
+                        {/* Main Garment Card */}
+                        <div 
+                          onClick={() => toggleGarmentInDeck(garment)}
+                          className={`bg-white rounded-2xl cursor-pointer transition-all duration-300 relative border-2 overflow-hidden ${isInDeck ? 'border-emerald-500 shadow-md ring-4 ring-emerald-500/20' : 'border-transparent hover:border-zinc-300 hover:shadow-lg'}`}
+                        >
+                          {/* Expansion Toggle Button */}
+                          <div 
+                            className={`absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center cursor-pointer shadow-sm border border-zinc-200 hover:bg-zinc-900 hover:text-white transition-all duration-300 text-zinc-400 opacity-0 group-hover:opacity-100 ${isExpanded ? 'opacity-100 bg-zinc-900 text-white !border-zinc-900 rotate-180' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedSelectorGarmentId(isExpanded ? null : garment.id);
+                            }}
+                          >
+                            <ChevronRight size={16} />
+                          </div>
+
+                          <div className="aspect-[4/5] p-6 relative group">
+                            <img src={garment.image} alt={garment.name} className="w-full h-full object-contain mix-blend-multiply" />
+                            <div className={`absolute inset-0 bg-black/5 transition-opacity ${isInDeck ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`} />
+                          </div>
+                          <div className="p-5 border-t border-zinc-100 bg-white group hover:bg-zinc-50 transition-colors">
+                            <h3 className="font-serif text-lg leading-tight mb-1 line-clamp-1">{garment.name}</h3>
+                            <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">{garment.category}</p>
+                          </div>
+                          
+                          {/* Status indicators */}
+                          <div className="absolute top-3 right-3 z-10 group cursor-pointer block">
+                            {isInDeck ? (
+                              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-md">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 bg-white/80 border border-zinc-200 rounded-full flex items-center justify-center text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-900 hover:text-white hover:border-zinc-900 group-hover:opacity-100 shadow-sm backdrop-blur-md">
+                                <Plus size={16} />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="p-5 border-t border-zinc-100 bg-white">
-                          <h3 className="font-serif text-lg leading-tight mb-1 line-clamp-1">{garment.name}</h3>
-                          <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">{garment.category}</p>
-                        </div>
-                        
-                        {/* Status indicators */}
-                        <div className="absolute top-3 right-3 z-10">
-                          {isInDeck ? (
-                            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-md">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 bg-white/80 border border-zinc-200 rounded-full flex items-center justify-center text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-900 hover:text-white hover:border-zinc-900 group-hover:opacity-100 shadow-sm backdrop-blur-md">
-                              <Plus size={16} />
-                            </div>
+
+                        {/* Expanding Details Popover */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ width: 0, opacity: 0 }}
+                              animate={{ width: 280, opacity: 1 }}
+                              exit={{ width: 0, opacity: 0 }}
+                              className={`absolute top-0 bottom-0 ${isRightEdge ? 'right-[105%]' : 'left-[105%]'} bg-white rounded-2xl shadow-2xl border border-zinc-200 z-[60] overflow-hidden`}
+                            >
+                              <div className="w-[280px] p-6 h-full flex flex-col hide-scrollbar overflow-y-auto">
+                                <div className="flex justify-between items-start mb-6">
+                                  <h4 className="font-serif text-xl">{garment.name}</h4>
+                                  <button onClick={() => setExpandedSelectorGarmentId(null)} className="p-1 hover:bg-zinc-100 rounded-full text-zinc-400 flex-shrink-0">
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="space-y-4 flex-1">
+                                  {(garment.msrp !== undefined || garment.price !== undefined) && (
+                                    <div>
+                                      <strong className="block text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">MSRP</strong>
+                                      <span className="text-sm font-medium text-zinc-900">${garment.msrp?.toFixed(2) || garment.price.toFixed(2)}</span>
+                                    </div>
+                                  )}
+                                  {garment.fabric_details && (
+                                    <div>
+                                      <strong className="block text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Fabric</strong>
+                                      <span className="text-xs text-zinc-700 leading-relaxed">{garment.fabric_details}</span>
+                                    </div>
+                                  )}
+                                  {garment.fit && (
+                                    <div>
+                                      <strong className="block text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Fit</strong>
+                                      <span className="text-xs text-zinc-700">{garment.fit}</span>
+                                    </div>
+                                  )}
+                                  {garment.sizes && garment.sizes.length > 0 && (
+                                    <div>
+                                      <strong className="block text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Sizes</strong>
+                                      <div className="flex flex-wrap gap-1">
+                                        {garment.sizes.map(s => <span key={s} className="px-1.5 py-0.5 bg-zinc-100 rounded text-[9px] uppercase font-bold text-zinc-600">{s}</span>)}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {garment.turn_time && (
+                                    <div>
+                                      <strong className="block text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Turn Time</strong>
+                                      <span className="text-xs text-zinc-700">{garment.turn_time}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => toggleGarmentInDeck(garment)}
+                                  className={`mt-6 w-full py-3 rounded-lg text-xs uppercase tracking-widest font-bold transition-colors ${isInDeck ? 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+                                >
+                                  {isInDeck ? 'Remove from Deck' : 'Add to Deck'}
+                                </button>
+                              </div>
+                            </motion.div>
                           )}
-                        </div>
+                        </AnimatePresence>
                       </div>
                     );
                   })}
