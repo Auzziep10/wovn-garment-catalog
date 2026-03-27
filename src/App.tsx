@@ -3083,17 +3083,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 className={`group relative rounded-2xl transition-all duration-300 ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
               >
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
-                  <div className="absolute top-4 right-4 z-10 pointer-events-auto">
-                    <div className="relative flex h-3 w-3 group/status">
-                      {(item.mockup_status === 'Working' || item.mockup_status === 'New Mock Needed') && (
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${item.mockup_status === 'New Mock Needed' ? 'bg-red-400' : 'bg-yellow-400'}`} />
-                      )}
-                      <span className={`relative inline-flex rounded-full h-3 w-3 border border-white/50 shadow-sm ${item.mockup_status === 'New Mock Needed' ? 'bg-red-500' : item.mockup_status === 'Working' ? 'bg-yellow-500' : 'bg-emerald-500'}`} />
-                      <div className="absolute top-full right-0 mt-2 whitespace-nowrap bg-zinc-900 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover/status:opacity-100 transition-opacity pointer-events-none z-50">
-                        {item.mockup_status || 'Final Mock Uploaded'}
-                      </div>
-                    </div>
-                  </div>
+
                   <img
                     src={activeVariations[item.id] || item.mock_image}
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
