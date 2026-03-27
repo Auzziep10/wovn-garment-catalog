@@ -1641,18 +1641,27 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Care Instructions</label>
                             <textarea name="care_instructions" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.care_instructions || ""} placeholder="e.g. Machine wash cold, tumble dry low" />
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Weight (GSM)</label>
                               <input name="fabric_weight_gsm" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.fabric_weight_gsm || ""} placeholder="e.g. 250 GSM" />
                             </div>
                             <div>
-                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Decoration Method</label>
-                              <input name="decoration_method" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.decoration_method || ""} placeholder="e.g. Screen Print..." />
-                            </div>
-                            <div>
                               <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Colors (CSV)</label>
                               <input name="available_colors" type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" defaultValue={editingGarment?.available_colors || ""} placeholder="Black, Navy, White" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Decoration Methods</label>
+                            <div className="flex flex-wrap gap-2">
+                              {['DTF', 'Vinyl', 'Heat Patch', 'Sew on Patch', 'Embroidery', 'Screen Print', 'Laser Engraving'].map(method => (
+                                <label key={method} className="relative cursor-pointer">
+                                  <input type="checkbox" name="decoration_method" value={method} defaultChecked={editingGarment?.decoration_method?.includes(method)} className="peer sr-only" />
+                                  <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                                    {method}
+                                  </span>
+                                </label>
+                              ))}
                             </div>
                           </div>
                         </div>
@@ -2346,7 +2355,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           garment_id: garment.id,
           mock_image: garment.image,
           order_index: items.length,
-          variations: Array.from(new Set(garment.images || []))
+          variations: Array.from(new Set(garment.images?.filter(img => img !== garment.image) || []))
         })
       });
       if (res.ok) {
@@ -3476,15 +3485,37 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Customization & Production</label>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Decorating Methods</label>
-                      <input value={decorationMethod} onChange={e => setDecorationMethod(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Decorating Methods</label>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {['DTF', 'Vinyl', 'Heat Patch', 'Sew on Patch', 'Embroidery', 'Screen Print', 'Laser Engraving'].map(method => {
+                        const isChecked = decorationMethod?.includes(method);
+                        return (
+                          <label key={method} className="relative cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="peer sr-only"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const currentMethods = decorationMethod ? decorationMethod.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  setDecorationMethod([...currentMethods, method].join(', '));
+                                } else {
+                                  setDecorationMethod(currentMethods.filter(m => m !== method).join(', '));
+                                }
+                              }}
+                            />
+                            <span className="inline-block px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
+                              {method}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
-                    <div>
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
-                      <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
-                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
+                    <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
