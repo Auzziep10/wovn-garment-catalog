@@ -21,6 +21,13 @@ function HoverTooltip({ content }: { content: string }) {
   );
 }
 
+const formatFabric = (str: string) => {
+  if (!str) return '';
+  return str.trim().split(/\s+/).map(w => {
+    return w.split('-').map(part => part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : '').join('-');
+  }).join(' ');
+};
+
 export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear' | 'Swimwear' | 'Elevated Basics';
 export type Gender = 'Male' | 'Female' | 'Accessories';
 export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other' | 'T-Shirt' | 'Hoodie' | 'Polo' | 'Pants' | 'Outerwear' | 'Swim' | 'Quarter Zip' | 'Long Sleeve';
@@ -1324,9 +1331,9 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       for (const p of parts) {
         const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
         if (match) {
-           parsedComp.push({ id: Math.random().toString(), percentage: match[1], fabric: match[2] });
+           parsedComp.push({ id: Math.random().toString(), percentage: match[1], fabric: formatFabric(match[2]) });
         } else {
-           parsedComp.push({ id: Math.random().toString(), percentage: '', fabric: p });
+           parsedComp.push({ id: Math.random().toString(), percentage: '', fabric: formatFabric(p) });
         }
       }
     }
@@ -1707,18 +1714,42 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium text-xs">%</span>
                                     </div>
-                                    <input 
-                                      type="text" 
-                                      list="fabric-types"
-                                      value={comp.fabric} 
+                                    <select 
+                                      value={comp.fabric || 'Cotton'} 
                                       onChange={e => {
-                                        const newComps = [...fabricCompositions];
-                                        newComps[idx].fabric = e.target.value;
-                                        setFabricCompositions(newComps);
+                                        const val = e.target.value;
+                                        if (val === '_add_custom_') {
+                                          const custom = window.prompt("Enter new custom fabric:");
+                                          if (custom && custom.trim() !== '') {
+                                            const formatted = formatFabric(custom);
+                                            const newComps = [...fabricCompositions];
+                                            newComps[idx].fabric = formatted;
+                                            setFabricCompositions(newComps);
+                                          } else {
+                                            const newComps = [...fabricCompositions];
+                                            newComps[idx].fabric = comp.fabric || 'Cotton';
+                                            setFabricCompositions(newComps);
+                                          }
+                                        } else {
+                                          const newComps = [...fabricCompositions];
+                                          newComps[idx].fabric = val;
+                                          setFabricCompositions(newComps);
+                                        }
                                       }}
-                                      placeholder="e.g. Organic Cotton" 
                                       className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all min-w-0" 
-                                    />
+                                    >
+                                      {Array.from(new Set([
+                                        "Cotton", "Organic Cotton", "Ring-Spun Cotton", "Combed Ring-Spun Cotton", 
+                                        "Polyester", "Recycled Polyester", "Spandex", "Elastane", "Rayon", 
+                                        "Viscose", "Nylon", "Silk", "Wool", "Linen", "Bamboo", "Modal", 
+                                        "Acrylic", "Fleece", "French Terry", "Twill", "Canvas",
+                                        ...fabricCompositions.map(c => c.fabric).filter(Boolean)
+                                      ])).map(fab => (
+                                        <option key={fab} value={fab}>{fab}</option>
+                                      ))}
+                                      <option disabled>──────────</option>
+                                      <option value="_add_custom_">+ Add Fabric...</option>
+                                    </select>
                                     {fabricCompositions.length > 1 && (
                                       <button 
                                         type="button" 
@@ -1730,29 +1761,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
                                     )}
                                   </div>
                                 ))}
-                                <datalist id="fabric-types">
-                                  <option value="Cotton" />
-                                  <option value="Organic Cotton" />
-                                  <option value="Ring-spun Cotton" />
-                                  <option value="Combed Ring-Spun Cotton" />
-                                  <option value="Polyester" />
-                                  <option value="Recycled Polyester" />
-                                  <option value="Spandex" />
-                                  <option value="Elastane" />
-                                  <option value="Rayon" />
-                                  <option value="Viscose" />
-                                  <option value="Nylon" />
-                                  <option value="Silk" />
-                                  <option value="Wool" />
-                                  <option value="Linen" />
-                                  <option value="Bamboo" />
-                                  <option value="Modal" />
-                                  <option value="Acrylic" />
-                                  <option value="Fleece" />
-                                  <option value="French Terry" />
-                                  <option value="Twill" />
-                                  <option value="Canvas" />
-                                </datalist>
+
                               </div>
                             </div>
                             <div>
