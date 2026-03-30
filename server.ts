@@ -197,6 +197,7 @@ app.post("/api/garments", async (req, res) => {
   try {
     const data = req.body;
     data.created_at = new Date().toISOString();
+    data.updated_at = data.created_at;
     if (!data.images && data.image) {
       data.images = [data.image];
     } else if (!data.images) {
@@ -211,7 +212,7 @@ app.post("/api/garments", async (req, res) => {
 
 app.put("/api/garments/:id", async (req, res) => {
   try {
-    const updates = { ...req.body };
+    const updates = { ...req.body, updated_at: new Date().toISOString() };
     const docRef = doc(db, "garments", req.params.id);
     await updateDoc(docRef, updates);
     res.json({ status: "ok" });

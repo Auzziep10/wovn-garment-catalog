@@ -52,6 +52,8 @@ export interface Garment {
   moq?: number;
   turn_time?: string;
   mockup_status?: 'New Mock Needed' | 'Working' | 'Final Mock Uploaded';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface BrandColor {
@@ -1277,7 +1279,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [librarySortBy, setLibrarySortBy] = useState<'default' | 'category' | 'gender' | 'type'>('default');
+  const [librarySortBy, setLibrarySortBy] = useState<'default' | 'recent' | 'category' | 'gender' | 'type'>('default');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterGender, setFilterGender] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
@@ -1292,6 +1294,11 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
       return true;
     })
     .sort((a, b) => {
+      if (librarySortBy === 'recent') {
+        const timeA = new Date(a.updated_at || a.created_at || '1970-01-01').getTime();
+        const timeB = new Date(b.updated_at || b.created_at || '1970-01-01').getTime();
+        return timeB - timeA;
+      }
       if (librarySortBy === 'category') return (a.category || '').localeCompare(b.category || '');
       if (librarySortBy === 'gender') return (a.gender || '').localeCompare(b.gender || '');
       if (librarySortBy === 'type') return (a.type || '').localeCompare(b.type || '');
@@ -1492,6 +1499,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
             className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer text-zinc-500 min-w-[120px]"
           >
             <option value="default">Sort: Default</option>
+            <option value="recent">Sort: Recently Edited</option>
             <option value="category">Sort: Category</option>
             <option value="gender">Sort: Gender</option>
             <option value="type">Sort: Type</option>
