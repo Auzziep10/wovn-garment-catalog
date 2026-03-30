@@ -96,6 +96,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           gender: garmentData ? garmentData.gender : null,
           type: garmentData ? garmentData.type : null,
           supplier_link: garmentData ? garmentData.supplier_link : null,
+          fabric_details: garmentData ? garmentData.fabric_details : null,
+          fabric_finish: garmentData ? garmentData.fabric_finish : null,
+          care_instructions: garmentData ? garmentData.care_instructions : null,
+          fit: garmentData ? garmentData.fit : null,
+          fabric_weight_gsm: garmentData ? garmentData.fabric_weight_gsm : null,
+          decoration_method: garmentData ? garmentData.decoration_method : null,
+          sizes: garmentData ? garmentData.sizes : null,
+          available_colors: garmentData ? garmentData.available_colors : null,
+          wholesale_price: garmentData ? garmentData.wholesale_price : null,
+          cost_price: garmentData ? garmentData.cost_price : null,
+          msrp: garmentData ? garmentData.msrp : null,
+          moq: garmentData ? garmentData.moq : null,
+          turn_time: garmentData ? garmentData.turn_time : null,
           order_index: itemData.order_index || 0
         };
       }));
