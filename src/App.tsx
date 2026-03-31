@@ -248,6 +248,7 @@ export default function App() {
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
   const [isNewDeckModalOpen, setIsNewDeckModalOpen] = useState(false);
   const [garmentToAddToDeck, setGarmentToAddToDeck] = useState<Garment | null>(null);
+  const [garmentToEdit, setGarmentToEdit] = useState<Garment | null>(null);
   const [pendingMockupImage, setPendingMockupImage] = useState<string | null>(null);
   const [showPricing, setShowPricing] = useState(true);
   const [allDecks, setAllDecks] = useState<(Deck & { customer_name: string })[]>([]);
@@ -809,10 +810,11 @@ export default function App() {
             onSelectGarment={(g) => { setSelectedGarment(g); setSelectedDeckItem(null); setView('mockup-studio'); }}
             onAddToDeck={(g) => { setGarmentToAddToDeck(g); setIsDeckSelectorOpen(true); }}
             onDeleteGarment={handleDeleteGarment}
-            onAddGarment={() => setView('admin')}
+            onAddGarment={() => { setGarmentToEdit(null); setView('admin'); }}
+            onEditGarment={(g) => { setGarmentToEdit(g); setView('admin'); }}
           />
         )}
-        {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} />}
+        {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} initialEditingGarment={garmentToEdit} onClearEdit={() => setGarmentToEdit(null)} />}
         {view === 'customers' && (
           <CustomersView
             customers={customers}
@@ -945,7 +947,7 @@ export default function App() {
   );
 }
 
-function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck, onDeleteGarment, onAddGarment }: {
+function CatalogView({ garments, category, gender, type, currentDeck, onSelectGarment, onAddToDeck, onDeleteGarment, onAddGarment, onEditGarment }: {
   garments: Garment[],
   category: string,
   gender: string,
@@ -954,7 +956,8 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   onSelectGarment: (g: Garment) => void,
   onAddToDeck: (g: Garment) => void,
   onDeleteGarment: (g: Garment) => void,
-  onAddGarment: () => void
+  onAddGarment: () => void,
+  onEditGarment: (g: Garment) => void
 }) {
   const [viewingGarment, setViewingGarment] = useState<Garment | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -985,9 +988,9 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
           <div className="flex items-center gap-4">
             <button
               onClick={onAddGarment}
-              className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 transition-colors shadow-sm"
+              className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 transition-colors shadow-sm whitespace-nowrap"
             >
-              + Garment
+              + Garment Library
             </button>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
@@ -1263,6 +1266,15 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                   <div className="flex flex-col gap-4">
                     <button
                       onClick={() => {
+                        onEditGarment(viewingGarment);
+                        setViewingGarment(null);
+                      }}
+                      className="w-full bg-white text-zinc-900 border border-zinc-200 px-8 py-5 text-sm uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors rounded-full shadow-sm"
+                    >
+                      Edit Garment
+                    </button>
+                    <button
+                      onClick={() => {
                         onAddToDeck(viewingGarment);
                         setViewingGarment(null);
                       }}
@@ -1281,7 +1293,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
   );
 }
 
-function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
+function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onGarmentAdded: () => void, initialEditingGarment?: Garment | null, onClearEdit?: () => void }) {
   const [images, setImages] = useState<string[]>([]);
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
@@ -1321,6 +1333,13 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     fetchExisting();
   }, []);
 
+  useEffect(() => {
+    if (initialEditingGarment) {
+      handleEditClick(initialEditingGarment);
+      setIsModalOpen(true);
+    }
+  }, [initialEditingGarment]);
+
   const handleEditClick = (g: Garment) => {
     setEditingGarment(g);
     setImages(g.images && g.images.length > 0 ? g.images : [g.image]);
@@ -1348,6 +1367,7 @@ function AdminView({ onGarmentAdded }: { onGarmentAdded: () => void }) {
     setImages([]);
     setFabricCompositions([{ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' }]);
     setIsModalOpen(false);
+    if (onClearEdit) onClearEdit();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
