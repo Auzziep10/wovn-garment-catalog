@@ -145,6 +145,9 @@ export interface DeckItem {
   msrp?: number | null;
   moq?: number | null;
   turn_time?: string | null;
+  custom_msrp?: number | null;
+  custom_wholesale_price?: number | null;
+  custom_cost_price?: number | null;
 }
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
@@ -3501,23 +3504,27 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           {item.notes && <p className="text-sm text-zinc-500 max-w-2xl mx-auto italic mb-4 line-clamp-2">"{item.notes}"</p>}
                         </div>
                       </div>
-                      <div className="mt-auto border-t border-zinc-200 pt-5 grid grid-cols-3 md:grid-cols-6 border-b gap-x-2 gap-y-4 w-full pb-5 text-left">
-                        <div className="col-span-1">
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Sizes</p>
-                          <p className="text-[10px] font-medium text-zinc-900 break-words">{((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A')}</p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Fabric</p>
-                          <p className="text-[10px] leading-relaxed font-medium text-zinc-900 pr-2 line-clamp-4 text-ellipsis overflow-hidden">{item.fabric_details || 'Premium blend'}</p>
-                        </div>
-                        <div className="col-span-1">
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">MOQ</p>
-                          <p className="text-[10px] font-medium text-zinc-900">{(item as any).custom_moq || (item as any).moq || 'TBD'}</p>
-                        </div>
-                        <div className="col-span-1">
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
-                          <p className="text-[10px] font-medium text-zinc-900">${(item.custom_price || item.garment_price || 0).toFixed(2)}</p>
-                        </div>
+                        <div className="mt-auto border-t border-zinc-200 pt-5 grid grid-cols-3 md:grid-cols-7 border-b gap-x-2 gap-y-4 w-full pb-5 text-left">
+                          <div className="col-span-1">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Sizes</p>
+                            <p className="text-[10px] font-medium text-zinc-900 break-words">{((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A')}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Fabric</p>
+                            <p className="text-[10px] leading-relaxed font-medium text-zinc-900 pr-2 line-clamp-4 text-ellipsis overflow-hidden">{item.fabric_details || 'Premium blend'}</p>
+                          </div>
+                          <div className="col-span-1">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">MOQ</p>
+                            <p className="text-[10px] font-medium text-zinc-900">{(item as any).custom_moq || (item as any).moq || 'TBD'}</p>
+                          </div>
+                          <div className="col-span-1">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Wholesale</p>
+                            <p className="text-[10px] font-medium text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="col-span-1">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
+                            <p className="text-[10px] font-medium text-zinc-900">${(item.custom_msrp || item.msrp || item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                          </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Delivery</p>
                           <p className="text-[10px] font-medium text-zinc-900 break-words line-clamp-2 text-ellipsis overflow-hidden">{(item as any).custom_turn_time || item.turn_time || 'TBD'}</p>
@@ -3558,10 +3565,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                 <h3 className="font-serif text-lg md:text-xl leading-tight border-b border-zinc-200 pb-2 mb-3 text-zinc-900">{item.custom_name || item.garment_name}</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 print:gap-y-2">
                                   <div>
-                                    <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
-                                    <p className="text-[10px] font-bold text-zinc-900">${(item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                                    <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Wholesale</p>
+                                    <p className="text-[10px] font-bold text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
                                   </div>
                                   <div>
+                                    <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
+                                    <p className="text-[10px] font-bold text-zinc-900">${(item.custom_msrp || item.msrp || item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                                  </div>
+                                  <div className="col-span-2">
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Sizes</p>
                                     <p className="text-[10px] font-medium text-zinc-900 truncate">{((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A')}</p>
                                   </div>
@@ -3618,7 +3629,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
 }) {
   const [name, setName] = useState(item.custom_name || item.garment_name || '');
   const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
-  const [price, setPrice] = useState(item.custom_price?.toString() || item.garment_price?.toString() || item.msrp?.toString() || item.cost_price?.toString() || '');
+  const [price, setPrice] = useState(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(item.variations || []);
@@ -3635,8 +3646,8 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [fabricWeightGsm, setFabricWeightGsm] = useState(item.fabric_weight_gsm || '');
   const [decorationMethod, setDecorationMethod] = useState(item.decoration_method || '');
   const [availableColors, setAvailableColors] = useState(item.available_colors || '');
-  const [costPrice, setCostPrice] = useState(item.cost_price?.toString() || '');
-  const [wholesalePrice, setWholesalePrice] = useState(item.wholesale_price?.toString() || '');
+  const [costPrice, setCostPrice] = useState(item.custom_cost_price?.toString() || item.cost_price?.toString() || '');
+  const [wholesalePrice, setWholesalePrice] = useState(item.custom_wholesale_price?.toString() || item.wholesale_price?.toString() || '');
   const [moq, setMoq] = useState(item.moq?.toString() || '');
   const [turnTime, setTurnTime] = useState(item.turn_time || '');
 
@@ -3927,7 +3938,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Backend Pricing</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost Price ($)</label>
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
@@ -3935,6 +3946,10 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price ($)</label>
                     <input type="number" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MSRP ($)</label>
+                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                 </div>
               </div>
@@ -3979,6 +3994,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_available_colors: availableColors,
                   custom_cost_price: parseFloat(costPrice) || null,
                   custom_wholesale_price: parseFloat(wholesalePrice) || null,
+                  custom_msrp: parseFloat(price) || null,
                   custom_moq: parseInt(moq, 10) || null,
                   custom_turn_time: turnTime
                 });
