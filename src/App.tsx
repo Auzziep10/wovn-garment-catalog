@@ -2527,6 +2527,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [filterGender, setFilterGender] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [lineSheetMode, setLineSheetMode] = useState<'individual' | 'combo' | null>(null);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -3072,6 +3073,18 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
               >
                 Share Link
               </button>
+              
+              <div className="relative group hidden sm:block">
+                <button
+                  className="bg-white border text-zinc-900 border-zinc-200 px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <List size={14} /> Line Sheets
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-zinc-100 shadow-xl rounded-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-2">
+                  <button onClick={() => setLineSheetMode('individual')} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 rounded-lg">Individual (1 per page)</button>
+                  <button onClick={() => setLineSheetMode('combo')} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 rounded-lg">Combo (4 per page)</button>
+                </div>
+              </div>
               <button
                 onClick={() => onPresent()}
                 className="bg-zinc-900 text-white px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-sm"
@@ -3421,6 +3434,116 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           </motion.div>
         )}
       </AnimatePresence>
+
+        {/* LINE SHEET MODAL (PRINT VIEW) */}
+        <AnimatePresence>
+          {lineSheetMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-zinc-100 z-[200] overflow-y-auto print:bg-white print:overflow-visible"
+            >
+              <div className="sticky top-0 bg-white border-b border-zinc-200 px-4 md:px-8 py-4 flex justify-between items-center z-10 print:hidden shadow-sm">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">
+                  {lineSheetMode === 'combo' ? 'Combo' : 'Individual'} Line Sheet
+                </h2>
+                <div className="flex items-center gap-2 md:gap-4">
+                  <button onClick={() => { setTimeout(() => window.print(), 100); }} className="bg-zinc-900 text-white px-4 md:px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-800 transition-colors">
+                    <Download size={14} /> Save to PDF
+                  </button>
+                  <button onClick={() => setLineSheetMode(null)} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-900 transition-colors">
+                    <X size={20}/>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 md:p-8 print:p-0 flex flex-col gap-8 print:gap-0 items-center">
+                {lineSheetMode === 'individual' ? (
+                  Array.from(displayedItems).map((item, idx) => (
+                    <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
+                      <div className="flex justify-between items-start mb-8 md:mb-12">
+                        <div>
+                          <h1 className="editorial-title text-3xl md:text-4xl mb-2">{customer?.company || 'WOVN'}</h1>
+                          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Garment Line Sheet</p>
+                        </div>
+                        {showPricing && item.price !== undefined && (
+                          <div className="text-right">
+                            <p className="font-serif text-2xl md:text-3xl">${item.price.toFixed(2)}</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Unit Price</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-center -mt-8">
+                        <img src={activeVariations[item.id] || item.mock_image} className="w-full max-h-[5in] md:max-h-[6.5in] object-contain mb-8 md:mb-12 mix-blend-multiply" />
+                        <div className="w-full text-center">
+                          <h2 className="font-serif text-2xl md:text-3xl mb-4">{item.custom_name || item.garment_name}</h2>
+                          {item.notes && <p className="text-sm text-zinc-500 max-w-2xl mx-auto italic">"{item.notes}"</p>}
+                        </div>
+                      </div>
+                      <div className="mt-auto border-t border-zinc-100 pt-8 grid grid-cols-2 lg:grid-cols-4 gap-8 w-full border-b">
+                          <div className="col-span-1 pb-8">
+                             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-2">Style Details</p>
+                             <p className="text-xs text-zinc-900 line-clamp-3 overflow-hidden">{item.decoration_method ? item.decoration_method : 'Custom Deco'}</p>
+                          </div>
+                          {(item.custom_colors && item.custom_colors.length > 0) && (
+                            <div className="col-span-1 pb-8">
+                               <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-3">Colorways</p>
+                               <div className="flex flex-wrap gap-2">
+                                 {item.custom_colors.map((c, i) => (
+                                   <div key={i} className="w-6 h-6 rounded-full border border-zinc-200 shadow-sm" style={{ backgroundColor: c }} />
+                                 ))}
+                               </div>
+                            </div>
+                          )}
+                      </div>
+                      <div className="absolute bottom-6 md:bottom-8 left-8 md:left-16 right-8 md:right-16 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300">
+                        <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
+                        <span>{new Date().toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: Math.ceil(displayedItems.length / 4) }).map((_, pageIdx) => {
+                    const pageItems = displayedItems.slice(pageIdx * 4, pageIdx * 4 + 4);
+                    return (
+                      <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-12 flex flex-col shrink-0 relative">
+                        <div className="text-center mb-10 md:mb-12">
+                          <h1 className="editorial-title text-3xl md:text-4xl mb-2 md:mb-3">{customer?.company || 'WOVN'}</h1>
+                          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Combo Line Sheet - Page {pageIdx + 1}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-8 md:gap-x-12 gap-y-12 md:gap-y-16 flex-1 content-start">
+                          {pageItems.map((item, idx) => (
+                            <div key={`combo-${item.id}-${idx}`} className="flex flex-col items-center">
+                              <img src={activeVariations[item.id] || item.mock_image} className="w-full h-48 md:h-80 object-contain mb-4 md:mb-6 mix-blend-multiply" />
+                              <div className="text-center w-full px-2">
+                                <h3 className="font-serif text-lg md:text-xl mb-2 leading-tight truncate">{item.custom_name || item.garment_name}</h3>
+                                {showPricing && item.price !== undefined && (
+                                  <p className="text-sm font-bold text-zinc-900 mb-3">${item.price.toFixed(2)}</p>
+                                )}
+                                {(item.custom_colors && item.custom_colors.length > 0) && (
+                                  <div className="flex justify-center flex-wrap gap-1.5 mt-2">
+                                    {item.custom_colors.map((c, i) => (
+                                      <div key={i} className="w-4 h-4 rounded-full border border-zinc-200 shadow-sm" style={{ backgroundColor: c }} />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="absolute bottom-6 md:bottom-12 left-8 md:left-12 right-8 md:right-12 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300">
+                          <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
+                          <span>{new Date().toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div >
   );
 }
