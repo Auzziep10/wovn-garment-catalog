@@ -3794,12 +3794,12 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 max-w-[120px]">Variations (Colors/Mockups)</p>
+                    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 shrink-0 mt-1.5">Variations (Colors/Mockups)</p>
                       {brandColors.length > 0 && (
-                        <div className="flex items-start gap-2.5 shrink-0">
+                        <div className="flex items-start gap-2.5 max-w-full">
                           <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 shrink-0 whitespace-nowrap mt-1.5">Auto-Bake:</span>
-                          <div className="flex gap-1.5 flex-wrap justify-end max-w-[140px]">
+                          <div className="flex gap-1.5 flex-wrap">
                             {brandColors.map((c, i) => {
                               const key = c.image || c.hex;
                               return (
