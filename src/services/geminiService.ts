@@ -464,9 +464,12 @@ export async function removeImageBackground(baseImage: string): Promise<string> 
     {
       text: `TASK: Background Removal
 CRITICAL CONSTRAINTS:
-1. ONLY REMOVE the background of the garment. Leave the garment ITSELF 100% UNTOUCHED (keep same exact color, lighting, texture, shape, folds, and details).
-2. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO background elements whatsoever. Every non-garment pixel MUST be exactly #FFFFFF.
-3. Do NOT change the framing, zoom, crop, or orientation.`
+1. REMOVE THE BACKGROUND ENTIRELY AND OUTPUT A TRANSPARENT PNG. 
+2. The background must be 100% transparent (alpha = 0). Do NOT use a solid white or solid grey background. 
+3. The user previously rejected your output because you left a faint grey background. You must erase the background completely to transparency.
+4. DO NOT cast any shadows on the floor. Erase all floor context.
+5. Keep the garment ITSELF 100% UNTOUCHED (same exact color, lighting, textures, and shape).
+6. Do NOT change the framing, zoom, crop, or orientation.`
     },
     {
       inlineData: {

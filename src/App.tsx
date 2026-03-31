@@ -3673,20 +3673,20 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   Array.from({ length: Math.ceil(displayedItems.length / 4) }).map((_, pageIdx) => {
                     const pageItems = displayedItems.slice(pageIdx * 4, pageIdx * 4 + 4);
                     return (
-                      <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-12 flex flex-col shrink-0 relative">
-                        <div className="text-center mb-6 md:mb-8 print:mb-6">
+                      <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
+                        <div className="text-center mb-4 md:mb-5 print:mb-4 shrink-0">
                           <h1 className="editorial-title text-2xl md:text-3xl mb-1 md:mb-2 text-zinc-900">{deck.name}</h1>
                           <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company ? `${customer.company} - ` : ''}Page {pageIdx + 1}</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-8 md:gap-x-12 gap-y-8 md:gap-y-10 print:gap-y-6 flex-1 content-start">
+                        <div className="grid grid-cols-2 gap-x-8 md:gap-x-10 gap-y-6 md:gap-y-6 print:gap-y-6 flex-1 content-start">
                           {pageItems.map((item, idx) => (
                             <div key={`combo-${item.id}-${idx}`} className="flex flex-col items-center">
-                              <div className="w-full h-40 md:h-56 print:h-[2in] mb-3 md:mb-5 print:mb-3 flex items-center justify-center">
+                              <div className="w-full h-36 md:h-44 print:h-[1.75in] mb-2 md:mb-3 flex items-center justify-center shrink-0">
                                 <img src={activeVariations[item.id] || item.mock_image} className="max-w-full max-h-full object-contain mix-blend-multiply" />
                               </div>
                               <div className="text-left w-full px-2">
-                                <h3 className="font-serif text-lg md:text-xl leading-tight border-b border-zinc-200 pb-1.5 mb-2 print:mb-1.5 text-zinc-900">{item.custom_name || item.garment_name}</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 print:gap-y-1.5">
+                                <h3 className="font-serif text-[15px] md:text-lg leading-tight border-b border-zinc-200 pb-1 mb-1.5 text-zinc-900 truncate">{item.custom_name || item.garment_name}</h3>
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 print:gap-y-1">
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Wholesale</p>
                                     <p className="text-[10px] font-bold text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
@@ -3728,7 +3728,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             </div>
                           ))}
                         </div>
-                        <div className="absolute bottom-6 md:bottom-12 left-8 md:left-12 right-8 md:right-12 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300">
+                        <div className="absolute bottom-5 left-10 right-10 flex justify-between items-center text-[7px] md:text-[8px] uppercase tracking-widest font-bold text-zinc-300">
                           <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
                           <span>{new Date().toLocaleDateString()}</span>
                         </div>
