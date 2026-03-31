@@ -349,7 +349,7 @@ CRITICAL CONSTRAINTS:
   throw new Error("Failed to generate rotated garment image");
 }
 
-export async function generateColorVariation(baseImage: string, colorHex: string) {
+export async function generateColorVariation(baseImage: string, colorHexOrPattern: string) {
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
@@ -369,22 +369,61 @@ export async function generateColorVariation(baseImage: string, colorHex: string
     model,
   });
 
-  const result = await modelObj.generateContent([
-    {
-      text: `TASK: Recoloring
+  const isPattern = colorHexOrPattern.startsWith('data:image/') || colorHexOrPattern.startsWith('http');
+  const parts: any[] = [];
+
+  if (isPattern) {
+    let patternData: string;
+    let patternMimeType = "image/png";
+
+    if (colorHexOrPattern.startsWith('http')) {
+      const result = await toBase64(colorHexOrPattern);
+      patternData = result.data;
+      patternMimeType = result.mimeType;
+    } else {
+      patternData = colorHexOrPattern.split(",")[1] || colorHexOrPattern;
+      const match = colorHexOrPattern.match(/^data:(image\/[a-z]+);base64,/);
+      if (match) patternMimeType = match[1];
+    }
+
+    parts.push({
+      text: `TASK: Recoloring / Pattern Application
 CRITICAL CONSTRAINTS:
-1. ONLY change the color of the garment in the image to exactly match this hex color code: ${colorHex}.
+1. APPLY the EXACT pattern and colors from the second image onto the garment in the first image. The garment should be fully covered in this pattern/color.
 2. Preserve all lighting, shadows, fabric textures, folds, and details authentically ON THE GARMENT ONLY.
 3. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.
 4. Do NOT change the framing, zoom, or crop.`
-    },
-    {
+    });
+    parts.push({
       inlineData: {
         data: baseImageData,
         mimeType: baseMimeType,
       }
-    }
-  ]);
+    });
+    parts.push({
+      inlineData: {
+        data: patternData,
+        mimeType: patternMimeType,
+      }
+    });
+  } else {
+    parts.push({
+      text: `TASK: Recoloring
+CRITICAL CONSTRAINTS:
+1. ONLY change the color of the garment in the image to exactly match this hex color code: ${colorHexOrPattern}.
+2. Preserve all lighting, shadows, fabric textures, folds, and details authentically ON THE GARMENT ONLY.
+3. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.
+4. Do NOT change the framing, zoom, or crop.`
+    });
+    parts.push({
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    });
+  }
+
+  const result = await modelObj.generateContent(parts);
 
   const response = result.response;
   const candidates = response.candidates;
@@ -400,7 +439,7 @@ CRITICAL CONSTRAINTS:
     }
   }
 
-  throw new Error("Failed to generate colored variation");
+  throw new Error("Failed to generate colored variation or pattern applying.");
 }
 
 export async function convertColorToHex(colorName: string): Promise<string | null> {

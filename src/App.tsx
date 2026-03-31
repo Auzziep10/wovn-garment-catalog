@@ -66,6 +66,7 @@ export interface Garment {
 export interface BrandColor {
   hex: string;
   pantone: string;
+  image?: string;
 }
 
 export interface Customer {
@@ -2222,7 +2223,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               <div className="mt-16 sm:mt-24 pt-12 border-t border-zinc-100">
                 <div className="mb-14">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="editorial-title text-2xl">Color Palette</h3>
+                    <h3 className="editorial-title text-2xl">Palette</h3>
                     <button
                       onClick={() => {
                         const c = customers.find(cust => cust.id === selectedCustId);
@@ -2235,7 +2236,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                       <Plus size={14} /> Add Color
                     </button>
                   </div>
-                  <p className="text-zinc-500 text-sm mb-6">Select brand colors for {customers.find(c => c.id === selectedCustId)?.company}. Drag to reorder.</p>
+                  <p className="text-zinc-500 text-sm mb-6">Select brand colors and patterns for {customers.find(c => c.id === selectedCustId)?.company}. Drag to reorder.</p>
                   <div className="flex gap-6 flex-wrap">
                     {getCustomerColors(customers.find(c => c.id === selectedCustId)!).map((colorObj, i) => {
                       let colorVal = colorObj.hex;
@@ -2269,34 +2270,80 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                         >
                           <div className="flex justify-between items-center px-1 mb-[-4px]">
                             <GripHorizontal size={14} className="text-zinc-300 group-hover:text-zinc-500 transition-colors" />
-                            {currentColors.length > 1 && (
-                              <button 
-                                onClick={() => {
-                                  const c = customers.find(cust => cust.id === selectedCustId);
-                                  if (!c) return;
-                                  const newColors = currentColors.filter((_, idx) => idx !== i);
-                                  onUpdateCustomer(c.id, { colors: newColors });
-                                }}
-                                className="text-zinc-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <label className="text-zinc-300 hover:text-zinc-900 transition-colors cursor-pointer" title="Upload Pattern Image">
+                                <ImageIcon size={12} />
+                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = async () => {
+                                      const base64Str = reader.result as string;
+                                      try {
+                                        const compressed = await compressImageIfNeeded(base64Str);
+                                        const c = customers.find(cust => cust.id === selectedCustId);
+                                        if (!c) return;
+                                        const newColors = [...getCustomerColors(c)];
+                                        newColors[i] = { ...newColors[i], image: compressed };
+                                        onUpdateCustomer(c.id, { colors: newColors });
+                                      } catch (err) { }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }} />
+                              </label>
+                              {colorObj.image && (
+                                <button
+                                  onClick={() => {
+                                    const c = customers.find(cust => cust.id === selectedCustId);
+                                    if (!c) return;
+                                    const newColors = [...getCustomerColors(c)];
+                                    newColors[i] = { ...newColors[i], image: undefined };
+                                    onUpdateCustomer(c.id, { colors: newColors });
+                                  }}
+                                  className="text-zinc-300 hover:text-red-500 transition-colors"
+                                  title="Remove Pattern Image"
+                                >
+                                  <MinusCircle size={12} />
+                                </button>
+                              )}
+                              {currentColors.length > 1 && (
+                                <button 
+                                  onClick={() => {
+                                    const c = customers.find(cust => cust.id === selectedCustId);
+                                    if (!c) return;
+                                    const newColors = currentColors.filter((_, idx) => idx !== i);
+                                    onUpdateCustomer(c.id, { colors: newColors });
+                                  }}
+                                  className="text-zinc-300 hover:text-red-500 transition-colors"
+                                  title="Remove Color"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <label className="w-full h-20 rounded-xl overflow-hidden cursor-pointer border-2 border-zinc-200 shadow-sm transition-all hover:scale-105 hover:border-zinc-900 relative flex items-center justify-center bg-checkerboard mx-auto">
-                            <input
-                              type="color"
-                              value={colorVal}
-                              onChange={(e) => {
-                                const c = customers.find(cust => cust.id === selectedCustId);
-                                if (!c) return;
-                                const newColors = [...getCustomerColors(c)];
-                                newColors[i] = { ...newColors[i], hex: e.target.value };
-                                onUpdateCustomer(c.id, { colors: newColors });
-                              }}
-                              className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0"
-                            />
-                            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: colorVal !== '#f4f4f5' ? colorVal : 'transparent' }} />
+                            {!colorObj.image && (
+                              <input
+                                type="color"
+                                value={colorVal}
+                                onChange={(e) => {
+                                  const c = customers.find(cust => cust.id === selectedCustId);
+                                  if (!c) return;
+                                  const newColors = [...getCustomerColors(c)];
+                                  newColors[i] = { ...newColors[i], hex: e.target.value };
+                                  onUpdateCustomer(c.id, { colors: newColors });
+                                }}
+                                className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0"
+                              />
+                            )}
+                            <div className="absolute inset-0 pointer-events-none" style={{ 
+                              backgroundColor: !colorObj.image && colorVal !== '#f4f4f5' ? colorVal : 'transparent',
+                              backgroundImage: colorObj.image ? `url(${colorObj.image})` : 'none',
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center'
+                            }} />
                           </label>
                           <div className="flex flex-col gap-2 mt-1">
                             <div>
@@ -3651,17 +3698,18 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [moq, setMoq] = useState(item.moq?.toString() || '');
   const [turnTime, setTurnTime] = useState(item.turn_time || '');
 
-  const brandColors = customer ? getCustomerColors(customer).map(c => c.hex).filter(h => h && h !== '#f4f4f5') : [];
+  const brandColors = customer ? getCustomerColors(customer).filter(c => c.image || (c.hex && c.hex !== '#f4f4f5')) : [];
 
-  const handleGenerateVariationForColor = async (color: string) => {
-    setGeneratingColor(color);
+  const handleGenerateVariationForColor = async (colorInfo: BrandColor) => {
+    const key = colorInfo.image || colorInfo.hex;
+    setGeneratingColor(key);
     try {
-      const generated = await generateColorVariation(mockImage, color);
+      const generated = await generateColorVariation(mockImage, key);
       const compressed = await compressImageIfNeeded(generated);
       setVariations(prev => [...prev, compressed]);
     } catch (err) {
       console.error(err);
-      alert(`Failed to generate variation for ${color}.`);
+      alert(`Failed to generate variation.`);
     } finally {
       setGeneratingColor(null);
     }
@@ -3751,20 +3799,27 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       {brandColors.length > 0 && (
                         <div className="flex items-center gap-2">
                           <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400">Auto-Bake:</span>
-                          <div className="flex gap-1.5">
-                            {brandColors.map(c => (
+                          <div className="flex gap-1.5 flex-wrap">
+                            {brandColors.map((c, i) => {
+                              const key = c.image || c.hex;
+                              return (
                               <button
-                                key={c}
+                                key={key + i}
                                 onClick={() => handleGenerateVariationForColor(c)}
                                 disabled={generatingColor !== null}
-                                className="w-4 h-4 rounded-full border border-zinc-200 hover:scale-125 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
-                                style={{ backgroundColor: c }}
-                                title={`Generate ${c} variant`}
+                                className="w-5 h-5 rounded-full border border-zinc-200 hover:scale-[1.15] transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
+                                style={{ 
+                                  backgroundColor: c.image ? 'transparent' : c.hex,
+                                  backgroundImage: c.image ? `url(${c.image})` : 'none',
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center'
+                                }}
+                                title={`Generate ${c.pantone || c.hex} variant`}
                               >
                                 <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                                {generatingColor === c && <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin mix-blend-difference absolute z-10" />}
+                                {generatingColor === key && <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin mix-blend-difference absolute z-10" />}
                               </button>
-                            ))}
+                            )})}
                           </div>
                         </div>
                       )}
