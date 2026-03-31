@@ -3794,12 +3794,12 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Variations (Colors/Mockups)</p>
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 max-w-[120px]">Variations (Colors/Mockups)</p>
                       {brandColors.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400">Auto-Bake:</span>
-                          <div className="flex gap-1.5 flex-wrap">
+                        <div className="flex items-start gap-2.5 shrink-0">
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 shrink-0 whitespace-nowrap mt-1.5">Auto-Bake:</span>
+                          <div className="flex gap-1.5 flex-wrap justify-end max-w-[140px]">
                             {brandColors.map((c, i) => {
                               const key = c.image || c.hex;
                               return (
@@ -3807,7 +3807,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                                 key={key + i}
                                 onClick={() => handleGenerateVariationForColor(c)}
                                 disabled={generatingColor !== null}
-                                className="w-5 h-5 rounded-full border border-zinc-200 hover:scale-[1.15] transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group"
+                                className="w-7 h-7 rounded-full border border-zinc-200 hover:scale-110 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100 shadow-sm relative overflow-hidden group shrink-0"
                                 style={{ 
                                   backgroundColor: c.image ? 'transparent' : c.hex,
                                   backgroundImage: c.image ? `url(${c.image})` : 'none',
