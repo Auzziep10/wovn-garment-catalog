@@ -4,10 +4,10 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground } from './services/geminiService';
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -2828,6 +2828,55 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     }
   };
 
+  const [removingBgItemId, setRemovingBgItemId] = useState<number | null>(null);
+
+  const handleRemoveBackground = async (e: React.MouseEvent, item: DeckItem) => {
+    e.stopPropagation();
+    const currentUrl = activeVariations[item.id] || item.mock_image;
+    if (!currentUrl) return;
+
+    setRemovingBgItemId(item.id);
+    try {
+      const pureWhiteUrl = await removeImageBackground(currentUrl);
+      const finalUrl = await compressImageIfNeeded(pureWhiteUrl);
+      
+      let updatedMockImage = item.mock_image;
+      let updatedVariations = item.variations ? [...item.variations] : [];
+
+      if (currentUrl === item.mock_image) {
+        updatedMockImage = finalUrl;
+      } else {
+        const idx = updatedVariations.indexOf(currentUrl);
+        if (idx >= 0) {
+          updatedVariations[idx] = finalUrl;
+        } else {
+          updatedVariations.push(finalUrl);
+        }
+      }
+
+      const res = await fetch(`/api/decks/${item.deck_id}/items/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...item,
+          mock_image: updatedMockImage,
+          variations: updatedVariations
+        })
+      });
+
+      if (res.ok) {
+        const updatedItem = await res.json();
+        setItems(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+        setActiveVariations(prev => ({ ...prev, [item.id]: finalUrl }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to remove background.');
+    } finally {
+      setRemovingBgItemId(null);
+    }
+  };
+
   const handleDownloadItem = async (e: React.MouseEvent, item: DeckItem) => {
     e.stopPropagation();
     const url = activeVariations[item.id] || item.mock_image;
@@ -3427,9 +3476,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       >
                         <Wand2 size={18} />
                       </button>
-                      {/* Generative scene hidden per user request:
-                      <button onClick={() => setGeneratingSceneForItem(item)} className="..." title="Generate Scene"><Camera size={18} /></button>
-                      */}
+                      <button
+                        onClick={(e) => handleRemoveBackground(e, item)}
+                        disabled={removingBgItemId === item.id}
+                        className={`bg-white text-zinc-900 p-3 rounded-full shadow transition-colors ${removingBgItemId === item.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-500 hover:text-white'}`}
+                        title="Remove Background"
+                      >
+                        {removingBgItemId === item.id ? <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-900 border-t-transparent animate-spin" /> : <Eraser size={18} />}
+                      </button>
                       <button
                         onClick={() => setEditingItem(item)}
                         className="bg-white text-zinc-900 p-3 rounded-full shadow hover:bg-zinc-900 hover:text-white transition-colors"

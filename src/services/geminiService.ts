@@ -442,6 +442,57 @@ CRITICAL CONSTRAINTS:
   throw new Error("Failed to generate colored variation or pattern applying.");
 }
 
+export async function removeImageBackground(baseImage: string): Promise<string> {
+  const model = "gemini-2.5-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/png";
+
+  if (baseImage.startsWith('http')) {
+    const result = await toBase64(baseImage);
+    baseImageData = result.data;
+    baseMimeType = result.mimeType;
+  } else {
+    baseImageData = baseImage.split(",")[1] || baseImage;
+    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
+    if (match) baseMimeType = match[1];
+  }
+
+  const modelObj = getGenerativeModel(ai, { model });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Background Removal
+CRITICAL CONSTRAINTS:
+1. ONLY REMOVE the background of the garment. Leave the garment ITSELF 100% UNTOUCHED (keep same exact color, lighting, texture, shape, folds, and details).
+2. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO background elements whatsoever. Every non-garment pixel MUST be exactly #FFFFFF.
+3. Do NOT change the framing, zoom, crop, or orientation.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to remove background.");
+}
+
 export async function convertColorToHex(colorName: string): Promise<string | null> {
   try {
     const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
