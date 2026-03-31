@@ -3833,23 +3833,25 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       </div>
                       {variations.map((v, i) => (
                         <div key={i} className="w-12 h-12 border border-zinc-200 rounded-lg overflow-hidden shrink-0 relative group p-0.5">
-                          <img src={v} className="w-full h-full object-contain" />
-                          <button
-                            title="Remove Variation"
-                            onClick={() => setVariations(variations.filter((_, index) => index !== i))}
-                            className="absolute inset-0 bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                          >
-                            <Trash2 size={12} />
-                          </button>
                           <button
                             title="Set as Main Image"
                             onClick={() => {
                               setMockImage(v);
                               setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
                             }}
-                            className="absolute top-0 right-0 p-1 bg-zinc-900 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-lg text-[8px] uppercase font-bold tracking-widest"
+                            className="w-full h-full block absolute inset-0 z-0 bg-transparent cursor-pointer"
+                          />
+                          <img src={v} className="w-full h-full object-contain pointer-events-none mix-blend-multiply" />
+                          <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors" />
+                          <button
+                            title="Remove Variation"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVariations(variations.filter((_, index) => index !== i));
+                            }}
+                            className="absolute top-0 right-0 p-1 bg-white/90 text-zinc-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-bl-lg z-10 backdrop-blur-sm"
                           >
-                            Main
+                            <Trash2 size={12} />
                           </button>
                         </div>
                       ))}
