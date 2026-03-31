@@ -277,25 +277,15 @@ export default function App() {
 
   useEffect(() => {
     fetchGarments();
+  }, [selectedCategory, selectedGender, selectedType]);
+
+  useEffect(() => {
     fetchCustomers();
 
     const params = new URLSearchParams(window.location.search);
     const sharedDeckId = params.get('deck');
 
-    if (sharedDeckId) {
-      if (!currentDeck) {
-        fetch(`/api/decks/${sharedDeckId}`)
-          .then(res => res.json())
-          .then(deck => {
-            if (deck && deck.id) {
-              setCurrentDeck(deck);
-              setView('shared-presentation');
-            }
-          })
-          .catch(err => console.error("Could not load shared deck:", err));
-      }
-    } else {
-      // Auto-select first deck if available
+    const loadFirstDeckFallback = () => {
       fetch('/api/customers')
         .then(res => res.json())
         .then(customers => {
@@ -311,8 +301,38 @@ export default function App() {
               });
           }
         });
+    };
+
+    if (sharedDeckId) {
+      if (!currentDeck) {
+        fetch(`/api/decks/${sharedDeckId}`)
+          .then(res => res.json())
+          .then(deck => {
+            if (deck && deck.id) {
+              setCurrentDeck(deck);
+              setView('shared-presentation');
+            }
+          })
+          .catch(err => console.error("Could not load shared deck:", err));
+      }
+    } else {
+      const savedId = localStorage.getItem('lastDeckId');
+      if (savedId) {
+        fetch(`/api/decks/${savedId}`)
+          .then(res => {
+            if (res.ok) return res.json();
+            throw new Error();
+          })
+          .then(deck => {
+            if (deck && deck.id) setCurrentDeck(deck);
+            else throw new Error();
+          })
+          .catch(() => loadFirstDeckFallback());
+      } else {
+        loadFirstDeckFallback();
+      }
     }
-  }, [selectedCategory, selectedGender, selectedType]);
+  }, []);
 
   const fetchGarments = async () => {
     const res = await fetch(`/api/garments?category=${selectedCategory}&gender=${selectedGender}&type=${selectedType}`);
@@ -3679,7 +3699,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [price, setPrice] = useState(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
-  const [variations, setVariations] = useState<string[]>(item.variations || []);
+  const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const [mockupStatus, setMockupStatus] = useState<'New Mock Needed' | 'Working' | 'Final Mock Uploaded'>(
