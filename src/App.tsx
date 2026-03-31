@@ -3474,35 +3474,35 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col items-center justify-center -mt-8">
-                        <img src={activeVariations[item.id] || item.mock_image} className="w-full max-h-[5in] md:max-h-[6.5in] object-contain mb-8 md:mb-12 mix-blend-multiply" />
+                      <div className="flex-1 flex flex-col items-center justify-center -mt-8 px-4">
+                        <img src={activeVariations[item.id] || item.mock_image} className="w-full max-h-[4.5in] md:max-h-[5.5in] print:max-h-[4.5in] object-contain mb-6 md:mb-8 mix-blend-multiply" />
                         <div className="w-full text-center">
-                          <h2 className="font-serif text-2xl md:text-3xl mb-4 text-zinc-900">{item.custom_name || item.garment_name}</h2>
-                          {item.notes && <p className="text-sm text-zinc-500 max-w-2xl mx-auto italic mb-4">"{item.notes}"</p>}
+                          <h2 className="font-serif text-2xl md:text-3xl mb-3 text-zinc-900 leading-tight">{item.custom_name || item.garment_name}</h2>
+                          {item.notes && <p className="text-sm text-zinc-500 max-w-2xl mx-auto italic mb-4 line-clamp-2">"{item.notes}"</p>}
                         </div>
                       </div>
-                      <div className="mt-auto border-t border-zinc-200 pt-6 grid grid-cols-3 lg:grid-cols-6 border-b gap-y-6 w-full pb-6 text-left">
+                      <div className="mt-auto border-t border-zinc-200 pt-5 grid grid-cols-3 md:grid-cols-6 border-b gap-x-2 gap-y-4 w-full pb-5 text-left">
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Sizes</p>
-                          <p className="text-xs font-medium text-zinc-900">{((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A')}</p>
+                          <p className="text-[10px] font-medium text-zinc-900 break-words">{((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A')}</p>
                         </div>
                         <div className="col-span-2">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Fabric</p>
-                          <p className="text-xs font-medium text-zinc-900 pr-4">{item.fabric_details || 'Premium blend'}</p>
+                          <p className="text-[10px] leading-relaxed font-medium text-zinc-900 pr-2 line-clamp-4 text-ellipsis overflow-hidden">{item.fabric_details || 'Premium blend'}</p>
                         </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">MOQ</p>
-                          <p className="text-xs font-medium text-zinc-900">{(item as any).custom_moq || (item as any).moq || 'TBD'}</p>
+                          <p className="text-[10px] font-medium text-zinc-900">{(item as any).custom_moq || (item as any).moq || 'TBD'}</p>
                         </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
-                          <p className="text-xs font-medium text-zinc-900">${(item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                          <p className="text-[10px] font-medium text-zinc-900">${(item.custom_price || item.garment_price || 0).toFixed(2)}</p>
                         </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Delivery</p>
-                          <p className="text-xs font-medium text-zinc-900 break-words">{(item as any).custom_turn_time || item.turn_time || 'TBD'}</p>
+                          <p className="text-[10px] font-medium text-zinc-900 break-words line-clamp-2 text-ellipsis overflow-hidden">{(item as any).custom_turn_time || item.turn_time || 'TBD'}</p>
                         </div>
-                        <div className="col-span-full pt-4 mt-2 border-t border-zinc-100 flex items-center gap-4">
+                        <div className="col-span-full pt-3 mt-1 border-t border-zinc-100 flex items-center gap-4">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 shrink-0">Colors</p>
                           <div className="flex flex-wrap gap-2">
                             {item.custom_colors && item.custom_colors.length > 0 ? (
@@ -3510,7 +3510,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                 <div key={i} className="w-5 h-5 rounded-full border border-zinc-200 shadow-sm" style={{ backgroundColor: c }} />
                               ))
                             ) : (
-                              <span className="text-xs text-zinc-500 italic">As Shown</span>
+                              <span className="text-[10px] font-medium text-zinc-500 italic">As Shown</span>
                             )}
                           </div>
                         </div>
@@ -3530,13 +3530,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           <h1 className="editorial-title text-3xl md:text-4xl mb-2 md:mb-3 text-zinc-900">{deck.name}</h1>
                           <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company ? `${customer.company} - ` : ''}Page {pageIdx + 1}</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-8 md:gap-x-12 gap-y-12 md:gap-y-16 flex-1 content-start">
+                        <div className="grid grid-cols-2 gap-x-8 md:gap-x-12 gap-y-12 md:gap-y-16 print:gap-y-8 flex-1 content-start">
                           {pageItems.map((item, idx) => (
                             <div key={`combo-${item.id}-${idx}`} className="flex flex-col items-center">
-                              <img src={activeVariations[item.id] || item.mock_image} className="w-full h-48 md:h-80 object-contain mb-4 md:mb-6 mix-blend-multiply" />
+                              <img src={activeVariations[item.id] || item.mock_image} className="w-full h-48 md:h-80 print:h-[2.25in] object-contain mb-4 md:mb-6 print:mb-4 mix-blend-multiply" />
                               <div className="text-left w-full px-2">
                                 <h3 className="font-serif text-lg md:text-xl leading-tight border-b border-zinc-200 pb-2 mb-3 text-zinc-900">{item.custom_name || item.garment_name}</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-3 print:gap-y-2">
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
                                     <p className="text-[10px] font-bold text-zinc-900">${(item.custom_price || item.garment_price || 0).toFixed(2)}</p>
@@ -3547,7 +3547,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                   </div>
                                   <div className="col-span-2">
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Fabric</p>
-                                    <p className="text-[10px] font-medium text-zinc-900 line-clamp-1">{item.fabric_details || 'Premium blend'}</p>
+                                    <p className="text-[10px] font-medium text-zinc-900 line-clamp-2 print:line-clamp-2 text-ellipsis overflow-hidden">{item.fabric_details || 'Premium blend'}</p>
                                   </div>
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">MOQ</p>
@@ -3555,9 +3555,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                   </div>
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Delivery</p>
-                                    <p className="text-[10px] font-medium text-zinc-900 truncate">{(item as any).custom_turn_time || item.turn_time || 'TBD'}</p>
+                                    <p className="text-[10px] font-medium text-zinc-900 truncate line-clamp-1 text-ellipsis overflow-hidden">{(item as any).custom_turn_time || item.turn_time || 'TBD'}</p>
                                   </div>
-                                  <div className="col-span-2 mt-1 flex items-center gap-2">
+                                  <div className="col-span-2 mt-1 print:mt-0 flex items-center gap-2">
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 shrink-0">Colors:</p>
                                     <div className="flex flex-wrap gap-1">
                                       {item.custom_colors && item.custom_colors.length > 0 ? (
