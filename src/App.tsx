@@ -57,11 +57,9 @@ function MarketPricingAnalyzer({ itemDetails }: { itemDetails: any }) {
                 <span className="font-bold text-emerald-600 shrink-0 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{ma.msrp}</span>
               </div>
               <p className="text-[11px] text-zinc-500 leading-relaxed mt-1">{ma.summary}</p>
-              {ma.link && ma.link !== '#' && ma.link !== '' && (
-                 <a href={ma.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-400 hover:text-zinc-600 font-medium self-start uppercase tracking-wider flex items-center gap-1 mt-1 transition-colors">
+                 <a href={`https://www.google.com/search?q=${encodeURIComponent(ma.brand + ' ' + ma.name + ' garment price')}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-400 hover:text-zinc-600 font-medium self-start uppercase tracking-wider flex items-center gap-1 mt-1 transition-colors">
                    View Comparable Product <ExternalLink size={10} className="ml-0.5" />
                  </a>
-              )}
             </div>
           ))}
         </div>
@@ -1751,6 +1749,14 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                           </label>
                         </div>
                       </div>
+                      
+                      <MarketPricingAnalyzer itemDetails={{
+                        name: editingGarment?.name,
+                        type: editingGarment?.type,
+                        category: editingGarment?.category,
+                        details: editingGarment?.description,
+                        fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                      }} />
                    </div>
 
                    {/* RIGHT COLUMN: Details */}
@@ -4035,8 +4041,6 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   </div>
                 </div>
               </div>
-            </div>
-
 
               <MarketPricingAnalyzer itemDetails={{
                 name: name,
@@ -4045,6 +4049,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 details: description,
                 fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
               }} />
+            </div>
 
             {/* RIGHT COLUMN */}
             <div className="lg:col-span-2 space-y-6">
