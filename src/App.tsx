@@ -3732,14 +3732,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
                       <div className="flex flex-col mb-8 md:mb-10 w-full shrink-0">
                         <div className="flex justify-between items-start w-full">
-                           <div className="w-1/3 flex justify-start shrink-0">
-                             <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
-                           </div>
-                           <div className="w-1/3 flex flex-col items-center pt-2">
-                             <h1 className="font-serif tracking-tight leading-none text-xl md:text-2xl mb-1 text-zinc-900 uppercase text-center break-words">{deck.name}</h1>
-                             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-center">
+                           <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-2">
+                             <h1 className="font-serif tracking-tight leading-none text-xl md:text-2xl mb-1 text-zinc-900 uppercase text-left break-words">{deck.name}</h1>
+                             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-left">
                                {customer?.company ? `${customer.company} - ` : ''}PAGE {idx + 1}
                              </p>
+                           </div>
+                           <div className="w-1/3 flex justify-center shrink-0">
+                             <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
                            </div>
                            <div className="w-1/3 flex flex-col items-end gap-2 text-right shrink-0">
                              {selectedAsset && (
@@ -3812,12 +3812,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
                         <div className="flex flex-col mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
                           <div className="flex justify-between items-start w-full">
-                             <div className="w-1/3 flex justify-start shrink-0">
-                               <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
+                             <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-1 md:pt-2">
+                               <h1 className="font-serif tracking-tight leading-none text-lg md:text-xl mb-1 text-zinc-900 uppercase text-left break-words">{deck.name}</h1>
+                               <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-left">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
                              </div>
-                             <div className="w-1/3 flex flex-col items-center pt-2">
-                               <h1 className="font-serif tracking-tight leading-none text-lg md:text-xl mb-1 text-zinc-900 uppercase text-center break-words">{deck.name}</h1>
-                               <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-center">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
+                             <div className="w-1/3 flex justify-center shrink-0">
+                               <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
                              </div>
                              <div className="w-1/3 flex justify-end shrink-0">
                                {selectedAsset && (
