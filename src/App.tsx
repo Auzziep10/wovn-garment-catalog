@@ -1686,7 +1686,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                exit={{ scale: 0.98, opacity: 0, y: 15 }}
                transition={{ type: "spring", stiffness: 350, damping: 30 }}
                onClick={e => e.stopPropagation()}
-               className="bg-[#fafafa] w-full max-w-6xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] md:max-h-[95vh] outline-none relative"
+               className="bg-[#fafafa] w-full max-w-[1400px] xl:max-w-[90vw] rounded-2xl shadow-xl flex flex-col max-h-[90vh] md:max-h-[95vh] outline-none relative"
              >
                <div className="flex items-center justify-between px-6 md:px-8 py-4 bg-white rounded-t-2xl border-b border-zinc-100 shrink-0 sticky top-0 z-20">
                  <h2 className="font-serif text-xl md:text-2xl">{editingGarment ? 'Edit Item Specs' : 'New Garment'}</h2>
@@ -1696,7 +1696,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                </div>
 
                <form id="garment-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 shrink min-h-0 custom-scrollbar">
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 w-full max-w-none mx-auto">
                    
                    {/* LEFT COLUMN: Imagery */}
                    <div className="lg:col-span-1 flex flex-col gap-6">
@@ -3939,7 +3939,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-[#fafafa] rounded-[2rem] shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] md:max-h-[95vh] relative"
+        className="bg-[#fafafa] rounded-[2rem] shadow-2xl w-full max-w-[1400px] xl:max-w-[90vw] overflow-hidden flex flex-col max-h-[90vh] md:max-h-[95vh] relative"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 md:px-8 py-4 bg-white rounded-t-2xl border-b border-zinc-100 shrink-0 sticky top-0 z-20">
@@ -3953,7 +3953,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 shrink min-h-0 custom-scrollbar">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 w-full max-w-none mx-auto">
             
             {/* LEFT COLUMN */}
             <div className="lg:col-span-1 flex flex-col gap-6">
