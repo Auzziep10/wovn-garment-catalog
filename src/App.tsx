@@ -1391,6 +1391,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
   const [images, setImages] = useState<string[]>([]);
   const [existingGarments, setExistingGarments] = useState<Garment[]>([]);
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
+  const [marketAnalysis, setMarketAnalysis] = useState<any[] | null>(null);
   const [fabricCompositions, setFabricCompositions] = useState<{ id: string, percentage: string, fabric: string }[]>([{ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' }]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [librarySortBy, setLibrarySortBy] = useState<'default' | 'recent' | 'category' | 'gender' | 'type'>('default');
