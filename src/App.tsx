@@ -3771,7 +3771,24 @@ function EditItemModal({ item, customer, onClose, onSave }: {
     (item.mockup_status as 'New Mock Needed' | 'Working' | 'Final Mock Uploaded') || 'Final Mock Uploaded'
   );
 
-  const [fabricDetails, setFabricDetails] = useState(item.fabric_details || '');
+  const [fabricCompositions, setFabricCompositions] = useState<{ id: string, percentage: string, fabric: string }[]>(() => {
+    let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
+    if (item.fabric_details) {
+      const parts = item.fabric_details.split(',').map(s => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
+        if (match) {
+           parsedComp.push({ id: Math.random().toString(), percentage: match[1], fabric: formatFabric(match[2]) });
+        } else {
+           parsedComp.push({ id: Math.random().toString(), percentage: '', fabric: formatFabric(p) });
+        }
+      }
+    }
+    if (parsedComp.length === 0) {
+       parsedComp.push({ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' });
+    }
+    return parsedComp;
+  });
   const [fabricFinish, setFabricFinish] = useState(item.fabric_finish || '');
   const [careInstructions, setCareInstructions] = useState(item.care_instructions || '');
   const [fit, setFit] = useState(item.fit || '');
@@ -4004,9 +4021,76 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Material & Build</label>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Details</label>
-                      <input value={fabricDetails} onChange={e => setFabricDetails(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 flex items-center justify-between">
+                        <span>Fabric Composition</span>
+                        <button type="button" onClick={() => setFabricCompositions(prev => [...prev, { id: Math.random().toString(), percentage: '', fabric: '' }])} className="text-zinc-500 hover:text-zinc-900 transition-colors flex items-center gap-1"><PlusCircle size={12} /> Add</button>
+                      </label>
+                      <div className="space-y-2">
+                        {fabricCompositions.map((comp, idx) => (
+                          <div key={comp.id} className="flex gap-2 items-center">
+                            <div className="relative w-24 shrink-0">
+                              <input
+                                type="number"
+                                value={comp.percentage}
+                                onChange={e => {
+                                  const newComps = [...fabricCompositions];
+                                  newComps[idx].percentage = e.target.value;
+                                  setFabricCompositions(newComps);
+                                }} 
+                                placeholder="%"
+                                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pr-6 pl-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium text-xs">%</span>
+                            </div>
+                            <select
+                              value={comp.fabric || 'Cotton'}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === '_add_custom_') {
+                                  const custom = window.prompt("Enter new custom fabric:");
+                                  if (custom && custom.trim() !== '') {
+                                    const formatted = formatFabric(custom);
+                                    const newComps = [...fabricCompositions];
+                                    newComps[idx].fabric = formatted;
+                                    setFabricCompositions(newComps);
+                                  } else {
+                                    const newComps = [...fabricCompositions];
+                                    newComps[idx].fabric = comp.fabric || 'Cotton';
+                                    setFabricCompositions(newComps);
+                                  }
+                                } else {
+                                  const newComps = [...fabricCompositions];
+                                  newComps[idx].fabric = val;
+                                  setFabricCompositions(newComps);
+                                }
+                              }}
+                              className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all min-w-0"
+                            >
+                              {Array.from(new Set([
+                                "Cotton", "Organic Cotton", "Ring-Spun Cotton", "Combed Ring-Spun Cotton",
+                                "Polyester", "Recycled Polyester", "Spandex", "Elastane", "Rayon",
+                                "Viscose", "Nylon", "Silk", "Wool", "Linen", "Bamboo", "Modal",
+                                "Acrylic", "Fleece", "French Terry", "Twill", "Canvas",
+                                ...fabricCompositions.map(c => c.fabric).filter(Boolean)
+                              ])).map(fab => (
+                                <option key={fab} value={fab}>{fab}</option>
+                              ))}
+                              <option disabled>──────────</option>
+                              <option value="_add_custom_">+ Add Fabric...</option>
+                            </select>
+                            {fabricCompositions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setFabricCompositions(prev => prev.filter((_, i) => i !== idx))}
+                                className="p-1 text-zinc-400 hover:text-red-500 transition-colors shrink-0 outline-none"
+                              >
+                                <MinusCircle size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Finish</label>
@@ -4127,7 +4211,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   mock_image: mockImage,
                   variations: variations,
                   mockup_status: mockupStatus,
-                  custom_fabric_details: fabricDetails,
+                  custom_fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
                   custom_fabric_finish: fabricFinish,
                   custom_care_instructions: careInstructions,
                   custom_fit: fit,
