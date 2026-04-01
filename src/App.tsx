@@ -141,6 +141,7 @@ export interface DeckItem {
   decoration_method?: string | null;
   sizes?: string[] | null;
   available_colors?: string | null;
+  custom_colors?: string[];
   wholesale_price?: number | null;
   cost_price?: number | null;
   msrp?: number | null;
@@ -4145,9 +4146,62 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       })}
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
-                    <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
+                      <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 flex items-center justify-between">
+                        <span>Line Sheet Colors</span>
+                        <span className="font-normal text-zinc-400 normal-case">(Click to toggle)</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {brandColors.map(bc => (
+                          <button
+                            key={bc.name}
+                            type="button"
+                            onClick={() => {
+                              if (customColors.includes(bc.hex)) {
+                                setCustomColors(customColors.filter(c => c !== bc.hex));
+                              } else {
+                                setCustomColors([...customColors, bc.hex]);
+                              }
+                            }}
+                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${customColors.includes(bc.hex) ? 'ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm' : 'border border-zinc-200 hover:scale-105 hover:border-zinc-400'}`}
+                            style={{ backgroundColor: bc.hex }}
+                            title={bc.name}
+                          />
+                        ))}
+                        {customColors.filter(c => !brandColors.some(bc => bc.hex.toLowerCase() === c.toLowerCase())).map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setCustomColors(customColors.filter(sc => sc !== c))}
+                            className="w-6 h-6 rounded-full transition-all ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm"
+                            style={{ backgroundColor: c }}
+                            title={`Remove ${c}`}
+                          />
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const hex = window.prompt("Enter a HEX color code (e.g. #000000):");
+                            if (hex && /^#[0-9A-Fa-f]{6}$/i.test(hex)) {
+                              if (!customColors.includes(hex.toLowerCase())) {
+                                setCustomColors([...customColors, hex.toLowerCase()]);
+                              }
+                            } else if (hex) {
+                              alert("Invalid HEX code. Please format as #000000.");
+                            }
+                          }}
+                          className="w-6 h-6 rounded-full border border-dashed border-zinc-300 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:border-zinc-400 transition-colors bg-white shadow-sm"
+                          title="Add custom hex color"
+                        >
+                          <PlusCircle size={14} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -4218,6 +4272,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_fabric_weight_gsm: fabricWeightGsm,
                   custom_decoration_method: decorationMethod,
                   custom_available_colors: availableColors,
+                  custom_colors: customColors,
                   custom_cost_price: parseFloat(costPrice) || null,
                   custom_wholesale_price: parseFloat(wholesalePrice) || null,
                   custom_msrp: parseFloat(price) || null,
