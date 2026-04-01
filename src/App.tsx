@@ -5328,7 +5328,7 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
   onSave: (newUrl: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [tolerance, setTolerance] = useState(25);
+  const [tolerance, setTolerance] = useState(35);
   const [isProcessing, setIsProcessing] = useState(false);
   const [needsReset, setNeedsReset] = useState(0);
 
@@ -5359,11 +5359,14 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    const startX = Math.floor((e.clientX - rect.left) * scaleX);
-    const startY = Math.floor((e.clientY - rect.top) * scaleY);
+    // e.nativeEvent.offsetX gives exact coordinate within element padding-box regardless of browser layout rect mapping
+    const startX = Math.floor(e.nativeEvent.offsetX * scaleX);
+    const startY = Math.floor(e.nativeEvent.offsetY * scaleY);
     
     const w = canvas.width;
     const h = canvas.height;
+    
+    if (startX < 0 || startX >= w || startY < 0 || startY >= h) return;
     
     const imgData = ctx.getImageData(0, 0, w, h);
     const data = imgData.data;
@@ -5387,13 +5390,19 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
       return diff <= tolerance;
     };
     
-    const stack = [startX, startY];
+    const maxStack = w * h * 2;
+    const stack = new Uint32Array(maxStack);
+    let stackPtr = 0;
+    
+    stack[stackPtr++] = startX;
+    stack[stackPtr++] = startY;
+    
     const visited = new Uint8Array(w * h);
     visited[startY * w + startX] = 1;
     
-    while(stack.length > 0) {
-      const y = stack.pop()!;
-      const x = stack.pop()!;
+    while(stackPtr > 0) {
+      const y = stack[--stackPtr];
+      const x = stack[--stackPtr];
       
       const p = (y * w + x) * 4;
       if (match(p)) {
@@ -5401,19 +5410,23 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
         
         if (x > 0 && visited[y * w + (x - 1)] === 0) { 
            visited[y * w + (x - 1)] = 1; 
-           stack.push(x - 1, y); 
+           stack[stackPtr++] = x - 1;
+           stack[stackPtr++] = y;
         }
         if (x < w - 1 && visited[y * w + (x + 1)] === 0) { 
            visited[y * w + (x + 1)] = 1; 
-           stack.push(x + 1, y); 
+           stack[stackPtr++] = x + 1;
+           stack[stackPtr++] = y;
         }
         if (y > 0 && visited[(y - 1) * w + x] === 0) { 
            visited[(y - 1) * w + x] = 1; 
-           stack.push(x, y - 1); 
+           stack[stackPtr++] = x;
+           stack[stackPtr++] = y - 1;
         }
         if (y < h - 1 && visited[(y + 1) * w + x] === 0) { 
            visited[(y + 1) * w + x] = 1; 
-           stack.push(x, y + 1); 
+           stack[stackPtr++] = x;
+           stack[stackPtr++] = y + 1;
         }
       }
     }
@@ -5448,15 +5461,15 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
         </div>
         
         <div className="p-6 flex-1 overflow-auto flex flex-col items-center border-y border-zinc-200" style={{ 
-            backgroundColor: '#ffffff',
-            backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0)',
+            backgroundColor: '#e5e7eb',
+            backgroundImage: 'linear-gradient(45deg, #9ca3af 25%, transparent 25%, transparent 75%, #9ca3af 75%, #9ca3af), linear-gradient(45deg, #9ca3af 25%, transparent 25%, transparent 75%, #9ca3af 75%, #9ca3af)',
             backgroundSize: '20px 20px',
             backgroundPosition: '0 0, 10px 10px'
           }}>
            <canvas
              ref={canvasRef}
              onClick={handleCanvasClick}
-             className="w-auto h-auto max-w-full max-h-[60vh] cursor-crosshair shadow-lg bg-transparent"
+             className="w-auto h-auto max-w-full max-h-[60vh] cursor-crosshair shadow-2xl bg-transparent"
              style={{ touchAction: 'none' }}
            />
         </div>
