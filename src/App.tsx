@@ -2855,24 +2855,25 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
         }
       }
 
-      const res = await fetch(`/api/decks/${item.deck_id}/items/${item.id}`, {
+      const res = await fetch(`/api/deck-items/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...item,
           mock_image: updatedMockImage,
           variations: updatedVariations
         })
       });
 
       if (res.ok) {
-        const updatedItem = await res.json();
-        setItems(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+        // Apply changes directly to React state
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, mock_image: updatedMockImage, variations: updatedVariations } : i));
         setActiveVariations(prev => ({ ...prev, [item.id]: finalUrl }));
+      } else {
+        alert('Failed to update image on the server.');
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to update background.');
+      alert('Network error while updating image.');
     } finally {
       setErasingBgItem(null);
     }
