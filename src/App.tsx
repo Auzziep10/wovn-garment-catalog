@@ -3218,7 +3218,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className={`max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 ${lineSheetMode ? 'print:hidden' : ''}`}>
         <button onClick={onBack} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors mb-8 md:mb-12">
           <ArrowLeft size={16} /> Back to Clients
         </button>
@@ -3726,7 +3726,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 </div>
               </div>
 
-              <div className="p-4 md:p-8 print:p-0 flex flex-col gap-8 print:gap-0 items-center">
+              <div className="p-4 md:p-8 print:p-0 flex flex-col gap-8 print:gap-0 items-center print:block">
                 {lineSheetMode === 'individual' ? (
                   Array.from(displayedItems).map((item, idx) => (
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
