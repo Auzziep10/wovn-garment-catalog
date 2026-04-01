@@ -219,6 +219,7 @@ export interface DeckItem {
   custom_msrp?: number | null;
   custom_wholesale_price?: number | null;
   custom_cost_price?: number | null;
+  custom_market_analysis?: any[] | null;
 }
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
@@ -4376,7 +4377,8 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_wholesale_price: parseFloat(wholesalePrice) || null,
                   custom_msrp: parseFloat(price) || null,
                   custom_moq: parseInt(moq, 10) || null,
-                  custom_turn_time: turnTime
+                  custom_turn_time: turnTime,
+                  custom_market_analysis: marketAnalysis
                 });
               } catch (err: any) {
                 console.error(err);

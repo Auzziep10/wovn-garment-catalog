@@ -418,6 +418,7 @@ app.get("/api/decks/:id", async (req, res) => {
         cost_price: itemData.custom_cost_price || (garmentData ? garmentData.cost_price : null),
         wholesale_price: itemData.custom_wholesale_price || (garmentData ? garmentData.wholesale_price : null),
         msrp: itemData.custom_msrp || (garmentData ? garmentData.msrp : null),
+        market_analysis: itemData.custom_market_analysis || (garmentData ? garmentData.market_analysis : null),
         moq: itemData.custom_moq || (garmentData ? garmentData.moq : null),
         turn_time: itemData.custom_turn_time || (garmentData ? garmentData.turn_time : null),
         order_index: itemData.order_index || 0
