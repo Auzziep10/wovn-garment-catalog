@@ -2689,6 +2689,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   setShowPricing: (show: boolean) => void
 }) {
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
+  const [customerAssets, setCustomerAssets] = useState<CustomerAsset[]>([]);
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('grid');
   const [editingItem, setEditingItem] = useState<DeckItem | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -2714,6 +2715,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   useEffect(() => {
     fetchItems();
   }, [deck.id]);
+
+  useEffect(() => {
+    if (customer?.id) {
+      fetch(`/api/customers/${customer.id}/assets`)
+        .then(res => res.json())
+        .then(setCustomerAssets);
+    }
+  }, [customer?.id]);
 
   useEffect(() => {
     if (isGarmentSelectorOpen && libraryGarments.length === 0) {
@@ -3701,17 +3710,27 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 {lineSheetMode === 'individual' ? (
                   Array.from(displayedItems).map((item, idx) => (
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
-                      <div className="flex justify-between items-start mb-8 md:mb-12">
-                        <div>
-                          <h1 className="editorial-title text-3xl md:text-4xl mb-2 text-zinc-900">{deck.name}</h1>
-                          {customer && <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer.company}</p>}
+                      <div className="relative flex flex-col items-center justify-center mb-8 md:mb-10 w-full shrink-0">
+                        <img src="/wovn-logo.png" alt="WOVN" className="h-4 md:h-5 object-contain opacity-80 mb-3" />
+                        <div className="text-center">
+                          <h1 className="editorial-title text-2xl md:text-3xl mb-1 text-zinc-900">{deck.name}</h1>
+                          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+                            {customer?.company ? `${customer.company} - ` : ''}PAGE {idx + 1}
+                          </p>
                         </div>
-                        {showPricing && item.price !== undefined && (
-                          <div className="text-right">
-                            <p className="font-serif text-2xl md:text-3xl">${item.price.toFixed(2)}</p>
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Unit Price</p>
+                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-end">
+                          <div className="flex flex-col items-end gap-2 text-right">
+                             {customerAssets && customerAssets.length > 0 && (
+                                <img src={customerAssets[0].image} className="h-8 md:h-10 max-w-[100px] object-contain mix-blend-multiply" />
+                             )}
+                             {showPricing && item.price !== undefined && (
+                               <div>
+                                 <p className="font-serif text-xl md:text-2xl leading-none">${item.price.toFixed(2)}</p>
+                                 <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mt-1">Unit Price</p>
+                               </div>
+                             )}
                           </div>
-                        )}
+                        </div>
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-center -mt-8 px-4">
                         <img src={activeVariations[item.id] || item.mock_image} className="w-full max-h-[4.5in] md:max-h-[5.5in] print:max-h-[4.5in] object-contain mb-6 md:mb-8 mix-blend-multiply" />
@@ -3769,9 +3788,17 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     const pageItems = displayedItems.slice(pageIdx * 4, pageIdx * 4 + 4);
                     return (
                       <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
-                        <div className="text-center mb-4 md:mb-5 print:mb-4 shrink-0">
-                          <h1 className="editorial-title text-2xl md:text-3xl mb-1 md:mb-2 text-zinc-900">{deck.name}</h1>
-                          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company ? `${customer.company} - ` : ''}Page {pageIdx + 1}</p>
+                        <div className="relative flex flex-col items-center justify-center mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
+                          <img src="/wovn-logo.png" alt="WOVN" className="h-4 md:h-5 object-contain opacity-80 mb-2 md:mb-3" />
+                          <div className="text-center w-full">
+                            <h1 className="editorial-title text-xl md:text-2xl mb-1 text-zinc-900">{deck.name}</h1>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
+                          </div>
+                          <div className="absolute right-2 top-0 bottom-0 flex items-center justify-end">
+                             {customerAssets && customerAssets.length > 0 && (
+                                <img src={customerAssets[0].image} className="h-8 md:h-10 max-w-[100px] object-contain mix-blend-multiply" />
+                             )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-2 gap-x-8 md:gap-x-10 gap-y-6 md:gap-y-6 print:gap-y-6 flex-1 content-start">
                           {pageItems.map((item, idx) => (
