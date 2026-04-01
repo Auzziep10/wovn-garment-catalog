@@ -3796,6 +3796,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [fabricWeightGsm, setFabricWeightGsm] = useState(item.fabric_weight_gsm || '');
   const [decorationMethod, setDecorationMethod] = useState(item.decoration_method || '');
   const [availableColors, setAvailableColors] = useState(item.available_colors || '');
+  const [customColors, setCustomColors] = useState<string[]>(item.custom_colors || []);
   const [costPrice, setCostPrice] = useState(item.custom_cost_price?.toString() || item.cost_price?.toString() || '');
   const [wholesalePrice, setWholesalePrice] = useState(item.custom_wholesale_price?.toString() || item.wholesale_price?.toString() || '');
   const [moq, setMoq] = useState(item.moq?.toString() || '');
@@ -4159,21 +4160,22 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       <div className="flex flex-wrap gap-2 pt-0.5">
                         {brandColors.map(bc => (
                           <button
-                            key={bc.name}
+                            key={bc.hex || bc.image}
                             type="button"
                             onClick={() => {
-                              if (customColors.includes(bc.hex)) {
-                                setCustomColors(customColors.filter(c => c !== bc.hex));
-                              } else {
-                                setCustomColors([...customColors, bc.hex]);
+                              const hexVal = bc.hex || '';
+                              if (customColors.includes(hexVal)) {
+                                setCustomColors(customColors.filter(c => c !== hexVal));
+                              } else if (hexVal) {
+                                setCustomColors([...customColors, hexVal]);
                               }
                             }}
-                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${customColors.includes(bc.hex) ? 'ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm' : 'border border-zinc-200 hover:scale-105 hover:border-zinc-400'}`}
-                            style={{ backgroundColor: bc.hex }}
-                            title={bc.name}
+                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${bc.hex && customColors.includes(bc.hex) ? 'ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm' : 'border border-zinc-200 hover:scale-105 hover:border-zinc-400'}`}
+                            style={{ backgroundColor: bc.hex || '#000000', backgroundImage: bc.image ? `url(${bc.image})` : 'none', backgroundSize: 'cover' }}
+                            title={bc.hex || "Brand Color"}
                           />
                         ))}
-                        {customColors.filter(c => !brandColors.some(bc => bc.hex.toLowerCase() === c.toLowerCase())).map(c => (
+                        {customColors.filter(c => !brandColors.some(bc => bc.hex && bc.hex.toLowerCase() === c.toLowerCase())).map(c => (
                           <button
                             key={c}
                             type="button"
