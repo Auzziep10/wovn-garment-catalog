@@ -5,9 +5,77 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser
-} from 'lucide-react';
+, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
+
+
+
+function MarketPricingAnalyzer({ itemDetails }: { itemDetails: any }) {
+  const [marketAnalysis, setMarketAnalysis] = useState<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }> | null>(null);
+  const [analyzingMarket, setAnalyzingMarket] = useState(false);
+
+  const handleAnalyzeMarket = async () => {
+    setAnalyzingMarket(true);
+    setMarketAnalysis(null);
+    try {
+      const result = await analyzeMarketPricing(itemDetails);
+      setMarketAnalysis(result);
+    } catch (e) {
+      alert("Failed to analyze market. Please try again.");
+    } finally {
+      setAnalyzingMarket(false);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] mt-6">
+      <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3">
+         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">AI Market Pricing</label>
+         <button 
+           type="button" 
+           onClick={handleAnalyzeMarket} 
+           disabled={analyzingMarket}
+           className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors flex items-center gap-2"
+           title="Scan top luxury brands for comparable MSRP"
+         >
+           {analyzingMarket ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+           {analyzingMarket ? 'Scanning...' : 'Analyze Market'}
+         </button>
+      </div>
+      
+      {marketAnalysis ? (
+        <div className="space-y-3">
+          {marketAnalysis.map((ma, idx) => (
+            <div key={idx} className="bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm flex flex-col gap-1.5 group">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0 flex-1 flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-bold text-zinc-900 truncate">{ma.brand}</span>
+                  <span className="text-zinc-400 text-xs">|</span>
+                  <span className="text-zinc-700 font-medium text-xs truncate">{ma.name}</span>
+                </div>
+                <span className="font-bold text-emerald-600 shrink-0 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{ma.msrp}</span>
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-relaxed mt-1">{ma.summary}</p>
+              {ma.link && ma.link !== '#' && ma.link !== '' && (
+                 <a href={ma.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-400 hover:text-zinc-600 font-medium self-start uppercase tracking-wider flex items-center gap-1 mt-1 transition-colors">
+                   View Comparable Product <ExternalLink size={10} className="ml-0.5" />
+                 </a>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-6 px-4 bg-zinc-50 rounded-lg border border-dashed border-zinc-200">
+          <Sparkles className="w-6 h-6 text-zinc-300 mx-auto mb-2" />
+          <p className="text-xs text-zinc-500 leading-relaxed max-w-[250px] mx-auto">
+            Use AI to scan current luxury & premium markets (Vuori, Lululemon, G-Star) for top comparable items to establish realistic MSRP benchmarking.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function HoverTooltip({ content }: { content: string }) {
   return (
@@ -3968,6 +4036,15 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 </div>
               </div>
             </div>
+
+
+              <MarketPricingAnalyzer itemDetails={{
+                name: name,
+                type: item.category,
+                category: item.category,
+                details: description,
+                fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+              }} />
 
             {/* RIGHT COLUMN */}
             <div className="lg:col-span-2 space-y-6">

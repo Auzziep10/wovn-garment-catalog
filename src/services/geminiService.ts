@@ -508,3 +508,43 @@ export async function convertColorToHex(colorName: string): Promise<string | nul
     return null;
   }
 }
+
+export async function analyzeMarketPricing(
+  garmentData: { name?: string | null, type?: string | null, details?: string | null, category?: string | null, fabric_details?: string | null }
+): Promise<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }>> {
+  const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+  
+  const prompt = `
+  TASK: Perform a luxury market pricing analysis for a garment with the following specs:
+  - Name: ${garmentData.name || 'Unknown'}
+  - Type: ${garmentData.type || 'Unknown'}
+  - Category: ${garmentData.category || 'Unknown'}
+  - Details: ${garmentData.details || 'Unknown'}
+  - Fabric: ${garmentData.fabric_details || 'Unknown'}
+  
+  Please search your knowledge base (as if scanning the current internet) for 3 similar luxury or premium items from top brands (e.g. Vuori, G-Star, Tropic of C, Lululemon, Alo Yoga, Rhone, Kith, etc.) that match this style and market tier.
+  
+  Return the output EXACTLY as a valid JSON array of objects, with NO markdown formatting, NO backticks. Do not include \`\`\`json. Just the raw array.
+  Each object MUST have these exact string keys:
+  - "brand": The name of the brand
+  - "name": The name of the comparable garment
+  - "msrp": The estimated retail price (e.g. "$128")
+  - "link": A realistic URL link to the product or brand's category page
+  - "summary": A 1-sentence explanation of why it's comparable
+  `;
+
+  const result = await modelObj.generateContent(prompt);
+  let text = result.response.text().trim();
+  
+  try {
+    if (text.startsWith('\`\`\`json')) {
+      text = text.replace(/^\`\`\`json/, '').replace(/\`\`\`$/, '').trim();
+    } else if (text.startsWith('\`\`\`')) {
+      text = text.replace(/^\`\`\`/, '').replace(/\`\`\`$/, '').trim();
+    }
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Failed to parse Market Pricing JSON:", text, err);
+    throw new Error("Market analysis failed to return valid JSON. Please try again.");
+  }
+}
