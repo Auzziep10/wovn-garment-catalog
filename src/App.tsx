@@ -1439,6 +1439,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
   const handleEditClick = (g: Garment) => {
     setEditingGarment(g);
     setImages(g.images && g.images.length > 0 ? g.images : [g.image]);
+    setMarketAnalysis(g.market_analysis || null);
     
     let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
     if (g.fabric_details) {
