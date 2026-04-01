@@ -3665,7 +3665,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           <div className="flex flex-wrap gap-2">
                             {item.custom_colors && item.custom_colors.length > 0 ? (
                               item.custom_colors.map((c, i) => (
-                                <div key={i} className="w-5 h-5 rounded-full border border-zinc-200 shadow-sm" style={{ backgroundColor: c }} />
+                                <div key={i} className="w-5 h-5 rounded-full border border-zinc-200 shadow-sm" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: c }} />
                               ))
                             ) : (
                               <span className="text-[10px] font-medium text-zinc-500 italic">As Shown</span>
@@ -3726,7 +3726,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                     <div className="flex flex-wrap gap-1">
                                       {item.custom_colors && item.custom_colors.length > 0 ? (
                                         item.custom_colors.map((c, i) => (
-                                          <div key={i} className="w-3.5 h-3.5 rounded-full border border-zinc-200 shadow-sm" style={{ backgroundColor: c }} />
+                                          <div key={i} className="w-3.5 h-3.5 rounded-full border border-zinc-200 shadow-sm" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: c }} />
                                         ))
                                       ) : (
                                         <span className="text-[9px] text-zinc-500 italic">As Shown</span>
@@ -4163,25 +4163,27 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                             key={bc.hex || bc.image}
                             type="button"
                             onClick={() => {
-                              const hexVal = bc.hex || '';
-                              if (customColors.includes(hexVal)) {
-                                setCustomColors(customColors.filter(c => c !== hexVal));
-                              } else if (hexVal) {
-                                setCustomColors([...customColors, hexVal]);
+                              const val = bc.image || bc.hex;
+                              if (val) {
+                                if (customColors.includes(val)) {
+                                  setCustomColors(customColors.filter(c => c !== val));
+                                } else {
+                                  setCustomColors([...customColors, val]);
+                                }
                               }
                             }}
-                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${bc.hex && customColors.includes(bc.hex) ? 'ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm' : 'border border-zinc-200 hover:scale-105 hover:border-zinc-400'}`}
-                            style={{ backgroundColor: bc.hex || '#000000', backgroundImage: bc.image ? `url(${bc.image})` : 'none', backgroundSize: 'cover' }}
+                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${(bc.image || bc.hex) && customColors.includes(bc.image || bc.hex || '') ? 'ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm' : 'border border-zinc-200 hover:scale-105 hover:border-zinc-400'}`}
+                            style={{ backgroundColor: bc.hex || 'transparent', backgroundImage: bc.image ? `url(${bc.image})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}
                             title={bc.hex || "Brand Color"}
                           />
                         ))}
-                        {customColors.filter(c => !brandColors.some(bc => bc.hex && bc.hex.toLowerCase() === c.toLowerCase())).map(c => (
+                        {customColors.filter(c => !brandColors.some(bc => (bc.image || bc.hex) && (bc.image || bc.hex)?.toLowerCase() === c.toLowerCase())).map(c => (
                           <button
                             key={c}
                             type="button"
                             onClick={() => setCustomColors(customColors.filter(sc => sc !== c))}
                             className="w-6 h-6 rounded-full transition-all ring-2 ring-offset-2 ring-zinc-900 scale-110 shadow-sm"
-                            style={{ backgroundColor: c }}
+                            style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: c }}
                             title={`Remove ${c}`}
                           />
                         ))}
