@@ -5320,6 +5320,7 @@ function DeckModal({ onClose, onConfirm, initialName = '', initialCoverImages = 
   );
 }
 
+
 function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
   item: DeckItem,
   currentUrl: string,
@@ -5388,23 +5389,32 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     
     const stack = [startX, startY];
     const visited = new Uint8Array(w * h);
+    visited[startY * w + startX] = 1;
     
     while(stack.length > 0) {
       const y = stack.pop()!;
       const x = stack.pop()!;
       
-      const idx = y * w + x;
-      if (visited[idx]) continue;
-      visited[idx] = 1;
-
-      const p = idx * 4;
+      const p = (y * w + x) * 4;
       if (match(p)) {
         data[p + 3] = 0;
         
-        if (x > 0) { stack.push(x - 1, y); }
-        if (x < w - 1) { stack.push(x + 1, y); }
-        if (y > 0) { stack.push(x, y - 1); }
-        if (y < h - 1) { stack.push(x, y + 1); }
+        if (x > 0 && visited[y * w + (x - 1)] === 0) { 
+           visited[y * w + (x - 1)] = 1; 
+           stack.push(x - 1, y); 
+        }
+        if (x < w - 1 && visited[y * w + (x + 1)] === 0) { 
+           visited[y * w + (x + 1)] = 1; 
+           stack.push(x + 1, y); 
+        }
+        if (y > 0 && visited[(y - 1) * w + x] === 0) { 
+           visited[(y - 1) * w + x] = 1; 
+           stack.push(x, y - 1); 
+        }
+        if (y < h - 1 && visited[(y + 1) * w + x] === 0) { 
+           visited[(y + 1) * w + x] = 1; 
+           stack.push(x, y + 1); 
+        }
       }
     }
     
@@ -5446,7 +5456,7 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
            <canvas
              ref={canvasRef}
              onClick={handleCanvasClick}
-             className="max-w-full max-h-[60vh] object-contain cursor-crosshair shadow bg-transparent"
+             className="w-auto h-auto max-w-full max-h-[60vh] cursor-crosshair shadow-lg bg-transparent"
              style={{ touchAction: 'none' }}
            />
         </div>
