@@ -1527,6 +1527,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
       types: formData.getAll('types'),
       type: formData.getAll('types')[0] || 'Tops',
       supplier_link: formData.get('supplier_link'),
+      market_analysis: marketAnalysis,
       mockup_status: formData.get('mockup_status'),
       image: images[0],
       images: images
