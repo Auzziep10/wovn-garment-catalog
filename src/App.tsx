@@ -3729,7 +3729,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
               <div className="p-4 md:p-8 print:p-0 flex flex-col gap-8 print:gap-0 items-center print:block">
                 {lineSheetMode === 'individual' ? (
                   Array.from(displayedItems).map((item, idx) => (
-                    <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
+                    <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-full print:aspect-auto print:h-auto bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
                       <div className="flex flex-col mb-8 md:mb-10 w-full shrink-0">
                         <div className="flex justify-between items-start w-full">
                            <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-2">
@@ -3799,7 +3799,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           </div>
                         </div>
                       </div>
-                      <div className="absolute bottom-6 md:bottom-8 left-8 md:left-16 right-8 md:right-16 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300">
+                      <div className="mt-auto pt-6 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300 w-full">
                         <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
                         <span>{new Date().toLocaleDateString()}</span>
                       </div>
@@ -3809,7 +3809,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   Array.from({ length: Math.ceil(displayedItems.length / 4) }).map((_, pageIdx) => {
                     const pageItems = displayedItems.slice(pageIdx * 4, pageIdx * 4 + 4);
                     return (
-                      <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
+                      <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-full print:aspect-auto print:h-auto bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
                         <div className="flex flex-col mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
                           <div className="flex justify-between items-start w-full">
                              <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-1 md:pt-2">
@@ -3876,7 +3876,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             </div>
                           ))}
                         </div>
-                        <div className="absolute bottom-5 left-10 right-10 flex justify-between items-center text-[7px] md:text-[8px] uppercase tracking-widest font-bold text-zinc-300">
+                        <div className="mt-auto pt-4 flex justify-between items-center text-[7px] md:text-[8px] uppercase tracking-widest font-bold text-zinc-300 w-full">
                           <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
                           <span>{new Date().toLocaleDateString()}</span>
                         </div>
