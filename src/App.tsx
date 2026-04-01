@@ -2828,18 +2828,19 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     }
   };
 
-  const [removingBgItemId, setRemovingBgItemId] = useState<number | null>(null);
+  const [erasingBgItem, setErasingBgItem] = useState<DeckItem | null>(null);
 
-  const handleRemoveBackground = async (e: React.MouseEvent, item: DeckItem) => {
+  const handleRemoveBackgroundClick = (e: React.MouseEvent, item: DeckItem) => {
     e.stopPropagation();
-    const currentUrl = activeVariations[item.id] || item.mock_image;
-    if (!currentUrl) return;
+    setErasingBgItem(item);
+  };
 
-    setRemovingBgItemId(item.id);
+  const handleSaveErasedImage = async (finalUrl: string) => {
+    if (!erasingBgItem) return;
+    const item = erasingBgItem;
+    const currentUrl = activeVariations[item.id] || item.mock_image;
+
     try {
-      const pureWhiteUrl = await removeImageBackground(currentUrl);
-      const finalUrl = await compressImageIfNeeded(pureWhiteUrl);
-      
       let updatedMockImage = item.mock_image;
       let updatedVariations = item.variations ? [...item.variations] : [];
 
@@ -2871,9 +2872,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to remove background.');
+      alert('Failed to update background.');
     } finally {
-      setRemovingBgItemId(null);
+      setErasingBgItem(null);
     }
   };
 
@@ -3477,12 +3478,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         <Wand2 size={18} />
                       </button>
                       <button
-                        onClick={(e) => handleRemoveBackground(e, item)}
-                        disabled={removingBgItemId === item.id}
-                        className={`bg-white text-zinc-900 p-3 rounded-full shadow transition-colors ${removingBgItemId === item.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-500 hover:text-white'}`}
-                        title="Remove Background"
+                        onClick={(e) => handleRemoveBackgroundClick(e, item)}
+                        className="bg-white text-zinc-900 p-3 rounded-full shadow hover:bg-emerald-500 hover:text-white transition-colors"
+                        title="Manual Eraser"
                       >
-                        {removingBgItemId === item.id ? <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-900 border-t-transparent animate-spin" /> : <Eraser size={18} />}
+                        <Eraser size={18} />
                       </button>
                       <button
                         onClick={() => setEditingItem(item)}
@@ -3552,6 +3552,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             customer={customer}
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
+          />
+        )}
+        {erasingBgItem && (
+          <BackgroundEraserModal
+            item={erasingBgItem}
+            currentUrl={activeVariations[erasingBgItem.id] || erasingBgItem.mock_image}
+            onClose={() => setErasingBgItem(null)}
+            onSave={handleSaveErasedImage}
           />
         )}
         {zoomedImage && (
@@ -5309,5 +5317,157 @@ function DeckModal({ onClose, onConfirm, initialName = '', initialCoverImages = 
         </form>
       </motion.div>
     </motion.div>
+  );
+}
+
+function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
+  item: DeckItem,
+  currentUrl: string,
+  onClose: () => void,
+  onSave: (newUrl: string) => void
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [tolerance, setTolerance] = useState(25);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [needsReset, setNeedsReset] = useState(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = currentUrl;
+  }, [currentUrl, needsReset]);
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const startX = Math.floor((e.clientX - rect.left) * scaleX);
+    const startY = Math.floor((e.clientY - rect.top) * scaleY);
+    
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    
+    const startPos = (startY * w + startX) * 4;
+    const startR = data[startPos];
+    const startG = data[startPos + 1];
+    const startB = data[startPos + 2];
+    const startA = data[startPos + 3];
+
+    if (startA === 0) return;
+
+    const match = (p: number) => {
+      const a = data[p+3];
+      if (a === 0) return false;
+      const r = data[p];
+      const g = data[p+1];
+      const b = data[p+2];
+      
+      const diff = Math.max(Math.abs(r - startR), Math.abs(g - startG), Math.abs(b - startB));
+      return diff <= tolerance;
+    };
+    
+    const stack = [startX, startY];
+    const visited = new Uint8Array(w * h);
+    
+    while(stack.length > 0) {
+      const y = stack.pop()!;
+      const x = stack.pop()!;
+      
+      const idx = y * w + x;
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+
+      const p = idx * 4;
+      if (match(p)) {
+        data[p + 3] = 0;
+        
+        if (x > 0) { stack.push(x - 1, y); }
+        if (x < w - 1) { stack.push(x + 1, y); }
+        if (y > 0) { stack.push(x, y - 1); }
+        if (y < h - 1) { stack.push(x, y + 1); }
+      }
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+  };
+  
+  const handleSave = async () => {
+    if (!canvasRef.current) return;
+    setIsProcessing(true);
+    try {
+      const dataUrl = canvasRef.current.toDataURL('image/png');
+      const finalUrl = await compressImageIfNeeded(dataUrl);
+      onSave(finalUrl);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save erased image');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6" onClick={onClose}>
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-serif text-2xl">Manual Eraser</h3>
+            <p className="text-zinc-500 text-sm mt-1">Click anywhere on the grey background to instantly wipe it out to pure transparency.</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors"><X size={20} /></button>
+        </div>
+        
+        <div className="p-6 flex-1 overflow-auto flex flex-col items-center border-y border-zinc-200" style={{ 
+            backgroundColor: '#ffffff',
+            backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 10px 10px'
+          }}>
+           <canvas
+             ref={canvasRef}
+             onClick={handleCanvasClick}
+             className="max-w-full max-h-[60vh] object-contain cursor-crosshair shadow bg-transparent"
+             style={{ touchAction: 'none' }}
+           />
+        </div>
+        
+        <div className="p-6 md:p-8 border-t border-zinc-100 flex items-center justify-between gap-6">
+          <div className="flex-1 max-w-xs flex items-center gap-4">
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Detection Tolerance: {tolerance}</label>
+              <input type="range" min="0" max="100" value={tolerance} onChange={e => setTolerance(parseInt(e.target.value))} className="w-full accent-zinc-900 cursor-ew-resize" />
+            </div>
+            <button onClick={() => setNeedsReset(n => n + 1)} className="text-xs font-bold tracking-widest uppercase text-zinc-400 hover:text-red-500 transition-colors pt-4">Reset Image</button>
+          </div>
+          <div className="flex gap-4">
+            <button onClick={onClose} className="px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors">Cancel</button>
+            <button onClick={handleSave} disabled={isProcessing} className="px-6 py-3 bg-zinc-900 text-white rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center gap-2">
+              {isProcessing && <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />}
+              {isProcessing ? 'Saving...' : 'Save & Replace'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
