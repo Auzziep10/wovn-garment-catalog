@@ -3702,17 +3702,19 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 </h2>
                 <div className="flex items-center gap-2 md:gap-4">
                   {customerAssets.length > 0 && (
-                    <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 hidden sm:flex">
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Logo:</span>
-                      <select 
-                        value={selectedAsset?.id || ''} 
-                        onChange={e => setSelectedAsset(customerAssets.find(a => a.id === e.target.value) || null)}
-                        className="bg-transparent text-[10px] uppercase tracking-widest font-bold text-zinc-900 outline-none max-w-[120px]"
-                      >
-                        {customerAssets.map((asset, i) => (
-                          <option key={asset.id} value={asset.id}>Vault Asset {i + 1}</option>
+                    <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg p-1 hidden sm:flex">
+                      <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 px-2">Logo:</span>
+                      <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar max-w-[200px]">
+                        {customerAssets.map((asset) => (
+                          <button
+                            key={asset.id}
+                            onClick={() => setSelectedAsset(asset)}
+                            className={`w-7 h-7 rounded shrink-0 overflow-hidden border-2 transition-colors ${selectedAsset?.id === asset.id ? 'border-zinc-900 border-opacity-100' : 'border-transparent hover:border-zinc-200'}`}
+                          >
+                            <img src={asset.image} className="w-full h-full object-contain bg-white mix-blend-multiply" />
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
                   <button onClick={() => { setTimeout(() => window.print(), 100); }} className="bg-zinc-900 text-white px-4 md:px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-800 transition-colors">
@@ -3728,16 +3730,18 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 {lineSheetMode === 'individual' ? (
                   Array.from(displayedItems).map((item, idx) => (
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
-                      <div className="relative flex flex-col items-center justify-center mb-8 md:mb-10 w-full shrink-0">
-                        <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain opacity-80 mb-3" />
-                        <div className="text-center">
-                          <h1 className="editorial-title text-base md:text-lg mb-1 text-zinc-900 tracking-wide uppercase">{deck.name}</h1>
-                          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">
-                            {customer?.company ? `${customer.company} - ` : ''}PAGE {idx + 1}
-                          </p>
-                        </div>
-                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-end">
-                          <div className="flex flex-col items-end gap-2 text-right">
+                      <div className="flex flex-col mb-8 md:mb-10 w-full shrink-0">
+                        <div className="flex justify-between items-start w-full">
+                           <div className="w-1/3 flex justify-start shrink-0">
+                             <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
+                           </div>
+                           <div className="w-1/3 flex flex-col items-center pt-2">
+                             <h1 className="font-serif tracking-tight leading-none text-xl md:text-2xl mb-1 text-zinc-900 uppercase text-center break-words">{deck.name}</h1>
+                             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-center">
+                               {customer?.company ? `${customer.company} - ` : ''}PAGE {idx + 1}
+                             </p>
+                           </div>
+                           <div className="w-1/3 flex flex-col items-end gap-2 text-right shrink-0">
                              {selectedAsset && (
                                 <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
                              )}
@@ -3747,7 +3751,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                  <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mt-1">Unit Price</p>
                                </div>
                              )}
-                          </div>
+                           </div>
                         </div>
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-center -mt-8 px-4">
@@ -3806,16 +3810,20 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     const pageItems = displayedItems.slice(pageIdx * 4, pageIdx * 4 + 4);
                     return (
                       <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
-                        <div className="relative flex flex-col items-center justify-center mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
-                          <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain opacity-80 mb-2 md:mb-3" />
-                          <div className="text-center w-full">
-                            <h1 className="editorial-title text-[15px] md:text-base mb-1 text-zinc-900 tracking-wide uppercase">{deck.name}</h1>
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
-                          </div>
-                          <div className="absolute right-2 top-0 bottom-0 flex items-center justify-end">
-                             {selectedAsset && (
-                                <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
-                             )}
+                        <div className="flex flex-col mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
+                          <div className="flex justify-between items-start w-full">
+                             <div className="w-1/3 flex justify-start shrink-0">
+                               <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
+                             </div>
+                             <div className="w-1/3 flex flex-col items-center pt-2">
+                               <h1 className="font-serif tracking-tight leading-none text-lg md:text-xl mb-1 text-zinc-900 uppercase text-center break-words">{deck.name}</h1>
+                               <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-center">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
+                             </div>
+                             <div className="w-1/3 flex justify-end shrink-0">
+                               {selectedAsset && (
+                                  <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
+                               )}
+                             </div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-x-8 md:gap-x-10 gap-y-6 md:gap-y-6 print:gap-y-6 flex-1 content-start">
