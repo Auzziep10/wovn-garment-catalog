@@ -11,8 +11,8 @@ import { generateMockup, generateModelScene, generateColorVariation, convertColo
 
 
 
-function MarketPricingAnalyzer({ itemDetails }: { itemDetails: any }) {
-  const [marketAnalysis, setMarketAnalysis] = useState<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }> | null>(null);
+function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate }: { itemDetails: any, initialAnalysis?: any[] | null, onAnalysisUpdate?: (data: any[] | null) => void }) {
+  const [marketAnalysis, setMarketAnalysis] = useState<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }> | null>(initialAnalysis || null);
   const [analyzingMarket, setAnalyzingMarket] = useState(false);
 
   const handleAnalyzeMarket = async () => {
@@ -21,6 +21,7 @@ function MarketPricingAnalyzer({ itemDetails }: { itemDetails: any }) {
     try {
       const result = await analyzeMarketPricing(itemDetails);
       setMarketAnalysis(result);
+      if (onAnalysisUpdate) onAnalysisUpdate(result);
     } catch (e) {
       alert("Failed to analyze market. Please try again.");
     } finally {
@@ -122,6 +123,7 @@ export interface Garment {
   wholesale_price?: number;
   cost_price?: number;
   msrp?: number;
+  market_analysis?: any[] | null;
   moq?: number;
   turn_time?: string;
   mockup_status?: 'New Mock Needed' | 'Working' | 'Final Mock Uploaded';
@@ -189,6 +191,7 @@ export interface DeckItem {
   custom_name?: string;
   custom_description?: string;
   custom_price?: number;
+  market_analysis?: any[] | null;
   custom_sizes?: string;
   variations?: string[];
   order_index?: number;
@@ -1750,13 +1753,17 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                         </div>
                       </div>
                       
-                      <MarketPricingAnalyzer itemDetails={{
-                        name: editingGarment?.name,
-                        type: editingGarment?.type,
-                        category: editingGarment?.category,
-                        details: editingGarment?.description,
-                        fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
-                      }} />
+                      <MarketPricingAnalyzer 
+                        itemDetails={{
+                          name: editingGarment?.name,
+                          type: editingGarment?.type,
+                          category: editingGarment?.category,
+                          details: editingGarment?.description,
+                          fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                        }} 
+                        initialAnalysis={marketAnalysis}
+                        onAnalysisUpdate={setMarketAnalysis}
+                      />
                    </div>
 
                    {/* RIGHT COLUMN: Details */}
@@ -3875,6 +3882,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [wholesalePrice, setWholesalePrice] = useState(item.custom_wholesale_price?.toString() || item.wholesale_price?.toString() || '');
   const [moq, setMoq] = useState(item.moq?.toString() || '');
   const [turnTime, setTurnTime] = useState(item.turn_time || '');
+  const [marketAnalysis, setMarketAnalysis] = useState<any[] | null>(item.market_analysis || null);
 
   const brandColors = customer ? getCustomerColors(customer).filter(c => c.image || (c.hex && c.hex !== '#f4f4f5')) : [];
 
@@ -4042,13 +4050,17 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 </div>
               </div>
 
-              <MarketPricingAnalyzer itemDetails={{
-                name: name,
-                type: item.category,
-                category: item.category,
-                details: description,
-                fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
-              }} />
+              <MarketPricingAnalyzer 
+                itemDetails={{
+                  name: name,
+                  type: item.category,
+                  category: item.category,
+                  details: description,
+                  fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                }} 
+                initialAnalysis={marketAnalysis}
+                onAnalysisUpdate={setMarketAnalysis}
+              />
             </div>
 
             {/* RIGHT COLUMN */}
