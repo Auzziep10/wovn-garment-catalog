@@ -5329,9 +5329,69 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
   onSave: (newUrl: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   const [tolerance, setTolerance] = useState(35);
   const [isProcessing, setIsProcessing] = useState(false);
   const [needsReset, setNeedsReset] = useState(0);
+
+  const [isSpaceDown, setIsSpaceDown] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const stateRef = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
+  const [viewState, setViewState] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
+
+  // Keyboard listeners for spacebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsSpaceDown(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpaceDown(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Wheel listener for zoom
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const handleNativeWheel = (e: WheelEvent) => {
+      if (e.altKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        const current = stateRef.current;
+        const newZoom = Math.max(0.2, Math.min(25, current.zoom * (1 + delta)));
+        
+        const rect = container.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        const lx = (e.clientX - cx - current.pan.x) / current.zoom;
+        const ly = (e.clientY - cy - current.pan.y) / current.zoom;
+
+        const newPanX = e.clientX - cx - lx * newZoom;
+        const newPanY = e.clientY - cy - ly * newZoom;
+        
+        stateRef.current = { zoom: newZoom, pan: { x: newPanX, y: newPanY } };
+        setViewState(stateRef.current);
+      }
+    };
+    
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleNativeWheel);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -5350,7 +5410,7 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     img.src = currentUrl;
   }, [currentUrl, needsReset]);
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -5461,27 +5521,83 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
           <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors"><X size={20} /></button>
         </div>
         
-        <div className="p-6 flex-1 overflow-auto flex flex-col items-center border-y border-zinc-200" style={{ 
+        <div 
+          ref={containerRef}
+          className="p-6 flex-1 overflow-hidden flex flex-col items-center justify-center border-y border-zinc-200 relative select-none" 
+          style={{ 
             backgroundColor: '#e5e7eb',
             backgroundImage: 'linear-gradient(45deg, #9ca3af 25%, transparent 25%, transparent 75%, #9ca3af 75%, #9ca3af), linear-gradient(45deg, #9ca3af 25%, transparent 25%, transparent 75%, #9ca3af 75%, #9ca3af)',
             backgroundSize: '20px 20px',
             backgroundPosition: '0 0, 10px 10px'
-          }}>
-           <canvas
-             ref={canvasRef}
-             onClick={handleCanvasClick}
-             className="w-auto h-auto max-w-full max-h-[60vh] cursor-crosshair shadow-2xl bg-transparent"
-             style={{ touchAction: 'none' }}
-           />
+          }}
+        >
+          <div className="absolute top-4 left-4 bg-zinc-900/60 backdrop-blur text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full pointer-events-none z-10 flex items-center gap-2">
+            <span>Alt + Scroll to Zoom</span>
+            <span className="w-1 h-1 rounded-full bg-white/30"></span>
+            <span>Space + Drag to Pan</span>
+          </div>
+
+          <div 
+            style={{ 
+              transform: `translate(${viewState.pan.x}px, ${viewState.pan.y}px) scale(${viewState.zoom})`,
+              display: 'flex' 
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              onPointerDown={(e) => {
+                if (isSpaceDown || e.button === 1 || e.button === 2) { 
+                  e.preventDefault();
+                  setIsDragging(true);
+                  (e.target as HTMLElement).setPointerCapture(e.pointerId);
+                } else if (e.button === 0) {
+                  handleCanvasClick(e);
+                }
+              }}
+              onPointerMove={(e) => {
+                if (isDragging) {
+                  stateRef.current.pan = { 
+                    x: stateRef.current.pan.x + e.movementX, 
+                    y: stateRef.current.pan.y + e.movementY 
+                  };
+                  setViewState({ ...stateRef.current });
+                }
+              }}
+              onPointerUp={(e) => {
+                if (isDragging) {
+                  setIsDragging(false);
+                  (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+                }
+              }}
+              onContextMenu={e => e.preventDefault()}
+              className={`w-auto h-auto max-w-full max-h-[60vh] shadow-2xl bg-transparent ${isSpaceDown || isDragging ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}`}
+              style={{ touchAction: 'none' }}
+            />
+          </div>
         </div>
         
-        <div className="p-6 md:p-8 border-t border-zinc-100 flex items-center justify-between gap-6">
-          <div className="flex-1 max-w-xs flex items-center gap-4">
-            <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Detection Tolerance: {tolerance}</label>
-              <input type="range" min="0" max="100" value={tolerance} onChange={e => setTolerance(parseInt(e.target.value))} className="w-full accent-zinc-900 cursor-ew-resize" />
+        <div className="p-6 md:px-8 border-t border-zinc-100 flex items-center justify-between bg-white shrink-0">
+          <div className="flex items-center gap-6">
+            <div>
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Detection Tolerance: {tolerance}</label>
+              <input 
+                type="range" 
+                min="0" max="100" 
+                value={tolerance} 
+                onChange={(e) => setTolerance(Number(e.target.value))}
+                className="w-32 md:w-48 accent-zinc-900"
+              />
             </div>
-            <button onClick={() => setNeedsReset(n => n + 1)} className="text-xs font-bold tracking-widest uppercase text-zinc-400 hover:text-red-500 transition-colors pt-4">Reset Image</button>
+            <button 
+              onClick={() => {
+                setNeedsReset(n => n + 1);
+                stateRef.current = { zoom: 1, pan: { x: 0, y: 0 } };
+                setViewState(stateRef.current);
+              }} 
+              className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 flex items-center gap-1.5 transition-colors pt-4"
+            >
+              <RotateCw size={12} /> Reset Image
+            </button>
           </div>
           <div className="flex gap-4">
             <button onClick={onClose} className="px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors">Cancel</button>
