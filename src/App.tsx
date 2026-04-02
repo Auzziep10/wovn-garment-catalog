@@ -748,6 +748,12 @@ export default function App() {
                 >
                   Customers
                 </button>
+                <button
+                  onClick={() => { setGarmentToEdit(null); setView('admin'); }}
+                  className={`nav-link ${view === 'admin' ? 'text-zinc-900' : ''}`}
+                >
+                  Garment Library
+                </button>
               </div>
             </div>
 
@@ -1081,12 +1087,6 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
             Each piece is selected for its quality, durability, and aesthetic appeal.
           </p>
           <div className="flex items-center gap-4">
-            <button
-              onClick={onAddGarment}
-              className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-800 transition-colors shadow-sm whitespace-nowrap"
-            >
-              + Garment Library
-            </button>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Sort By</span>
               <select
