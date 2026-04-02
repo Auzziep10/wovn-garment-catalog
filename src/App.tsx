@@ -3791,7 +3791,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           <div className="flex flex-wrap gap-2">
                             {item.custom_colors && item.custom_colors.length > 0 ? (
                               item.custom_colors.map((c, i) => (
-                                <div key={i} className="w-5 h-5 rounded-full border border-zinc-200 shadow-sm" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: c }} />
+                                <div key={i} className="w-5 h-5 rounded-full border border-zinc-200 shadow-sm print:shadow-none" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } : { backgroundColor: c, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
                               ))
                             ) : (
                               <span className="text-[10px] font-medium text-zinc-500 italic">As Shown</span>
@@ -3864,7 +3864,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                     <div className="flex flex-wrap gap-1">
                                       {item.custom_colors && item.custom_colors.length > 0 ? (
                                         item.custom_colors.map((c, i) => (
-                                          <div key={i} className="w-3.5 h-3.5 rounded-full border border-zinc-200 shadow-sm" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: c }} />
+                                          <div key={i} className="w-3.5 h-3.5 rounded-full border border-zinc-200 shadow-sm print:shadow-none" style={c.startsWith("http") || c.startsWith("data:") ? { backgroundImage: `url(${c})`, backgroundSize: "cover", backgroundPosition: "center", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } : { backgroundColor: c, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
                                         ))
                                       ) : (
                                         <span className="text-[9px] text-zinc-500 italic">As Shown</span>
