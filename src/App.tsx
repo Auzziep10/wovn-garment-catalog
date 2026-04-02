@@ -24,31 +24,27 @@ export function SortableDeckItem({ id, disabled, children }: { key?: React.Key |
 
 function ColorPickerAdder({ onAdd }: { onAdd: (hex: string) => void }) {
   const [color, setColor] = useState('#000000');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    const handleChange = (e: Event) => {
-      onAdd((e.target as HTMLInputElement).value);
-    };
-    el.addEventListener('change', handleChange);
-    return () => el.removeEventListener('change', handleChange);
-  }, [onAdd]);
 
   return (
-    <div className="relative w-6 h-6 shrink-0 group">
-      <input
-        ref={inputRef}
-        type="color"
-        value={color}
-        onChange={(e) => setColor(e.target.value)}
-        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
-        title="Add custom hex color"
-      />
-      <div className="absolute inset-0 rounded-full border border-dashed border-zinc-300 flex items-center justify-center text-zinc-400 group-hover:text-zinc-600 group-hover:border-zinc-400 transition-colors bg-white shadow-sm pointer-events-none">
-        <PlusCircle size={14} />
+    <div className="flex items-center gap-1.5 p-1 pl-1.5 pr-1 border border-dashed border-zinc-300 rounded-full bg-white shadow-sm hover:border-zinc-400 transition-colors">
+      <div className="relative w-5 h-5 shrink-0 group rounded-full overflow-hidden border border-zinc-200 shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]">
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          className="absolute -inset-4 opacity-0 w-16 h-16 cursor-pointer z-10"
+          title="Pick a color"
+        />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: color }} />
       </div>
+      <button
+        type="button" 
+        onClick={() => onAdd(color)}
+        className="w-5 h-5 flex items-center justify-center bg-zinc-900 text-white rounded-full hover:bg-zinc-800 hover:scale-105 transition-all shadow-sm"
+        title="Add to Line Sheet"
+      >
+        <Plus size={12} strokeWidth={3} />
+      </button>
     </div>
   );
 }
