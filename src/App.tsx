@@ -22,7 +22,36 @@ export function SortableDeckItem({ id, disabled, children }: { key?: React.Key |
   );
 }
 
+function ColorPickerAdder({ onAdd }: { onAdd: (hex: string) => void }) {
+  const [color, setColor] = useState('#000000');
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const handleChange = (e: Event) => {
+      onAdd((e.target as HTMLInputElement).value);
+    };
+    el.addEventListener('change', handleChange);
+    return () => el.removeEventListener('change', handleChange);
+  }, [onAdd]);
+
+  return (
+    <div className="relative w-6 h-6 shrink-0 group">
+      <input
+        ref={inputRef}
+        type="color"
+        value={color}
+        onChange={(e) => setColor(e.target.value)}
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+        title="Add custom hex color"
+      />
+      <div className="absolute inset-0 rounded-full border border-dashed border-zinc-300 flex items-center justify-center text-zinc-400 group-hover:text-zinc-600 group-hover:border-zinc-400 transition-colors bg-white shadow-sm pointer-events-none">
+        <PlusCircle size={14} />
+      </div>
+    </div>
+  );
+}
 
 function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate }: { itemDetails: any, initialAnalysis?: any[] | null, onAnalysisUpdate?: (data: any[] | null) => void }) {
   const [marketAnalysis, setMarketAnalysis] = useState<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }> | null>(initialAnalysis || null);
@@ -4437,23 +4466,13 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                             title={`Remove ${c}`}
                           />
                         ))}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const hex = window.prompt("Enter a HEX color code (e.g. #000000):");
-                            if (hex && /^#[0-9A-Fa-f]{6}$/i.test(hex)) {
-                              if (!customColors.includes(hex.toLowerCase())) {
-                                setCustomColors([...customColors, hex.toLowerCase()]);
-                              }
-                            } else if (hex) {
-                              alert("Invalid HEX code. Please format as #000000.");
+                        <ColorPickerAdder
+                          onAdd={(hex) => {
+                            if (!customColors.includes(hex.toLowerCase())) {
+                              setCustomColors([...customColors, hex.toLowerCase()]);
                             }
                           }}
-                          className="w-6 h-6 rounded-full border border-dashed border-zinc-300 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:border-zinc-400 transition-colors bg-white shadow-sm"
-                          title="Add custom hex color"
-                        >
-                          <PlusCircle size={14} />
-                        </button>
+                        />
                       </div>
                     </div>
                   </div>
