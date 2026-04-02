@@ -3760,15 +3760,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                            <div className="w-1/3 flex justify-center shrink-0">
                              <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
                            </div>
-                           <div className="w-1/3 flex flex-col items-end gap-2 text-right shrink-0">
+                           <div className="w-1/3 flex justify-end shrink-0">
                              {selectedAsset && (
                                 <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
-                             )}
-                             {showPricing && item.price !== undefined && (
-                               <div>
-                                 <p className="font-serif text-xl md:text-2xl leading-none">${item.price.toFixed(2)}</p>
-                                 <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mt-1">Unit Price</p>
-                               </div>
                              )}
                            </div>
                         </div>
