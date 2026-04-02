@@ -3602,11 +3602,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   <img
                     src={activeVariations[item.id] || item.mock_image}
                     onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
-                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
+                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 active:scale-95"
+                    draggable={false}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
                     {sortBy === 'default' && (
-                      <div className="absolute top-4 left-4 flex items-center pointer-events-none">
+                      <div className="absolute top-2 left-2 flex items-center p-2 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-black/20 transition-colors">
                         <GripHorizontal className="text-white drop-shadow-md" size={24} />
                       </div>
                     )}
