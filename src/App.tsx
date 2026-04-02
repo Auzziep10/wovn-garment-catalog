@@ -32,7 +32,7 @@ function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate 
   return (
     <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] mt-6">
       <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3">
-         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">AI Market Pricing</label>
+         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">Market Pricing</label>
          <button 
            type="button" 
            onClick={handleAnalyzeMarket} 
@@ -68,7 +68,7 @@ function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate 
         <div className="text-center py-6 px-4 bg-zinc-50 rounded-lg border border-dashed border-zinc-200">
           <Sparkles className="w-6 h-6 text-zinc-300 mx-auto mb-2" />
           <p className="text-xs text-zinc-500 leading-relaxed max-w-[250px] mx-auto">
-            Use AI to scan current luxury & premium markets (Vuori, Lululemon, G-Star) for top comparable items to establish realistic MSRP benchmarking.
+            Scan current luxury & premium markets (Vuori, Lululemon, G-Star) for top comparable items to establish realistic MSRP benchmarking.
           </p>
         </div>
       )}
@@ -1766,7 +1766,26 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                           fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
                         }} 
                         initialAnalysis={marketAnalysis}
-                        onAnalysisUpdate={setMarketAnalysis}
+                        onAnalysisUpdate={(data) => {
+                          setMarketAnalysis(data);
+                          if (data && data.length > 0) {
+                            const highestPriceStr = data.reduce((max, item) => {
+                              const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
+                              return val > max ? val : max;
+                            }, 0);
+                            if (highestPriceStr > 0) {
+                              const msrp = highestPriceStr * 1.5;
+                              const wholesale = msrp * 0.5;
+                              const cost = wholesale * 0.5;
+                              const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
+                              const wsEl = document.getElementById('admin_wholesale_price') as HTMLInputElement;
+                              const costEl = document.getElementById('admin_cost_price') as HTMLInputElement;
+                              if (msrpEl) msrpEl.value = msrp.toFixed(2);
+                              if (wsEl) wsEl.value = wholesale.toFixed(2);
+                              if (costEl) costEl.value = cost.toFixed(2);
+                            }
+                          }
+                        }}
                       />
                    </div>
 
@@ -1999,21 +2018,21 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
-                              <input name="cost_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.cost_price || ""} placeholder="65.00" />
+                              <input id="admin_cost_price" name="cost_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.cost_price || ""} placeholder="65.00" />
                             </div>
                           </div>
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
-                              <input name="wholesale_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
+                              <input id="admin_wholesale_price" name="wholesale_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.wholesale_price || ""} placeholder="105.00" />
                             </div>
                           </div>
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MSRP (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
-                              <input name="msrp" type="number" step="0.01" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.msrp || editingGarment?.price || ""} placeholder="219.00" />
+                              <input id="admin_msrp" name="msrp" type="number" step="0.01" required className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.msrp || editingGarment?.price || ""} placeholder="219.00" />
                             </div>
                           </div>
                         </div>
@@ -4116,7 +4135,23 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
                 }} 
                 initialAnalysis={marketAnalysis}
-                onAnalysisUpdate={setMarketAnalysis}
+                onAnalysisUpdate={(data) => {
+                  setMarketAnalysis(data);
+                  if (data && data.length > 0) {
+                    const highestPriceStr = data.reduce((max, item) => {
+                      const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
+                      return val > max ? val : max;
+                    }, 0);
+                    if (highestPriceStr > 0) {
+                      const msrpVal = highestPriceStr * 1.5;
+                      const wsVal = msrpVal * 0.5;
+                      const cVal = wsVal * 0.5;
+                      setPrice(msrpVal.toFixed(2));
+                      setWholesalePrice(wsVal.toFixed(2));
+                      setCostPrice(cVal.toFixed(2));
+                    }
+                  }
+                }}
               />
             </div>
 
@@ -4706,7 +4741,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center z-50">
                 <div className="w-16 h-16 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin mb-6"></div>
                 <h3 className="font-serif text-2xl mb-2">{isRotating ? 'Rotating Garment' : 'Creating Realistic Mockup'}</h3>
-                <p className="text-zinc-500 text-sm">{isRotating ? 'Our AI is generating a professional view from the requested perspective...' : 'Our AI is meticulously placing the logo and adjusting lighting for a perfect result...'}</p>
+                <p className="text-zinc-500 text-sm">{isRotating ? 'Generating a professional view from the requested perspective...' : 'Meticulously placing the logo and adjusting lighting for a perfect result...'}</p>
               </div>
             )}
           </div>
@@ -4760,7 +4795,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
             <h2 className="editorial-title mb-4">Interactive Placement</h2>
             <p className="text-zinc-500 leading-relaxed">
               Drag the logo to your desired position and adjust the scale.
-              Our AI will then"bake" it into the garment, matching perspective and lighting perfectly.
+              It will then "bake" it into the garment, matching perspective and lighting perfectly.
             </p>
           </div>
 
@@ -4832,7 +4867,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
-                2. Describe the Finish <HoverTooltip content="Optional details for the AI to follow (e.g.'Faded vintage screenprint' or'Thick 3D embroidery'). It will incorporate this lighting/texture." />
+                2. Describe the Finish <HoverTooltip content="Optional details to follow (e.g. 'Faded vintage screenprint' or 'Thick 3D embroidery'). It will incorporate this lighting/texture." />
               </h3>
               <textarea
                 value={customPrompt}
@@ -4843,7 +4878,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               />
 
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
-                3. Garment View <HoverTooltip content="Allow the AI to regenerate the garment from a completely different camera perspective before placing the logo." />
+                3. Garment View <HoverTooltip content="Regenerate the garment from a completely different camera perspective before placing the logo." />
               </h3>
               <div className="flex flex-col sm:flex-row gap-4 items-end">
                 <div className="flex-1 space-y-2 w-full">
@@ -4996,7 +5031,7 @@ function ModelSceneGeneratorModal({ item, baseImage, onClose, onSave }: {
       >
         <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">AI Model Generator</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Model Generator</p>
             <h3 className="font-serif text-2xl">Create Lifestyle Scene</h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
