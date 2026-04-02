@@ -1206,7 +1206,7 @@ function CatalogView({ garments, category, gender, type, currentDeck, onSelectGa
                     )}
                     {(viewingGarment.cost_price ?? 0) > 0 && (
                       <div>
-                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Cost</span>
+                        <span className="block text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-1">Landed</span>
                         <span className="font-serif text-2xl text-zinc-300">${viewingGarment.cost_price.toFixed(2)}</span>
                       </div>
                     )}
@@ -1774,7 +1774,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                               return val > max ? val : max;
                             }, 0);
                             if (highestPriceStr > 0) {
-                              const msrp = highestPriceStr * 1.5;
+                              const msrp = highestPriceStr * 1.2;
                               const wholesale = msrp * 0.5;
                               const cost = wholesale * 0.5;
                               const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
@@ -2015,7 +2015,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                         <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3 flex items-center gap-2">Pricing Strategy</label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost (USD)</label>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Landed (USD)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">$</span>
                               <input id="admin_cost_price" name="cost_price" type="number" step="0.01" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all font-medium" defaultValue={editingGarment?.cost_price || ""} placeholder="65.00" />
@@ -4208,7 +4208,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       return val > max ? val : max;
                     }, 0);
                     if (highestPriceStr > 0) {
-                      const msrpVal = highestPriceStr * 1.5;
+                      const msrpVal = highestPriceStr * 1.2;
                       const wsVal = msrpVal * 0.5;
                       const cVal = wsVal * 0.5;
                       setPrice(msrpVal.toFixed(2));
@@ -4475,7 +4475,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Backend Pricing</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Cost Price ($)</label>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Landed ($)</label>
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
