@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
 , ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
@@ -1613,6 +1613,60 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
     }
   };
 
+  const handleDuplicate = async () => {
+    const form = document.getElementById('garment-form') as HTMLFormElement;
+    if (!form) return;
+    if (images.length === 0) {
+      alert('Please upload at least one image.');
+      return;
+    }
+    const formData = new FormData(form);
+    const data = {
+      name: formData.get('name') + ' (Copy)',
+      fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
+      fabric_finish: formData.get('fabric_finish'),
+      care_instructions: formData.get('care_instructions'),
+      fit: formData.get('fit'),
+      fabric_weight_gsm: formData.get('fabric_weight_gsm'),
+      decoration_method: formData.getAll('decoration_method').join(', '),
+      sizes: formData.getAll('sizes'),
+      available_colors: formData.get('available_colors'),
+      cost_price: parseFloat(formData.get('cost_price') as string) || 0,
+      wholesale_price: parseFloat(formData.get('wholesale_price') as string) || 0,
+      msrp: parseFloat(formData.get('msrp') as string) || 0,
+      moq: parseInt(formData.get('moq') as string, 10),
+      turn_time: formData.get('turn_time'),
+      categories: formData.getAll('categories'),
+      category: formData.getAll('categories')[0] || 'Athleisure',
+      gender: formData.get('gender'),
+      types: formData.getAll('types'),
+      type: formData.getAll('types')[0] || 'Tops',
+      supplier_link: formData.get('supplier_link'),
+      market_analysis: marketAnalysis,
+      mockup_status: formData.get('mockup_status'),
+      image: images[0],
+      images: images
+    };
+
+    const res = await fetch('/api/garments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert('Garment duplicated successfully!');
+      onGarmentAdded();
+      fetchExisting();
+      setImages([]);
+      form.reset();
+      setIsModalOpen(false);
+    } else {
+      const errText = await res.text();
+      alert(`Failed to duplicate garment: ${res.status} ${errText}`);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <div className="flex justify-between items-end mb-8 md:mb-12">
@@ -2091,20 +2145,25 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                {/* Modal Footer */}
                <div className="flex items-center justify-between px-6 md:px-10 py-4 bg-white rounded-b-2xl border-t border-zinc-100 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] sticky bottom-0 z-20">
                  {editingGarment ? (
-                   <button type="button" onClick={async () => {
-                     if (confirm("Are you sure you want to delete this garment? This action cannot be undone.")) {
-                       try {
-                         const res = await fetch(`/api/garments/${editingGarment.id}`, { method: 'DELETE' });
-                         if (res.ok) {
-                           onGarmentAdded();
-                           fetchExisting();
-                           handleCancelEdit();
-                         }
-                       } catch (err) { console.error(err); }
-                     }
-                   }} className="text-[10px] uppercase font-bold tracking-widest text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
-                     <Trash2 size={12} /> Delete Record
-                   </button>
+                   <div className="flex items-center gap-2">
+                     <button type="button" onClick={async () => {
+                       if (confirm("Are you sure you want to delete this garment? This action cannot be undone.")) {
+                         try {
+                           const res = await fetch(`/api/garments/${editingGarment.id}`, { method: 'DELETE' });
+                           if (res.ok) {
+                             onGarmentAdded();
+                             fetchExisting();
+                             handleCancelEdit();
+                           }
+                         } catch (err) { console.error(err); }
+                       }
+                     }} className="text-[10px] uppercase font-bold tracking-widest text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                       <Trash2 size={12} /> Delete Record
+                     </button>
+                     <button type="button" onClick={handleDuplicate} className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                       <Copy className="mb-0.5" size={12} /> Duplicate
+                     </button>
+                   </div>
                  ) : (
                    <div />
                  )}
