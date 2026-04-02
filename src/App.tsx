@@ -3953,6 +3953,63 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [moq, setMoq] = useState(item.moq?.toString() || '');
   const [turnTime, setTurnTime] = useState(item.turn_time || '');
   const [marketAnalysis, setMarketAnalysis] = useState<any[] | null>(item.market_analysis || null);
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handlePullFromLibrary = async () => {
+    if (!item.garment_id) {
+       alert("No garment ID associated with this item.");
+       return;
+    }
+    if (!window.confirm("Pull latest text and pricing details from the catalog? This will overwrite the fields below (Mocks and variations will remain unchanged).")) return;
+    
+    setIsPulling(true);
+    try {
+      const res = await fetch(`/api/garments/${item.garment_id}`);
+      if (!res.ok) throw new Error("Failed to fetch garment.");
+      const garment = await res.json();
+      
+      setName(garment.name || '');
+      setDescription(garment.description || garment.fabric_details || '');
+      setPrice(garment.msrp?.toString() || garment.price?.toString() || '');
+      setWholesalePrice(garment.wholesale_price?.toString() || '');
+      setCostPrice(garment.cost_price?.toString() || '');
+      
+      let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
+      if (garment.fabric_details) {
+        const parts = garment.fabric_details.split(',').map((s: string) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
+          if (match) {
+             parsedComp.push({ id: Math.random().toString(), percentage: match[1], fabric: formatFabric(match[2]) });
+          } else {
+             parsedComp.push({ id: Math.random().toString(), percentage: '', fabric: formatFabric(p) });
+          }
+        }
+      }
+      if (parsedComp.length === 0) {
+         parsedComp.push({ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' });
+      }
+      setFabricCompositions(parsedComp);
+      
+      setFabricFinish(garment.fabric_finish || '');
+      setCareInstructions(garment.care_instructions || '');
+      setFit(garment.fit || '');
+      setFabricWeightGsm(garment.fabric_weight_gsm || '');
+      setDecorationMethod(garment.decoration_method || '');
+      setAvailableColors(garment.available_colors || '');
+      setMoq(garment.moq?.toString() || '');
+      setTurnTime(garment.turn_time || '');
+      setMarketAnalysis(garment.market_analysis || null);
+      if (garment.sizes) {
+         setSizes(Array.isArray(garment.sizes) ? garment.sizes.join(', ') : garment.sizes);
+      }
+    } catch(err) {
+      console.error(err);
+      alert("Failed to pull from library.");
+    } finally {
+       setIsPulling(false);
+    }
+  };
 
   const brandColors = customer ? getCustomerColors(customer).filter(c => c.image || (c.hex && c.hex !== '#f4f4f5')) : [];
 
@@ -4025,9 +4082,23 @@ function EditItemModal({ item, customer, onClose, onSave }: {
             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Client Customization</p>
             <h2 className="font-serif text-xl md:text-2xl">Edit Item Details</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {item.garment_id && (
+               <button
+                 type="button"
+                 onClick={handlePullFromLibrary}
+                 disabled={isPulling}
+                 className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                 title="Pull latest text/pricing from Garment Library (mocks remain unchanged)"
+               >
+                 {isPulling ? <div className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-600 rounded-full animate-spin" /> : <RotateCw size={14} />}
+                 Sync Library
+               </button>
+            )}
+            <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 shrink min-h-0 custom-scrollbar">

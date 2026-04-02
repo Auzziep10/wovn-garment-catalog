@@ -220,6 +220,18 @@ app.put("/api/garments/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update garment" });
   }
 });
+app.get("/api/garments/:id", async (req, res) => {
+  try {
+    const docRef = doc(db, "garments", req.params.id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      return res.status(404).json({ error: "Garment not found" });
+    }
+    res.json({ id: docSnap.id, ...docSnap.data() });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch garment" });
+  }
+});
 app.get("/api/garments/:id/decks", async (req, res) => {
   try {
     const q = query(collection(db, "deck_items"), where("garment_id", "==", req.params.id));
