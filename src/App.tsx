@@ -6,7 +6,7 @@ import {
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser
 , ExternalLink } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, Reorder } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
 
 
@@ -3567,15 +3567,35 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          <Reorder.Group 
+            axis="y" 
+            values={displayedItems} 
+            onReorder={(newOrder) => {
+              if (sortBy === 'default') setItems([...newOrder]);
+            }}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 list-none p-0 m-0"
+          >
             {displayedItems.map((item, index) => (
-              <motion.div
+              <Reorder.Item
                 layout
+                value={item}
                 key={item.id}
+                drag={sortBy === 'default'}
+                onDragEnd={async () => {
+                  if (sortBy !== 'default') return;
+                  const newItems = displayedItems.map((i, idx) => ({ ...i, order_index: idx }));
+                  await fetch(`/api/decks/${deck.id}/reorder`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
+                  });
+                }}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                className={`group relative rounded-2xl transition-all duration-300 ${draggedItemId === item.id ? 'opacity-50 scale-95' : ''}`}
+                className="group relative rounded-2xl transition-all duration-300"
+                style={{ listStyleType: 'none', cursor: sortBy === 'default' ? 'grab' : 'default' }}
+                whileDrag={{ scale: 1.05, zIndex: 50, cursor: 'grabbing' }}
               >
                 <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
 
@@ -3586,9 +3606,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
                     {sortBy === 'default' && (
-                      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
-                        <button onClick={() => handleMoveItem(item.id, 'up')} className="bg-white/90 text-zinc-900 p-2 rounded-full shadow hover:bg-white hover:scale-110 transition-all" title="Move Left"><ArrowLeft size={16} /></button>
-                        <button onClick={() => handleMoveItem(item.id, 'down')} className="bg-white/90 text-zinc-900 p-2 rounded-full shadow hover:bg-white hover:scale-110 transition-all" title="Move Right"><ArrowRight size={16} /></button>
+                      <div className="absolute top-4 left-4 flex items-center pointer-events-none">
+                        <GripHorizontal className="text-white drop-shadow-md" size={24} />
                       </div>
                     )}
                     <div className="absolute top-1/2 right-4 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
@@ -3655,14 +3674,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </a>
                   )}
                 </div>
-              </motion.div>
+              </Reorder.Item>
             ))}
             {items.length === 0 && (
               <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
                 <p className="text-zinc-400 font-serif italic">This deck is empty. Add some garments from the catalog!</p>
               </div>
             )}
-          </div>
+          </Reorder.Group>
         )
         }
       </div >
