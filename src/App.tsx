@@ -2756,6 +2756,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const toggleGarmentInDeck = async (garment: Garment) => {
     const existingItem = items.find(i => i.garment_id === garment.id);
     if (existingItem) {
+      if (!window.confirm(`Are you sure you want to remove this item from the deck? Any custom pricing, variations, and mockups created for it will be permanently lost.`)) {
+        return;
+      }
       // Remove it
       await fetch(`/api/deck-items/${existingItem.id}`, { method: 'DELETE' });
       setItems(prev => prev.filter(i => i.id !== existingItem.id));
