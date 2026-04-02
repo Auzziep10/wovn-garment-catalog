@@ -3593,7 +3593,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                className="group relative rounded-2xl transition-all duration-300"
+                className="group relative rounded-2xl"
                 style={{ listStyleType: 'none', cursor: sortBy === 'default' ? 'grab' : 'default' }}
                 whileDrag={{ scale: 1.05, zIndex: 50, cursor: 'grabbing' }}
               >
