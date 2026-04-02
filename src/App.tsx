@@ -283,7 +283,7 @@ export default function App() {
   }, [view]);
 
 
-  const [selectedCategory, setSelectedCategory] = useState<Category | ''>('Athleisure');
+  const [selectedCategory, setSelectedCategory] = useState<Category | ''>('');
   const [selectedGender, setSelectedGender] = useState<Gender | ''>('');
   const [selectedType, setSelectedType] = useState<GarmentType | ''>('');
 
