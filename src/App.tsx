@@ -3694,7 +3694,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-zinc-100 z-[200] overflow-y-auto print:bg-white print:overflow-visible"
+              className="fixed inset-0 bg-zinc-100 z-[200] overflow-y-auto print:bg-white print:overflow-visible print:static print:h-auto print:w-full"
             >
               <div className="sticky top-0 bg-white border-b border-zinc-200 px-4 md:px-8 py-4 flex justify-between items-center z-10 print:hidden shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">
