@@ -6,8 +6,21 @@ import {
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser
 , ExternalLink } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, Reorder } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+export function SortableDeckItem({ id, disabled, children }: { key?: React.Key | null, id: number | string, disabled: boolean, children: (dragProps: any) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
+  const style = { transform: CSS.Translate.toString(transform), transition: transition || 'transform 200ms ease', zIndex: isDragging ? 50 : 'auto', touchAction: 'none' };
+  return (
+    <div ref={setNodeRef} style={style} className={`group relative rounded-2xl ${isDragging ? 'opacity-80 scale-[1.02] shadow-2xl z-50' : ''}`}>
+      {children({ attributes, listeners })}
+    </div>
+  );
+}
 
 
 
@@ -2830,52 +2843,30 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     });
   };
 
-  const handleDragStart = (e: React.DragEvent, id: number) => {
-    if (sortBy !== 'default') return;
-    setDraggedItemId(id);
-    e.dataTransfer.effectAllowed = 'move';
-    // Hide the drag image ghost slightly or just let default
-  };
+  const dndSensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
 
-  const handleDragOver = (e: React.DragEvent) => {
-    if (sortBy !== 'default') return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetId: number) => {
-    e.preventDefault();
-    if (sortBy !== 'default' || draggedItemId === null || draggedItemId === targetId) {
-      setDraggedItemId(null);
-      return;
+  const handleDndDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id && sortBy === 'default') {
+      const oldIndex = items.findIndex(i => i.id === active.id);
+      const newIndex = items.findIndex(i => i.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(items, oldIndex, newIndex) as any[];
+        newItems.forEach((i: any, idx: number) => i.order_index = idx);
+        setItems(newItems);
+        await fetch(`/api/decks/${deck.id}/reorder`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
+        });
+      }
     }
-
-    const sourceIdx = items.findIndex(i => i.id === draggedItemId);
-    const targetIdx = items.findIndex(i => i.id === targetId);
-
-    if (sourceIdx < 0 || targetIdx < 0) {
-      setDraggedItemId(null);
-      return;
-    }
-
-    const newItems = [...items];
-    const [movedItem] = newItems.splice(sourceIdx, 1);
-    newItems.splice(targetIdx, 0, movedItem);
-
-    newItems.forEach((item, idx) => item.order_index = idx);
-    setItems(newItems);
-    setDraggedItemId(null);
-
-    await fetch(`/api/decks/${deck.id}/reorder`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
-    });
   };
 
-  const handleDragEnd = () => {
-    setDraggedItemId(null);
-  };
+
 
   const handleMockupEdit = (item: DeckItem) => {
     onGarmentClick({
@@ -3567,50 +3558,31 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             ))}
           </div>
         ) : (
-          <Reorder.Group 
-            axis="y" 
-            values={displayedItems} 
-            onReorder={(newOrder) => {
-              if (sortBy === 'default') setItems([...newOrder]);
-            }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 list-none p-0 m-0"
+          <DndContext
+            sensors={dndSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDndDragEnd}
           >
-            {displayedItems.map((item, index) => (
-              <Reorder.Item
-                layout
-                value={item}
-                key={item.id}
-                drag={sortBy === 'default'}
-                onDragEnd={async () => {
-                  if (sortBy !== 'default') return;
-                  const newItems = displayedItems.map((i, idx) => ({ ...i, order_index: idx }));
-                  await fetch(`/api/decks/${deck.id}/reorder`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: newItems.map(i => ({ id: i.id, order_index: i.order_index })) })
-                  });
-                }}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05, layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                className="group relative rounded-2xl"
-                style={{ listStyleType: 'none', cursor: sortBy === 'default' ? 'grab' : 'default' }}
-                whileDrag={{ scale: 1.05, zIndex: 50, cursor: 'grabbing' }}
-              >
-                <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
+            <SortableContext items={displayedItems.map(i => i.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 p-0 m-0">
+                {displayedItems.map((item, index) => (
+                  <SortableDeckItem key={item.id} id={item.id} disabled={sortBy !== 'default'}>
+                    {(dragProps: any) => (
+                      <div className="group relative rounded-2xl h-full">
+                        <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
 
-                  <img
-                    src={activeVariations[item.id] || item.mock_image}
-                    onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
-                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 active:scale-95"
-                    draggable={false}
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
-                    {sortBy === 'default' && (
-                      <div className="absolute top-2 left-2 flex items-center p-2 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-black/20 transition-colors">
-                        <GripHorizontal className="text-white drop-shadow-md" size={24} />
-                      </div>
-                    )}
+                          <img
+                            src={activeVariations[item.id] || item.mock_image}
+                            onClick={() => setZoomedImage(activeVariations[item.id] || item.mock_image)}
+                            className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105 active:scale-95"
+                            draggable={false}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
+                            {sortBy === 'default' && (
+                              <div {...dragProps.attributes} {...dragProps.listeners} className="absolute top-2 left-2 flex items-center p-2 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-black/20 transition-colors">
+                                <GripHorizontal className="text-white drop-shadow-md" size={24} />
+                              </div>
+                            )}
                     <div className="absolute top-1/2 right-4 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
                       <button
                         onClick={() => handleMockupEdit(item)}
@@ -3674,15 +3646,19 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       Link
                     </a>
                   )}
-                </div>
-              </Reorder.Item>
-            ))}
-            {items.length === 0 && (
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
-                <p className="text-zinc-400 font-serif italic">This deck is empty. Add some garments from the catalog!</p>
+                  </div>
+                      </div>
+                    )}
+                  </SortableDeckItem>
+                ))}
+                {items.length === 0 && (
+                  <div className="col-span-full py-24 text-center border-2 border-dashed border-zinc-100 rounded-3xl">
+                    <p className="text-zinc-400 font-serif italic">This deck is empty. Add some garments from the catalog!</p>
+                  </div>
+                )}
               </div>
-            )}
-          </Reorder.Group>
+            </SortableContext>
+          </DndContext>
         )
         }
       </div >
