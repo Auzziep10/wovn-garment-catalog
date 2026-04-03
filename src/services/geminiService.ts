@@ -89,22 +89,45 @@ async function toBase64(url: string): Promise<{ data: string; mimeType: string }
   });
 }
 
+async function ensureSolidBackground(imageUrlOrBase64: string): Promise<string> {
+  let src = imageUrlOrBase64;
+  if (src.startsWith('http')) {
+    try {
+      const { data, mimeType } = await toBase64(src);
+      src = `data:${mimeType};base64,${data}`;
+    } catch (e) {
+      console.warn("Failed to fetch image for background fill", e);
+    }
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(src);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 1.0));
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+}
+
 export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string, isRotationRequested: boolean = false, logoBase64: string | null = null) {
   // Nano Banana is the Gemini 2.5 Flash Image model
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
-  let baseMimeType = "image/png";
+  let baseMimeType = "image/jpeg";
 
-  if (baseImage.startsWith('http')) {
-    const result = await toBase64(baseImage);
-    baseImageData = result.data;
-    baseMimeType = result.mimeType;
-  } else {
-    baseImageData = baseImage.split(",")[1] || baseImage;
-    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
-    if (match) baseMimeType = match[1];
-  }
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
 
   const compositeData = compositeImageBase64.split(",")[1] || compositeImageBase64;
   const compositeMatch = compositeImageBase64.match(/^data:(image\/[a-z]+);base64,/);
@@ -245,17 +268,10 @@ export async function generateModelScene(baseImage: string, prompt: string) {
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
-  let baseMimeType = "image/png";
+  let baseMimeType = "image/jpeg";
 
-  if (baseImage.startsWith('http')) {
-    const result = await toBase64(baseImage);
-    baseImageData = result.data;
-    baseMimeType = result.mimeType;
-  } else {
-    baseImageData = baseImage.split(",")[1] || baseImage;
-    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
-    if (match) baseMimeType = match[1];
-  }
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
 
   const modelObj = getGenerativeModel(ai, {
     model,
@@ -300,17 +316,10 @@ export async function generateRotatedGarment(baseImage: string, viewAngle: strin
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
-  let baseMimeType = "image/png";
+  let baseMimeType = "image/jpeg";
 
-  if (baseImage.startsWith('http')) {
-    const result = await toBase64(baseImage);
-    baseImageData = result.data;
-    baseMimeType = result.mimeType;
-  } else {
-    baseImageData = baseImage.split(",")[1] || baseImage;
-    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
-    if (match) baseMimeType = match[1];
-  }
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
 
   const modelObj = getGenerativeModel(ai, { model });
 
@@ -353,17 +362,10 @@ export async function generateColorVariation(baseImage: string, colorHexOrPatter
   const model = "gemini-2.5-flash-image";
 
   let baseImageData: string;
-  let baseMimeType = "image/png";
+  let baseMimeType = "image/jpeg";
 
-  if (baseImage.startsWith('http')) {
-    const result = await toBase64(baseImage);
-    baseImageData = result.data;
-    baseMimeType = result.mimeType;
-  } else {
-    baseImageData = baseImage.split(",")[1] || baseImage;
-    const match = baseImage.match(/^data:(image\/[a-z]+);base64,/);
-    if (match) baseMimeType = match[1];
-  }
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
 
   const modelObj = getGenerativeModel(ai, {
     model,
@@ -374,17 +376,10 @@ export async function generateColorVariation(baseImage: string, colorHexOrPatter
 
   if (isPattern) {
     let patternData: string;
-    let patternMimeType = "image/png";
+    let patternMimeType = "image/jpeg";
 
-    if (colorHexOrPattern.startsWith('http')) {
-      const result = await toBase64(colorHexOrPattern);
-      patternData = result.data;
-      patternMimeType = result.mimeType;
-    } else {
-      patternData = colorHexOrPattern.split(",")[1] || colorHexOrPattern;
-      const match = colorHexOrPattern.match(/^data:(image\/[a-z]+);base64,/);
-      if (match) patternMimeType = match[1];
-    }
+    const solidPatternImage = await ensureSolidBackground(colorHexOrPattern);
+    patternData = solidPatternImage.split(",")[1] || solidPatternImage;
 
     parts.push({
       text: `TASK: Recoloring / Pattern Application

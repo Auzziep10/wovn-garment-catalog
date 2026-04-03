@@ -262,7 +262,7 @@ export interface DeckItem {
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
 
-const compressImageIfNeeded = async (base64Str: string): Promise<string> => {
+const uploadImageToFirebase = async (base64Str: string): Promise<string> => {
   if (!base64Str.startsWith('data:image/')) return base64Str;
 
   // Now that Firebase Storage proxying completely bypasses Vercel and goes direct to Cloud Storage
@@ -584,7 +584,7 @@ export default function App() {
 
             try {
               const newImage = await generateColorVariation(item.mock_image, hex);
-              const compressed = await compressImageIfNeeded(newImage);
+              const compressed = await uploadImageToFirebase(newImage);
               newVariations.push(compressed);
               changed = true;
             } catch (err) {
@@ -638,7 +638,7 @@ export default function App() {
     if (!name || name.trim() === '') return;
 
     try {
-      const coverImages = await Promise.all(rawCoverImages.map(img => compressImageIfNeeded(img)));
+      const coverImages = await Promise.all(rawCoverImages.map(img => uploadImageToFirebase(img)));
       const res = await fetch('/api/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1025,7 +1025,7 @@ export default function App() {
             onBack={() => setView(selectedDeckItem ? 'deck-view' : 'catalog')}
             onSave={async (newImage, isVariation) => {
               try {
-                const compressedImage = await compressImageIfNeeded(newImage);
+                const compressedImage = await uploadImageToFirebase(newImage);
                 if (selectedDeckItem) {
                   const updates: any = {};
                   if (isVariation) {
@@ -1511,7 +1511,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
-          const compressed = await compressImageIfNeeded(reader.result as string);
+          const compressed = await uploadImageToFirebase(reader.result as string);
           setImages(prev => [...prev, compressed]);
         } catch (err) {
           console.error("Failed to upload image", err);
@@ -2264,7 +2264,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
-          const compressed = await compressImageIfNeeded(reader.result as string);
+          const compressed = await uploadImageToFirebase(reader.result as string);
           const res = await fetch(`/api/customers/${selectedCustId}/assets`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2300,7 +2300,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const handleRenameDeck = async (newName: string, rawCoverImages: string[] = []) => {
     if (!editingDeck) return;
     try {
-      const coverImages = await Promise.all(rawCoverImages.map(img => compressImageIfNeeded(img)));
+      const coverImages = await Promise.all(rawCoverImages.map(img => uploadImageToFirebase(img)));
       const res = await fetch(`/api/decks/${editingDeck.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -2502,7 +2502,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                                     reader.onloadend = async () => {
                                       const base64Str = reader.result as string;
                                       try {
-                                        const compressed = await compressImageIfNeeded(base64Str);
+                                        const compressed = await uploadImageToFirebase(base64Str);
                                         const c = customers.find(cust => cust.id === selectedCustId);
                                         if (!c) return;
                                         const newColors = [...getCustomerColors(c)];
@@ -2983,7 +2983,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     if (!generatingSceneForItem) return;
 
     try {
-      const compressedImg = await compressImageIfNeeded(img);
+      const compressedImg = await uploadImageToFirebase(img);
       const updatedVariations = [...(generatingSceneForItem.variations || []), compressedImg];
       await handleSaveDetails(generatingSceneForItem.id, {
         ...generatingSceneForItem,
@@ -3003,7 +3003,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       reader.onloadend = async () => {
         const base64Str = reader.result as string;
         try {
-          const compressed = await compressImageIfNeeded(base64Str);
+          const compressed = await uploadImageToFirebase(base64Str);
           const res = await fetch(`/api/decks/${deck.id}/items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4101,7 +4101,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
     setGeneratingColor(key);
     try {
       const generated = await generateColorVariation(mockImage, key);
-      const compressed = await compressImageIfNeeded(generated);
+      const compressed = await uploadImageToFirebase(generated);
       setVariations(prev => [...prev, compressed]);
     } catch (err) {
       console.error(err);
@@ -4118,7 +4118,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
       reader.onloadend = async () => {
         const base64Str = reader.result as string;
         try {
-          const compressed = await compressImageIfNeeded(base64Str);
+          const compressed = await uploadImageToFirebase(base64Str);
           setMockImage(compressed);
         } catch (err) {
           alert('Failed to process image.');
@@ -4135,7 +4135,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
       reader.onloadend = async () => {
         const base64Str = reader.result as string;
         try {
-          const compressed = await compressImageIfNeeded(base64Str);
+          const compressed = await uploadImageToFirebase(base64Str);
           setVariations([...variations, compressed]);
         } catch (err) {
           alert('Failed to process variation image.');
@@ -5977,7 +5977,7 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     setIsProcessing(true);
     try {
       const dataUrl = canvasRef.current.toDataURL('image/png');
-      const finalUrl = await compressImageIfNeeded(dataUrl);
+      const finalUrl = await uploadImageToFirebase(dataUrl);
       onSave(finalUrl);
     } catch (err) {
       console.error(err);
