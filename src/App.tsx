@@ -865,6 +865,31 @@ export default function App() {
               className="fixed top-0 left-0 bottom-0 w-80 bg-white z-[70] shadow-2xl p-8 overflow-y-auto"
             >
               <div className="flex flex-col gap-12">
+                {/* Mobile Navigation Links */}
+                <section className="md:hidden">
+                  <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Navigation</h3>
+                  <div className="flex flex-col gap-4">
+                    <button
+                      onClick={() => { setView('catalog'); setIsMenuOpen(false); }}
+                      className={`text-left text-lg font-serif ${view === 'catalog' ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
+                    >
+                      Collection
+                    </button>
+                    <button
+                      onClick={() => { setView('customers'); setIsMenuOpen(false); }}
+                      className={`text-left text-lg font-serif ${view === 'customers' ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
+                    >
+                      Customers
+                    </button>
+                    <button
+                      onClick={() => { setGarmentToEdit(null); setView('admin'); setIsMenuOpen(false); }}
+                      className={`text-left text-lg font-serif ${view === 'admin' ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'}`}
+                    >
+                      Garment Library
+                    </button>
+                  </div>
+                </section>
+
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
@@ -2335,7 +2360,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
-        <div className="lg:col-span-1">
+        <div className={`lg:col-span-1 ${selectedCustId ? 'hidden lg:block' : 'block'}`}>
           <h2 className="editorial-title mb-8">Clients</h2>
           <form onSubmit={onAddCustomer} className="space-y-6 mb-12 p-6 bg-zinc-50 rounded-2xl">
             <h3 className="text-xs uppercase tracking-widest font-bold mb-4">New Customer</h3>
@@ -2372,13 +2397,20 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
           </div>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className={`lg:col-span-2 ${selectedCustId ? 'block' : 'hidden lg:block'}`}>
           {selectedCustId ? (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="editorial-title">{customers.find(c => c.id === selectedCustId)?.company}</h2>
+                <div className="flex-1 w-full">
+                  <div className="flex items-center gap-3 w-full">
+                    <button 
+                      onClick={() => setSelectedCustId(null)} 
+                      className="lg:hidden p-2 -ml-2 text-zinc-400 hover:text-zinc-900 transition-colors"
+                      title="Back to Clients"
+                    >
+                      <ArrowLeft size={24} />
+                    </button>
+                    <h2 className="editorial-title truncate">{customers.find(c => c.id === selectedCustId)?.company}</h2>
                     <button
                       onClick={() => setEditingCustomer(customers.find(c => c.id === selectedCustId) || null)}
                       className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 rounded-full transition-colors"
@@ -3833,20 +3865,28 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   Array.from(displayedItems).map((item, idx) => (
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
                       <div className="flex flex-col mb-8 md:mb-10 w-full shrink-0">
-                        <div className="flex justify-between items-start w-full">
-                           <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-2">
-                             <h1 className="font-serif tracking-tight leading-none text-xl md:text-2xl mb-1 text-zinc-900 uppercase text-left break-words">{deck.name}</h1>
-                             <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-left">
-                               {customer?.company ? `${customer.company} - ` : ''}PAGE {idx + 1}
-                             </p>
-                           </div>
-                           <div className="w-1/3 flex justify-center shrink-0">
-                             <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
-                           </div>
-                           <div className="w-1/3 flex justify-end shrink-0">
-                             {selectedAsset && (
+                        <div className="flex justify-between items-center w-full border-y border-zinc-200 py-3">
+                           <div className="w-1/3 flex items-center justify-start shrink-0">
+                             {selectedAsset ? (
                                 <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
+                             ) : (
+                                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company || ''}</p>
                              )}
+                           </div>
+                           <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
+                             <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0 mb-1" />
+                             <p className="text-[6px] md:text-[7px] uppercase tracking-[0.3em] font-bold text-zinc-500">Design Studio</p>
+                           </div>
+                           <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
+                             <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
+                             <div className="flex gap-1.5 md:gap-2">
+                               {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
+                                 <div key={i} className="flex flex-col items-center gap-0.5">
+                                   <div className="w-4 h-2.5 md:w-5 md:h-3 border border-zinc-200 print:border-zinc-300" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
+                                   <span className="text-[4px] md:text-[5px] text-zinc-400 uppercase leading-none truncate max-w-[20px]">{c.pantone || c.hex}</span>
+                                 </div>
+                               ))}
+                             </div>
                            </div>
                         </div>
                       </div>
@@ -3897,7 +3937,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
                       <div className="absolute bottom-6 md:bottom-8 left-8 md:left-16 right-8 md:right-16 flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-zinc-300">
                         <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
-                        <span>{new Date().toLocaleDateString()}</span>
+                        <span>{new Date().toLocaleDateString()} - PAGE {idx + 1}</span>
                       </div>
                     </div>
                   ))
@@ -3907,18 +3947,28 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     return (
                       <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
                         <div className="flex flex-col mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
-                          <div className="flex justify-between items-start w-full">
-                             <div className="w-1/3 flex flex-col justify-center items-start shrink-0 pt-1 md:pt-2">
-                               <h1 className="font-serif tracking-tight leading-none text-lg md:text-xl mb-1 text-zinc-900 uppercase text-left break-words">{deck.name}</h1>
-                               <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 text-left">{customer?.company ? `${customer.company} - ` : ''}PAGE {pageIdx + 1}</p>
-                             </div>
-                             <div className="w-1/3 flex justify-center shrink-0">
-                               <img src="/wovn-logo.png" alt="WOVN" className="h-[48px] md:h-[60px] object-contain brightness-0" />
-                             </div>
-                             <div className="w-1/3 flex justify-end shrink-0">
-                               {selectedAsset && (
+                          <div className="flex justify-between items-center w-full border-y border-zinc-200 py-3">
+                             <div className="w-1/3 flex items-center justify-start shrink-0">
+                               {selectedAsset ? (
                                   <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
+                               ) : (
+                                  <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">{customer?.company || ''}</p>
                                )}
+                             </div>
+                             <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
+                               <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0 mb-1" />
+                               <p className="text-[6px] md:text-[7px] uppercase tracking-[0.3em] font-bold text-zinc-500">Design Studio</p>
+                             </div>
+                             <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
+                               <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
+                               <div className="flex gap-1.5 md:gap-2">
+                                 {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
+                                   <div key={i} className="flex flex-col items-center gap-0.5">
+                                     <div className="w-4 h-2.5 md:w-5 md:h-3 border border-zinc-200 print:border-zinc-300" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
+                                     <span className="text-[4px] md:text-[5px] text-zinc-400 uppercase leading-none truncate max-w-[20px]">{c.pantone || c.hex}</span>
+                                   </div>
+                                 ))}
+                               </div>
                              </div>
                           </div>
                         </div>
@@ -3974,7 +4024,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         </div>
                         <div className="absolute bottom-5 left-10 right-10 flex justify-between items-center text-[7px] md:text-[8px] uppercase tracking-widest font-bold text-zinc-300">
                           <span>CONFIDENTIAL - WOVN GARMENT CATALOG</span>
-                          <span>{new Date().toLocaleDateString()}</span>
+                          <span>{new Date().toLocaleDateString()} - PAGE {pageIdx + 1}</span>
                         </div>
                       </div>
                     );
