@@ -1481,7 +1481,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
     
     let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
     if (g.fabric_details) {
-      const parts = g.fabric_details.split(',').map(s => s.trim()).filter(Boolean);
+      const parts = g.fabric_details.split(/,\s*(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
       for (const p of parts) {
         const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
         if (match) {
@@ -4009,7 +4009,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [fabricCompositions, setFabricCompositions] = useState<{ id: string, percentage: string, fabric: string }[]>(() => {
     let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
     if (item.fabric_details) {
-      const parts = item.fabric_details.split(',').map(s => s.trim()).filter(Boolean);
+      const parts = item.fabric_details.split(/,\s*(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
       for (const p of parts) {
         const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
         if (match) {
@@ -4059,7 +4059,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
       
       let parsedComp: { id: string, percentage: string, fabric: string }[] = [];
       if (garment.fabric_details) {
-        const parts = garment.fabric_details.split(',').map((s: string) => s.trim()).filter(Boolean);
+        const parts = garment.fabric_details.split(/,\s*(?![^()]*\))/).map((s: string) => s.trim()).filter(Boolean);
         for (const p of parts) {
           const match = p.match(/^(\d+(?:\.\d+)?)\s*%\s*(.+)$/);
           if (match) {
