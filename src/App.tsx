@@ -3547,7 +3547,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 <div className="flex-1 space-y-8 max-w-lg">
                   <div className="space-y-4">
                     <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Item {index + 1}</p>
-                    <h3 className="font-serif text-3xl md:text-5xl leading-tight">{item.custom_name || item.garment_name}</h3>
+                    <h3 className="font-serif text-3xl md:text-4xl leading-tight">{item.custom_name || item.garment_name}</h3>
                     <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
                       {item.custom_description || item.garment_description}
                     </p>
@@ -5579,7 +5579,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
             <div className="flex-1 space-y-3 md:space-y-8 w-full mt-4 md:mt-0">
               <div className="space-y-2 md:space-y-4 text-center md:text-left">
                 <p className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-zinc-400">{currentItem.isCoverSlide ? 'Presentation Cover' : `Item ${currentIndex + (items[0]?.isCoverSlide ? 0 : 1)} of ${items[0]?.isCoverSlide ? items.length - 1 : items.length}`}</p>
-                <h2 className={`font-serif leading-tight ${currentItem.isCoverSlide ? 'text-4xl md:text-6xl' : 'text-3xl md:text-7xl'}`}>{currentItem.custom_name || currentItem.garment_name}</h2>
+                <h2 className={`font-serif leading-tight ${currentItem.isCoverSlide ? 'text-4xl md:text-5xl' : 'text-3xl md:text-5xl'}`}>{currentItem.custom_name || currentItem.garment_name}</h2>
                 <p className="text-zinc-500 text-sm md:text-xl leading-relaxed">
                   {currentItem.custom_description || currentItem.garment_description}
                 </p>
