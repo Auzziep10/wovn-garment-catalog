@@ -4131,7 +4131,14 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
   const [price, setPrice] = useState(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '');
   const [rushFee, setRushFee] = useState(item.rush_fee_percentage?.toString() || '');
-  const [marginTarget, setMarginTarget] = useState('50');
+  const [marginTarget, setMarginTarget] = useState(() => {
+    const p = parseFloat(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '0');
+    const c = parseFloat(item.custom_cost_price?.toString() || item.cost_price?.toString() || '0');
+    if (p > 0 && c > 0 && p > c) {
+      return ((p - c) / c * 100).toFixed(0);
+    }
+    return '50';
+  });
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
