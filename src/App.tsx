@@ -3865,7 +3865,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   Array.from(displayedItems).map((item, idx) => (
                     <div key={`ls-${item.id}-${idx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-8 md:p-16 flex flex-col relative shrink-0">
                       <div className="flex flex-col mb-8 md:mb-10 w-full shrink-0">
-                        <div className="flex justify-between items-center w-full border-y border-zinc-200 py-3">
+                        <div className="flex justify-between items-center w-full py-3">
                            <div className="w-1/3 flex items-center justify-start shrink-0">
                              {selectedAsset ? (
                                 <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
@@ -3874,7 +3874,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                              )}
                            </div>
                            <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
-                             <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0" />
+                             <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                            </div>
                            <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
                              <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
@@ -3943,7 +3943,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     return (
                       <div key={`ls-combo-${pageIdx}`} className="w-full max-w-[8.5in] aspect-[8.5/11] print:w-[8.5in] print:h-[11in] bg-white shadow-xl print:shadow-none print:break-inside-avoid print:break-after-page p-6 md:p-10 flex flex-col shrink-0 relative">
                         <div className="flex flex-col mb-4 md:mb-6 print:mb-5 shrink-0 w-full px-2">
-                          <div className="flex justify-between items-center w-full border-y border-zinc-200 py-3">
+                          <div className="flex justify-between items-center w-full py-3">
                              <div className="w-1/3 flex items-center justify-start shrink-0">
                                {selectedAsset ? (
                                   <img src={selectedAsset.image} className="h-8 md:h-12 max-w-[120px] object-contain mix-blend-multiply" />
@@ -3952,7 +3952,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                )}
                              </div>
                              <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
-                               <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0" />
+                               <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                              </div>
                              <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
                                <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
