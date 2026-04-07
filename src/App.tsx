@@ -4131,6 +4131,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
   const [price, setPrice] = useState(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '');
   const [rushFee, setRushFee] = useState(item.rush_fee_percentage?.toString() || '');
+  const [marginTarget, setMarginTarget] = useState('50');
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
@@ -4709,10 +4710,30 @@ function EditItemModal({ item, customer, onClose, onSave }: {
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Backend Pricing</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Landed ($)</label>
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-indigo-500 mb-1.5 block">Target Margin (%)</label>
+                    <div className="flex bg-indigo-50 border border-indigo-200 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-indigo-400 focus-within:border-indigo-400 transition-all h-[38px]">
+                      <input type="number" value={marginTarget} onChange={e => setMarginTarget(e.target.value)} placeholder="50" className="w-full bg-transparent px-3 py-0 text-sm outline-none text-indigo-900 placeholder:text-indigo-300 min-w-0" />
+                      <button type="button" onClick={() => {
+                        const targetLine = parseFloat(marginTarget); 
+                        if (!isNaN(targetLine) && parseFloat(costPrice) > 0) {
+                          let newMSRP = 0;
+                          if (targetLine < 100) {
+                             // True retail margin calculation
+                             newMSRP = parseFloat(costPrice) / (1 - targetLine/100);
+                          } else {
+                             // If they entered >100, assume they mean markup percentage
+                             newMSRP = parseFloat(costPrice) * (1 + targetLine/100);
+                          }
+                          setPrice(newMSRP.toFixed(2));
+                        }
+                      }} className="bg-indigo-200 px-3 text-[10px] font-bold text-indigo-800 hover:bg-indigo-300 uppercase tracking-widest transition-colors flex items-center shrink-0">Set MSRP</button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale ($)</label>
