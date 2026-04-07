@@ -4360,6 +4360,15 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     />
                   </div>
 
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Description</label>
+                    <textarea
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-y min-h-[60px]"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Mockup Status</label>
