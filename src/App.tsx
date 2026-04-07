@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink, Eye, EyeOff } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -4031,6 +4031,87 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   );
 }
 
+function ImageCropModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClose: () => void, onSave: (dataUrl: string) => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [scale, setScale] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSave = async () => {
+    setIsProcessing(true);
+    try {
+      if (!containerRef.current || !imageRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const imageRect = imageRef.current.getBoundingClientRect();
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 1600;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const scaleX = canvas.width / containerRect.width;
+      const scaleY = canvas.height / containerRect.height;
+      const dx = (imageRect.left - containerRect.left) * scaleX;
+      const dy = (imageRect.top - containerRect.top) * scaleY;
+      const dw = imageRect.width * scaleX;
+      const dh = imageRect.height * scaleY;
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = async () => {
+         ctx.drawImage(img, dx, dy, dw, dh);
+         const dataUrl = canvas.toDataURL('image/png');
+         const finalUrl = await uploadImageToFirebase(dataUrl);
+         onSave(finalUrl);
+      };
+      img.onerror = () => setIsProcessing(false);
+      img.src = imageUrl;
+    } catch (e) {
+      console.error(e);
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-[120] flex flex-col items-center justify-center p-4">
+      <div className="bg-white rounded-[2rem] overflow-hidden w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex justify-between items-center shrink-0 w-full">
+          <h3 className="font-serif text-2xl">Crop & Match</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900"><X size={20} /></button>
+        </div>
+        <div className="p-8 bg-zinc-50 flex items-center justify-center relative flex-1 overflow-hidden min-h-[40vh] w-full">
+          <div ref={containerRef} className="w-full aspect-[3/4] max-w-[280px] bg-white border border-zinc-200 overflow-hidden relative shadow-inner flex items-center justify-center">
+            <motion.img 
+              ref={imageRef}
+              src={imageUrl} 
+              drag 
+              dragMomentum={false}
+              style={{ scale }}
+              className="w-[80%] h-[80%] object-contain cursor-grab active:cursor-grabbing origin-center select-none pointer-events-auto mix-blend-multiply" 
+              crossOrigin="anonymous"
+            />
+          </div>
+        </div>
+        <div className="p-6 md:p-8 border-t border-zinc-100 bg-white shrink-0 w-full">
+          <div className="flex items-center gap-4 mb-6">
+            <ZoomOut size={16} className="text-zinc-400" />
+            <input type="range" min="0.5" max="3" step="0.05" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="flex-1" />
+            <ZoomIn size={16} className="text-zinc-400" />
+          </div>
+          <button onClick={handleSave} disabled={isProcessing} className="w-full bg-zinc-900 text-white rounded-full py-4 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex justify-center items-center gap-2">
+            {isProcessing && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            Extract Variant
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditItemModal({ item, customer, onClose, onSave }: {
   item: DeckItem,
   customer?: Customer | null,
@@ -4044,6 +4125,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
   const [hiddenVariations, setHiddenVariations] = useState<string[]>(item.hidden_variations || []);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const [mockupStatus, setMockupStatus] = useState<'New Mock Needed' | 'Working' | 'Final Mock Uploaded'>(
@@ -4239,12 +4321,15 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 <div className="space-y-6">
                   <div className="aspect-[3/4] bg-zinc-50 rounded-lg overflow-hidden border-2 border-zinc-200 flex items-center justify-center p-4 relative group">
                     <img src={mockImage} className="w-full h-full object-contain" />
-                    <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-                      <div className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                      <button type="button" onClick={() => setIsCropModalOpen(true)} className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm hover:bg-white transition-colors">
+                        <Crop size={14} /> Crop
+                      </button>
+                      <label className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm hover:bg-white cursor-pointer transition-colors">
                         <Upload size={14} /> Replace
-                      </div>
-                      <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
-                    </label>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageReplace} />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
