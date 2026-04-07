@@ -231,6 +231,7 @@ export interface DeckItem {
   custom_price?: number;
   market_analysis?: any[] | null;
   custom_sizes?: string;
+  rush_fee_percentage?: number | null;
   variations?: string[];
   hidden_variations?: string[];
   order_index?: number;
@@ -260,6 +261,14 @@ export interface DeckItem {
   custom_cost_price?: number | null;
   custom_market_analysis?: any[] | null;
 }
+
+export const getDisplayPrice = (item: any) => {
+  const base = parseFloat(item.custom_msrp?.toString() || item.msrp?.toString() || item.custom_price?.toString() || item.garment_price?.toString() || '0');
+  if (item.rush_fee_percentage && base > 0) {
+    return base * (1 + parseFloat(item.rush_fee_percentage) / 100);
+  }
+  return base;
+};
 
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
 
@@ -3554,7 +3563,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </p>
                   </div>
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
-                    {showPricing ? <p className="text-2xl font-medium">${item.custom_price || item.garment_price}</p> : <div />}
+                    {showPricing ? <p className="text-2xl font-medium">${getDisplayPrice(item).toFixed(2).replace(/\.00$/, '')}</p> : <div />}
                     <div className="flex flex-wrap gap-2">
                       {((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(',') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(',') : item.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
                         <span key={idx} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
@@ -3757,7 +3766,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
 
                 <h4 className="font-serif text-lg truncate">{item.custom_name || item.garment_name}</h4>
                 <div className="flex items-center justify-between mt-1">
-                  {showPricing ? <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${item.custom_price || item.garment_price}</p> : <div />}
+                  {showPricing ? <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">${getDisplayPrice(item).toFixed(2).replace(/\.00$/, '')}</p> : <div />}
                   {item.supplier_link && (
                     <a href={item.supplier_link} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 border-b border-transparent hover:border-zinc-900 transition-colors" onClick={(e) => e.stopPropagation()}>
                       Link
@@ -3913,7 +3922,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           </div>
                           <div className="col-span-1">
                             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
-                            <p className="text-[10px] font-medium text-zinc-900">${(item.custom_msrp || item.msrp || item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                            <p className="text-[10px] font-medium text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
                           </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Delivery</p>
@@ -3980,7 +3989,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                   </div>
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
-                                    <p className="text-[10px] font-bold text-zinc-900">${(item.custom_msrp || item.msrp || item.custom_price || item.garment_price || 0).toFixed(2)}</p>
+                                    <p className="text-[10px] font-bold text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
                                   </div>
                                   <div className="col-span-2">
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Sizes</p>
@@ -4121,6 +4130,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [name, setName] = useState(item.custom_name || item.garment_name || '');
   const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
   const [price, setPrice] = useState(item.custom_msrp?.toString() || item.custom_price?.toString() || item.msrp?.toString() || item.garment_price?.toString() || item.cost_price?.toString() || '');
+  const [rushFee, setRushFee] = useState(item.rush_fee_percentage?.toString() || '');
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
@@ -4699,18 +4709,25 @@ function EditItemModal({ item, customer, onClose, onSave }: {
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Backend Pricing</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Landed ($)</label>
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale Price ($)</label>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Wholesale ($)</label>
                     <input type="number" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MSRP ($)</label>
                     <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-orange-500 mb-1.5 flex items-center justify-between">
+                      Rush Fee (%)
+                      {parseFloat(rushFee) > 0 && <span className="bg-orange-100 text-orange-600 px-1 py-0.5 rounded-[4px] text-[8px]">Active</span>}
+                    </label>
+                    <input type="number" value={rushFee} onChange={e => setRushFee(e.target.value)} placeholder="0" className="w-full bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-2 text-sm focus:border-orange-400 focus:bg-white focus:ring-1 focus:ring-orange-400 outline-none transition-all text-orange-900 placeholder:text-orange-300" />
                   </div>
                 </div>
               </div>
@@ -4760,6 +4777,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_msrp: parseFloat(price) || null,
                   custom_moq: parseInt(moq, 10) || null,
                   custom_turn_time: turnTime,
+                  rush_fee_percentage: parseFloat(rushFee) || null,
                   custom_market_analysis: marketAnalysis
                 });
               } catch (err: any) {
@@ -5697,7 +5715,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                 </p>
               </div>
               <div className="pt-6 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-                {showPricing && !currentItem.isCoverSlide && currentItem.custom_price !== 0 ? <p className="text-2xl md:text-4xl font-medium">${currentItem.custom_price || currentItem.garment_price}</p> : <div />}
+                {showPricing && !currentItem.isCoverSlide && getDisplayPrice(currentItem) !== 0 ? <p className="text-2xl md:text-4xl font-medium">${getDisplayPrice(currentItem).toFixed(2).replace(/\.00$/, '')}</p> : <div />}
                 <div className="flex flex-wrap justify-center md:justify-start gap-1.5 md:gap-2 max-w-full">
                   {!currentItem.isCoverSlide && ((Array.isArray(currentItem.custom_sizes) ? currentItem.custom_sizes.join(',') : currentItem.custom_sizes) || (Array.isArray(currentItem.sizes) ? currentItem.sizes.join(',') : currentItem.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
                     <span key={idx} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
