@@ -4723,9 +4723,9 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-indigo-500 mb-1.5 block">Target Margin (%)</label>
-                    <div className="flex bg-indigo-50 border border-indigo-200 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-indigo-400 focus-within:border-indigo-400 transition-all h-[38px]">
-                      <input type="number" value={marginTarget} onChange={e => setMarginTarget(e.target.value)} placeholder="50" className="w-full bg-transparent px-3 py-0 text-sm outline-none text-indigo-900 placeholder:text-indigo-300 min-w-0" />
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Target Margin (%)</label>
+                    <div className="flex bg-zinc-50 border border-zinc-200 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-zinc-400 focus-within:border-zinc-400 transition-all h-[38px]">
+                      <input type="number" value={marginTarget} onChange={e => setMarginTarget(e.target.value)} placeholder="50" className="w-full bg-transparent px-3 py-0 text-sm outline-none text-zinc-900 placeholder:text-zinc-400 min-w-0" />
                       <button type="button" onClick={() => {
                         const targetLine = parseFloat(marginTarget); 
                         if (!isNaN(targetLine) && parseFloat(costPrice) > 0) {
@@ -4733,7 +4733,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                           const newMSRP = parseFloat(costPrice) * (1 + targetLine/100);
                           setPrice(newMSRP.toFixed(2));
                         }
-                      }} className="bg-indigo-200 px-3 text-[10px] font-bold text-indigo-800 hover:bg-indigo-300 uppercase tracking-widest transition-colors flex items-center shrink-0">Set MSRP</button>
+                      }} className="bg-zinc-200 px-3 text-[10px] font-bold text-zinc-700 hover:bg-zinc-300 uppercase tracking-widest transition-colors flex items-center shrink-0">Set MSRP</button>
                     </div>
                   </div>
                   <div>
@@ -4745,11 +4745,11 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-orange-500 mb-1.5 flex items-center justify-between">
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 flex items-center justify-between">
                       Rush Fee (%)
-                      {parseFloat(rushFee) > 0 && <span className="bg-orange-100 text-orange-600 px-1 py-0.5 rounded-[4px] text-[8px]">Active</span>}
+                      {parseFloat(rushFee) > 0 && <span className="bg-zinc-200 text-zinc-700 px-1 py-0.5 rounded-[4px] text-[8px]">Active</span>}
                     </label>
-                    <input type="number" value={rushFee} onChange={e => setRushFee(e.target.value)} placeholder="0" className="w-full bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-2 text-sm focus:border-orange-400 focus:bg-white focus:ring-1 focus:ring-orange-400 outline-none transition-all text-orange-900 placeholder:text-orange-300" />
+                    <input type="number" value={rushFee} onChange={e => setRushFee(e.target.value)} placeholder="0" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-900 placeholder:text-zinc-400" />
                   </div>
                 </div>
               </div>
