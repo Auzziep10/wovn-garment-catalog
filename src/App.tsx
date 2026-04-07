@@ -3874,17 +3874,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                              )}
                            </div>
                            <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
-                             <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0 mb-1" />
-                             <p className="text-[6px] md:text-[7px] uppercase tracking-[0.3em] font-bold text-zinc-500">Design Studio</p>
+                             <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0" />
                            </div>
                            <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
                              <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
-                             <div className="flex gap-1.5 md:gap-2">
+                             <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
-                                 <div key={i} className="flex flex-col items-center gap-0.5">
-                                   <div className="w-4 h-2.5 md:w-5 md:h-3 border border-zinc-200 print:border-zinc-300" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
-                                   <span className="text-[4px] md:text-[5px] text-zinc-400 uppercase leading-none truncate max-w-[20px]">{c.pantone || c.hex}</span>
-                                 </div>
+                                 <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
                                ))}
                              </div>
                            </div>
@@ -3956,17 +3952,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                )}
                              </div>
                              <div className="w-1/3 flex flex-col items-center justify-center shrink-0">
-                               <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0 mb-1" />
-                               <p className="text-[6px] md:text-[7px] uppercase tracking-[0.3em] font-bold text-zinc-500">Design Studio</p>
+                               <img src="/wovn-logo.png" alt="WOVN" className="h-[28px] md:h-[36px] object-contain brightness-0" />
                              </div>
                              <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
                                <h1 className="font-serif tracking-tight leading-none text-[13px] md:text-base mb-1.5 text-zinc-900 uppercase text-right break-words">{deck.name}</h1>
-                               <div className="flex gap-1.5 md:gap-2">
+                               <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                  {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
-                                   <div key={i} className="flex flex-col items-center gap-0.5">
-                                     <div className="w-4 h-2.5 md:w-5 md:h-3 border border-zinc-200 print:border-zinc-300" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
-                                     <span className="text-[4px] md:text-[5px] text-zinc-400 uppercase leading-none truncate max-w-[20px]">{c.pantone || c.hex}</span>
-                                   </div>
+                                   <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
                                  ))}
                                </div>
                              </div>
