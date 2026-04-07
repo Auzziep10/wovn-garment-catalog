@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink } from 'lucide-react';
+, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -232,6 +232,7 @@ export interface DeckItem {
   market_analysis?: any[] | null;
   custom_sizes?: string;
   variations?: string[];
+  hidden_variations?: string[];
   order_index?: number;
   mockup_status?: 'New Mock Needed' | 'Working' | 'Final Mock Uploaded' | null;
   category?: string;
@@ -3563,11 +3564,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </div>
                   </div>
 
-                  {Array.from(new Set([item.mock_image, ...(item.variations || [])])).length > 1 && (
+                  {Array.from(new Set([item.mock_image, ...(item.variations || [])])).filter(v => !(item.hidden_variations || []).includes(v)).length > 1 && (
                     <div className="pt-8 border-t border-zinc-200">
                       <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-4">View Variation</p>
                       <div className="flex gap-2 lg:gap-3 flex-wrap">
-                        {Array.from(new Set([item.mock_image, ...(item.variations || [])])).map((v, idx) => (
+                        {Array.from(new Set([item.mock_image, ...(item.variations || [])])).filter(v => !(item.hidden_variations || []).includes(v)).map((v, idx) => (
                           <button
                             key={idx}
                             onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
@@ -3740,9 +3741,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   </div>
                 </div>
 
-                {Array.from(new Set([item.mock_image, ...(item.variations || [])])).length > 1 && (
+                {Array.from(new Set([item.mock_image, ...(item.variations || [])])).filter(v => !(item.hidden_variations || []).includes(v)).length > 1 && (
                   <div className="flex gap-1.5 mb-3 px-1 overflow-x-auto hide-scrollbar">
-                    {Array.from(new Set([item.mock_image, ...(item.variations || [])])).map((v, idx) => (
+                    {Array.from(new Set([item.mock_image, ...(item.variations || [])])).filter(v => !(item.hidden_variations || []).includes(v)).map((v, idx) => (
                       <button
                         key={idx}
                         onClick={() => setActiveVariations(prev => ({ ...prev, [item.id]: v }))}
@@ -4042,6 +4043,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [sizes, setSizes] = useState(item.custom_sizes || item.sizes || 'XS,S,M,L,XL');
   const [mockImage, setMockImage] = useState(item.mock_image);
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
+  const [hiddenVariations, setHiddenVariations] = useState<string[]>(item.hidden_variations || []);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const [mockupStatus, setMockupStatus] = useState<'New Mock Needed' | 'Working' | 'Final Mock Uploaded'>(
@@ -4305,6 +4307,21 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                           >
                             <Trash2 size={12} />
                           </button>
+                          <button
+                            title={hiddenVariations.includes(v) ? "Show in Presentation" : "Hide in Presentation"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (hiddenVariations.includes(v)) {
+                                setHiddenVariations(hiddenVariations.filter(hv => hv !== v));
+                              } else {
+                                setHiddenVariations([...hiddenVariations, v]);
+                              }
+                            }}
+                            className={`absolute top-0 left-0 p-1 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-br-lg z-10 backdrop-blur-sm ${hiddenVariations.includes(v) ? 'text-red-500 opacity-100' : 'text-zinc-400 hover:text-zinc-600'}`}
+                          >
+                            {hiddenVariations.includes(v) ? <EyeOff size={12} /> : <Eye size={12} />}
+                          </button>
+                          {hiddenVariations.includes(v) && <div className="absolute inset-0 bg-white/40 pointer-events-none" />}
                         </div>
                       ))}
                       <label className="w-12 h-12 border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-zinc-400 hover:bg-zinc-50 shrink-0 transition-colors text-zinc-400 hover:text-zinc-600" title="Add Variation">
@@ -4643,6 +4660,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   custom_sizes: sizes,
                   mock_image: mockImage,
                   variations: variations,
+                  hidden_variations: hiddenVariations,
                   mockup_status: mockupStatus,
                   custom_fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
                   custom_fabric_finish: fabricFinish,
@@ -5565,7 +5583,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                 );
               })()}
 
-              {currentItem.variations && currentItem.variations.length > 0 && (
+              {currentItem.variations && currentItem.variations.filter((v: string) => !(currentItem.hidden_variations || []).includes(v)).length > 0 && (
                 <div className="flex gap-2 lg:gap-3 flex-wrap justify-center">
                   <button
                     onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: currentItem.mock_image }))}
@@ -5573,7 +5591,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                   >
                     <img src={currentItem.mock_image} className="w-full h-full object-contain" />
                   </button>
-                  {currentItem.variations.map((v, idx) => (
+                  {currentItem.variations.filter((v: string) => !(currentItem.hidden_variations || []).includes(v)).map((v: string, idx: number) => (
                     <button
                       key={idx}
                       onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
