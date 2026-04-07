@@ -4722,14 +4722,8 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       <button type="button" onClick={() => {
                         const targetLine = parseFloat(marginTarget); 
                         if (!isNaN(targetLine) && parseFloat(costPrice) > 0) {
-                          let newMSRP = 0;
-                          if (targetLine < 100) {
-                             // True retail margin calculation
-                             newMSRP = parseFloat(costPrice) / (1 - targetLine/100);
-                          } else {
-                             // If they entered >100, assume they mean markup percentage
-                             newMSRP = parseFloat(costPrice) * (1 + targetLine/100);
-                          }
+                          // Using markup percentage multiplication as requested
+                          const newMSRP = parseFloat(costPrice) * (1 + targetLine/100);
                           setPrice(newMSRP.toFixed(2));
                         }
                       }} className="bg-indigo-200 px-3 text-[10px] font-bold text-indigo-800 hover:bg-indigo-300 uppercase tracking-widest transition-colors flex items-center shrink-0">Set MSRP</button>
