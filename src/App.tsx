@@ -5767,9 +5767,9 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                     <button
                       key={idx}
                       onClick={() => setActiveVariations(prev => ({ ...prev, [currentItem.id]: v }))}
-                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-0 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
+                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 overflow-hidden transition-all p-1 bg-white ${activeVariations[currentItem.id] === v ? 'border-zinc-900 shadow-sm scale-110' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100'}`}
                     >
-                      <img src={v} className="w-full h-full object-cover" />
+                      <img src={v} className="w-full h-full object-contain" />
                     </button>
                   ))}
                 </div>
