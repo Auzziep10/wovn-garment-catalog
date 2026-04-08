@@ -4741,8 +4741,11 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     <input type="number" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">MSRP ($)</label>
-                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-emerald-600 mb-1.5 flex items-center justify-between">
+                      MSRP ($)
+                      <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-[4px] text-[8px] font-bold">CLIENT FACING</span>
+                    </label>
+                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-emerald-50/50 border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:bg-white focus:ring-1 focus:ring-emerald-500 outline-none transition-all font-semibold text-emerald-950 placeholder:text-emerald-300" />
                   </div>
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-black mb-1.5 flex items-center justify-between">
