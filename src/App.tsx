@@ -2864,6 +2864,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [filterType, setFilterType] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [lineSheetMode, setLineSheetMode] = useState<'individual' | 'combo' | null>(null);
+  const [showWholesaleInLineSheet, setShowWholesaleInLineSheet] = useState<boolean>(true);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -3866,9 +3867,17 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
                     </div>
                   )}
-                  <button onClick={() => { setTimeout(() => window.print(), 100); }} className="bg-zinc-900 text-white px-4 md:px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-800 transition-colors">
-                    <Download size={14} /> Save to PDF
-                  </button>
+                  <div className="flex items-center gap-2 print:hidden backdrop-blur-sm bg-white/50 rounded-full pr-1 pl-1 py-1">
+                    <button 
+                      onClick={() => setShowWholesaleInLineSheet(!showWholesaleInLineSheet)} 
+                      className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all border ${showWholesaleInLineSheet ? 'bg-zinc-100 border-zinc-200 text-zinc-900 shadow-sm' : 'bg-transparent border-transparent hover:border-zinc-200 text-zinc-400 hover:text-zinc-600'}`}
+                    >
+                      {showWholesaleInLineSheet ? <Eye size={14} /> : <EyeOff size={14} />} Wholesale
+                    </button>
+                    <button onClick={() => { setTimeout(() => window.print(), 100); }} className="bg-zinc-900 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-800 transition-colors shadow-sm whitespace-nowrap">
+                      <Download size={14} /> Save to PDF
+                    </button>
+                  </div>
                   <button onClick={() => setLineSheetMode(null)} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-900 transition-colors">
                     <X size={20}/>
                   </button>
@@ -3921,10 +3930,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">MOQ</p>
                             <p className="text-[10px] font-medium text-zinc-900">{(item as any).custom_moq || (item as any).moq || 'TBD'}</p>
                           </div>
-                          <div className="col-span-1">
-                            <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Wholesale</p>
-                            <p className="text-[10px] font-medium text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
-                          </div>
+                          {showWholesaleInLineSheet && (
+                            <div className="col-span-1">
+                              <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Wholesale</p>
+                              <p className="text-[10px] font-medium text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
+                            </div>
+                          )}
                           <div className="col-span-1">
                             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
                             <p className="text-[10px] font-medium text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
@@ -3988,10 +3999,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                               <div className="text-left w-full px-2">
                                 <h3 className="font-serif text-[15px] md:text-lg leading-tight border-b border-zinc-200 pb-1 mb-1.5 text-zinc-900 truncate">{item.custom_name || item.garment_name}</h3>
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 print:gap-y-1">
-                                  <div>
-                                    <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Wholesale</p>
-                                    <p className="text-[10px] font-bold text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
-                                  </div>
+                                  {showWholesaleInLineSheet && (
+                                    <div>
+                                      <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Wholesale</p>
+                                      <p className="text-[10px] font-bold text-zinc-900">${(item.custom_wholesale_price || item.wholesale_price || 0).toFixed(2)}</p>
+                                    </div>
+                                  )}
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
                                     <p className="text-[10px] font-bold text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
