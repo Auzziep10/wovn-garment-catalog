@@ -4825,7 +4825,6 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               try {
                 if (uploadedUrl && uploadedUrl.startsWith('http')) {
                   setVariations(prev => [uploadedUrl, ...prev]);
-                  setMockImage(uploadedUrl);
                   setIsCropModalOpen(false);
                 } else {
                   throw new Error("Invalid uploaded URL from cropper");
