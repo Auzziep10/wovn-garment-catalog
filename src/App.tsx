@@ -4077,7 +4077,26 @@ function ImageCropModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClo
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = async () => {
-         ctx.drawImage(img, dx, dy, dw, dh);
+         const imgRatio = img.width / img.height;
+         const boxRatio = imageRect.width / imageRect.height;
+         let drawnWidth, drawnHeight;
+         if (imgRatio > boxRatio) {
+            drawnWidth = imageRect.width;
+            drawnHeight = imageRect.width / imgRatio;
+         } else {
+            drawnHeight = imageRect.height;
+            drawnWidth = imageRect.height * imgRatio;
+         }
+         
+         const offsetX = (imageRect.width - drawnWidth) / 2;
+         const offsetY = (imageRect.height - drawnHeight) / 2;
+         
+         const actualDx = (imageRect.left + offsetX - containerRect.left) * scaleX;
+         const actualDy = (imageRect.top + offsetY - containerRect.top) * scaleY;
+         const actualDw = drawnWidth * scaleX;
+         const actualDh = drawnHeight * scaleY;
+
+         ctx.drawImage(img, actualDx, actualDy, actualDw, actualDh);
          const dataUrl = canvas.toDataURL('image/png');
          const finalUrl = await uploadImageToFirebase(dataUrl);
          onSave(finalUrl);
