@@ -3563,7 +3563,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     </p>
                   </div>
                   <div className="pt-8 border-t border-zinc-200 flex items-center justify-between">
-                    {showPricing ? <p className="text-2xl font-medium">${getDisplayPrice(item).toFixed(2).replace(/\.00$/, '')}</p> : <div />}
+                    {showPricing ? (
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-2xl font-medium">${getDisplayPrice(item).toFixed(2).replace(/\.00$/, '')}</p>
+                        {parseFloat(item.rush_fee_percentage) > 0 && <span className="text-sm italic text-zinc-400 font-normal">includes rush fee</span>}
+                      </div>
+                    ) : <div />}
                     <div className="flex flex-wrap gap-2">
                       {((Array.isArray(item.custom_sizes) ? item.custom_sizes.join(',') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(',') : item.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
                         <span key={idx} className="px-3 h-10 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-900">
@@ -5761,7 +5766,12 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                 </p>
               </div>
               <div className="pt-6 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-                {showPricing && !currentItem.isCoverSlide && getDisplayPrice(currentItem) !== 0 ? <p className="text-2xl md:text-4xl font-medium">${getDisplayPrice(currentItem).toFixed(2).replace(/\.00$/, '')}</p> : <div />}
+                {showPricing && !currentItem.isCoverSlide && getDisplayPrice(currentItem) !== 0 ? (
+                  <div className="flex items-baseline gap-2 md:gap-3">
+                    <p className="text-2xl md:text-4xl font-medium">${getDisplayPrice(currentItem).toFixed(2).replace(/\.00$/, '')}</p>
+                    {parseFloat(currentItem.rush_fee_percentage) > 0 && <span className="text-sm md:text-base italic text-zinc-400 font-normal">includes rush fee</span>}
+                  </div>
+                ) : <div />}
                 <div className="flex flex-wrap justify-center md:justify-start gap-1.5 md:gap-2 max-w-full">
                   {!currentItem.isCoverSlide && ((Array.isArray(currentItem.custom_sizes) ? currentItem.custom_sizes.join(',') : currentItem.custom_sizes) || (Array.isArray(currentItem.sizes) ? currentItem.sizes.join(',') : currentItem.sizes) || 'XS,S,M,L,XL').split(',').map((size: string, idx: number) => (
                     <span key={idx} className="w-8 h-8 md:w-12 md:h-12 border border-zinc-200 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-400">
