@@ -3649,7 +3649,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="pb-6 text-sm text-zinc-500 leading-relaxed grid grid-cols-2 gap-6">
                                 {item.decoration_method && <div><strong className="text-zinc-900 block mb-1">Techniques</strong>{item.decoration_method}</div>}
-                                {item.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Thread/Ink Colors</strong>{item.available_colors}</div>}
+                                {item.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Colors</strong>{item.available_colors}</div>}
                               </div>
                             </motion.div>
                           )}
@@ -4654,7 +4654,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Thread / Ink Colors</label>
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Colors</label>
                       <input value={availableColors} onChange={e => setAvailableColors(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
                     </div>
                     <div>
@@ -5831,7 +5831,7 @@ function PresentationMode({ deck, onClose, showPricing, isSharedView = false }: 
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="pb-6 text-sm md:text-base text-zinc-500 leading-relaxed grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {currentItem.decoration_method && <div><strong className="text-zinc-900 block mb-1">Techniques</strong>{currentItem.decoration_method}</div>}
-                                {currentItem.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Thread/Ink Colors</strong>{currentItem.available_colors}</div>}
+                                {currentItem.available_colors && <div><strong className="text-zinc-900 block mb-1">Available Colors</strong>{currentItem.available_colors}</div>}
                               </div>
                             </motion.div>
                           )}
