@@ -4821,16 +4821,14 @@ function EditItemModal({ item, customer, onClose, onSave }: {
           <ImageCropModal
             imageUrl={mockImage}
             onClose={() => setIsCropModalOpen(false)}
-            onSave={async (dataUrl) => {
+            onSave={async (uploadedUrl) => {
               try {
-                // Ensure proper signature
-                if (dataUrl.startsWith('data:image')) {
-                  const uploadedUrl = await uploadImageToStorage(dataUrl);
+                if (uploadedUrl && uploadedUrl.startsWith('http')) {
                   setVariations(prev => [uploadedUrl, ...prev]);
                   setMockImage(uploadedUrl);
                   setIsCropModalOpen(false);
                 } else {
-                  throw new Error("Invalid image format from cropper");
+                  throw new Error("Invalid uploaded URL from cropper");
                 }
               } catch (err) {
                 console.error("Failed to save crop", err);
