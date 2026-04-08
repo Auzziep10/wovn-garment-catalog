@@ -4816,6 +4816,30 @@ function EditItemModal({ item, customer, onClose, onSave }: {
           </button>
         </div>
       </motion.div>
+      <AnimatePresence>
+        {isCropModalOpen && (
+          <ImageCropModal
+            imageUrl={mockImage}
+            onClose={() => setIsCropModalOpen(false)}
+            onSave={async (dataUrl) => {
+              try {
+                // Ensure proper signature
+                if (dataUrl.startsWith('data:image')) {
+                  const uploadedUrl = await uploadImageToStorage(dataUrl);
+                  setVariations(prev => [uploadedUrl, ...prev]);
+                  setMockImage(uploadedUrl);
+                  setIsCropModalOpen(false);
+                } else {
+                  throw new Error("Invalid image format from cropper");
+                }
+              } catch (err) {
+                console.error("Failed to save crop", err);
+                alert("Failed to upload cropped image.");
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
