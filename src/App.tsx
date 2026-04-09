@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -812,12 +812,17 @@ export default function App() {
                 >
                   Customers
                 </button>
-                <button
-                  onClick={() => { setGarmentToEdit(null); setView('admin'); }}
-                  className={`nav-link ${view === 'admin' ? 'text-zinc-900' : ''}`}
-                >
-                  Garment Library
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setGarmentToEdit(null); setView('admin'); }}
+                    className={`nav-link ${view === 'admin' ? 'text-zinc-900' : ''}`}
+                  >
+                    Garment Library
+                  </button>
+                  <a href="https://print-shop-os-beta.vercel.app" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 transition-colors ml-1" title="Print Shop OS Beta">
+                    <Printer size={16} />
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -913,6 +918,14 @@ export default function App() {
                     >
                       Garment Library
                     </button>
+                    <a 
+                      href="https://print-shop-os-beta.vercel.app" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-left text-lg font-serif opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2"
+                    >
+                      Print Shop OS <Printer size={16} />
+                    </a>
                   </div>
                 </section>
 
