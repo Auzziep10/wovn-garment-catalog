@@ -819,8 +819,8 @@ export default function App() {
                   >
                     Garment Library
                   </button>
-                  <a href="https://print-shop-os-beta.vercel.app" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 transition-colors ml-1" title="Print Shop OS Beta">
-                    <Printer size={16} />
+                  <a href="https://print-shop-os-beta.vercel.app" target="_blank" rel="noopener noreferrer" className="ml-1" title="Print Shop OS Beta">
+                    <img src="/print-shop-icon.png" alt="Print Shop OS" className="w-4 h-4 object-contain brightness-0 opacity-40 hover:opacity-100 transition-opacity" />
                   </a>
                 </div>
               </div>
@@ -924,7 +924,7 @@ export default function App() {
                       rel="noopener noreferrer" 
                       className="text-left text-lg font-serif opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2"
                     >
-                      Print Shop OS <Printer size={16} />
+                      Print Shop OS <img src="/print-shop-icon.png" alt="Print Shop OS" className="w-5 h-5 object-contain brightness-0" />
                     </a>
                   </div>
                 </section>
