@@ -4000,7 +4000,10 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           )}
                           <div className="col-span-1">
                             <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Price (MSRP)</p>
-                            <p className="text-[10px] font-medium text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
+                            <p className="text-[10px] font-medium text-zinc-900 flex flex-wrap items-baseline gap-x-1">
+                              ${getDisplayPrice(item).toFixed(2)}
+                              {parseFloat(item.rush_fee_percentage) > 0 && <span className="text-[8px] italic text-zinc-400 font-normal opacity-80 whitespace-nowrap">(includes rush fee)</span>}
+                            </p>
                           </div>
                         <div className="col-span-1">
                           <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Delivery</p>
@@ -4069,7 +4072,10 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                   )}
                                   <div>
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Price (MSRP)</p>
-                                    <p className="text-[10px] font-bold text-zinc-900">${getDisplayPrice(item).toFixed(2)}</p>
+                                    <p className="text-[10px] font-bold text-zinc-900 flex flex-wrap items-baseline gap-x-1">
+                                      ${getDisplayPrice(item).toFixed(2)}
+                                      {parseFloat(item.rush_fee_percentage) > 0 && <span className="text-[7px] italic text-zinc-400 font-normal opacity-80 whitespace-nowrap">(includes rush fee)</span>}
+                                    </p>
                                   </div>
                                   <div className="col-span-2">
                                     <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mb-0.5">Sizes</p>
