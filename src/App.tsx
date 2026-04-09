@@ -280,6 +280,22 @@ const uploadImageToFirebase = async (base64Str: string): Promise<string> => {
   // We simply pipe the raw full-resolution image straight to the backend for storage.
   return await uploadImageToStorage(base64Str, 'mockups');
 };
+const GOOGLE_FONTS = [
+  "Default Serif", "Default Sans", "Default Mono",
+  "Abril Fatface", "Alegreya", "Anton", "Archivo Black", "Bebas Neue", "Bodoni Moda", 
+  "Cabin", "Cinzel", "Cormorant Garamond", "Courier Prime", "Crimson Pro", "Dancing Script", 
+  "DM Sans", "DM Serif Display", "Fira Sans", "Fraunces", "Great Vibes", "Inconsolata", 
+  "Inter", "Josefin Sans", "Jost", "Lato", "Libre Baskerville", "Lora", "Merriweather", 
+  "Montserrat", "Mulish", "Nunito", "Open Sans", "Oswald", "Outfit", "Pacifico", 
+  "Playfair Display", "Poppins", "PT Sans", "PT Serif", "Quicksand", "Raleway", "Roboto", 
+  "Roboto Mono", "Rubik", "Space Grotesk", "Syne", "Tinos", "Ubuntu", "Work Sans"
+];
+
+const FONT_CLASS_MAP: Record<string, string> = {
+  "Default Serif": "font-serif",
+  "Default Sans": "font-sans",
+  "Default Mono": "font-mono"
+};
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -2867,7 +2883,23 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [showWholesaleInLineSheet, setShowWholesaleInLineSheet] = useState<boolean>(true);
   const [lineSheetTitleSize, setLineSheetTitleSize] = useState<number>(10);
   const [lineSheetCustomTitle, setLineSheetCustomTitle] = useState<string>(deck.name);
-  const [lineSheetTitleFont, setLineSheetTitleFont] = useState<'font-serif' | 'font-sans' | 'font-mono'>('font-serif');
+  const [lineSheetTitleFont, setLineSheetTitleFont] = useState<string>('Default Serif');
+
+  useEffect(() => {
+    if (FONT_CLASS_MAP[lineSheetTitleFont]) return;
+    const fontId = lineSheetTitleFont.replace(/\s+/g, '+');
+    const linkId = `google-font-${fontId}`;
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${fontId}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap`;
+      document.head.appendChild(link);
+    }
+  }, [lineSheetTitleFont]);
+
+  const customFontFamily = FONT_CLASS_MAP[lineSheetTitleFont] ? undefined : `"${lineSheetTitleFont}", sans-serif`;
+  const customFontClass = FONT_CLASS_MAP[lineSheetTitleFont] || '';
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -3885,12 +3917,10 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
                       <select 
                         value={lineSheetTitleFont} 
-                        onChange={(e) => setLineSheetTitleFont(e.target.value as any)} 
+                        onChange={(e) => setLineSheetTitleFont(e.target.value)} 
                         className="text-[10px] bg-transparent outline-none font-bold uppercase tracking-widest text-zinc-600 cursor-pointer px-3 border-r border-zinc-100"
                       >
-                        <option value="font-serif">Serif</option>
-                        <option value="font-sans">Sans</option>
-                        <option value="font-mono">Mono</option>
+                        {GOOGLE_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
                       </select>
                       <input
                         type="text"
@@ -3933,7 +3963,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                              <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                            </div>
                            <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
-                             <h1 className={`${lineSheetTitleFont} tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words`} style={{ fontSize: `${lineSheetTitleSize}px` }}>{lineSheetCustomTitle || '\u00A0'}</h1>
+                             <h1 className={`${customFontClass} tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words`} style={{ fontSize: `${lineSheetTitleSize}px`, fontFamily: customFontFamily }}>{lineSheetCustomTitle || '\u00A0'}</h1>
                              <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
                                  <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
@@ -4013,7 +4043,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                              </div>
                              <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
-                               <h1 className={`${lineSheetTitleFont} tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words`} style={{ fontSize: `${lineSheetTitleSize}px` }}>{lineSheetCustomTitle || '\u00A0'}</h1>
+                               <h1 className={`${customFontClass} tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words`} style={{ fontSize: `${lineSheetTitleSize}px`, fontFamily: customFontFamily }}>{lineSheetCustomTitle || '\u00A0'}</h1>
                                <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                  {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
                                    <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
