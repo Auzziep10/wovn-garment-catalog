@@ -2866,6 +2866,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [lineSheetMode, setLineSheetMode] = useState<'individual' | 'combo' | null>(null);
   const [showWholesaleInLineSheet, setShowWholesaleInLineSheet] = useState<boolean>(true);
   const [lineSheetTitleSize, setLineSheetTitleSize] = useState<number>(10);
+  const [lineSheetCustomTitle, setLineSheetCustomTitle] = useState<string>(deck.name);
 
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
@@ -3880,6 +3881,15 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         className="w-16 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-zinc-900"
                       />
                     </div>
+                    <div className="flex items-center bg-white rounded-full px-3 py-1 border border-zinc-200 shadow-sm hidden md:flex w-48">
+                      <input
+                        type="text"
+                        value={lineSheetCustomTitle}
+                        onChange={(e) => setLineSheetCustomTitle(e.target.value)}
+                        className="w-full text-[10px] font-bold text-zinc-900 bg-transparent outline-none uppercase placeholder:text-zinc-300"
+                        placeholder="Line Sheet Title..."
+                      />
+                    </div>
                     <button 
                       onClick={() => setShowWholesaleInLineSheet(!showWholesaleInLineSheet)} 
                       className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all border ${showWholesaleInLineSheet ? 'bg-zinc-100 border-zinc-200 text-zinc-900 shadow-sm' : 'bg-transparent border-transparent hover:border-zinc-200 text-zinc-400 hover:text-zinc-600'}`}
@@ -3913,7 +3923,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                              <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                            </div>
                            <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
-                             <h1 className="font-serif tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words" style={{ fontSize: `${lineSheetTitleSize}px` }}>{deck.name}</h1>
+                             <h1 className="font-serif tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words" style={{ fontSize: `${lineSheetTitleSize}px` }}>{lineSheetCustomTitle || '\u00A0'}</h1>
                              <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
                                  <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
@@ -3993,7 +4003,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                                <img src="/wovn-logo.png" alt="WOVN" className="h-[36px] md:h-[48px] object-contain brightness-0" />
                              </div>
                              <div className="w-1/3 flex flex-col items-end justify-center shrink-0">
-                               <h1 className="font-serif tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words" style={{ fontSize: `${lineSheetTitleSize}px` }}>{deck.name}</h1>
+                               <h1 className="font-serif tracking-tight leading-none mb-1.5 text-zinc-900 uppercase text-right break-words" style={{ fontSize: `${lineSheetTitleSize}px` }}>{lineSheetCustomTitle || '\u00A0'}</h1>
                                <div className="flex gap-1.5 md:gap-2 mt-0.5">
                                  {customer && getCustomerColors(customer).filter(c => c.hex && c.hex !== '#f4f4f5').map((c, i) => (
                                    <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full border border-zinc-200 print:border-zinc-300 shrink-0 shadow-sm" style={{ backgroundColor: c.hex, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} />
