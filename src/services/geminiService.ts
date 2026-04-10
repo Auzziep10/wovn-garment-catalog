@@ -121,7 +121,7 @@ async function ensureSolidBackground(imageUrlOrBase64: string): Promise<string> 
 
 export async function generateMockup(baseImage: string, compositeImageBase64: string, prompt: string, isRotationRequested: boolean = false, logoBase64: string | null = null) {
   // Nano Banana is the Gemini 2.5 Flash Image model
-  const model = "gemini-2.5-flash-image";
+  const model = "gemini-3.1-flash-image";
 
   let baseImageData: string;
   let baseMimeType = "image/jpeg";
@@ -265,7 +265,7 @@ ${prompt}`
 }
 
 export async function generateModelScene(baseImage: string, prompt: string) {
-  const model = "gemini-2.5-flash-image";
+  const model = "gemini-3.1-flash-image";
 
   let baseImageData: string;
   let baseMimeType = "image/jpeg";
@@ -313,7 +313,7 @@ CRITICAL CONSTRAINTS:
 }
 
 export async function generateRotatedGarment(baseImage: string, viewAngle: string) {
-  const model = "gemini-2.5-flash-image";
+  const model = "gemini-3.1-flash-image";
 
   let baseImageData: string;
   let baseMimeType = "image/jpeg";
@@ -359,7 +359,7 @@ CRITICAL CONSTRAINTS:
 }
 
 export async function generateColorVariation(baseImage: string, colorHexOrPattern: string) {
-  const model = "gemini-2.5-flash-image";
+  const model = "gemini-3.1-flash-image";
 
   let baseImageData: string;
   let baseMimeType = "image/jpeg";
@@ -438,7 +438,7 @@ CRITICAL CONSTRAINTS:
 }
 
 export async function removeImageBackground(baseImage: string): Promise<string> {
-  const model = "gemini-2.5-flash-image";
+  const model = "gemini-3.1-flash-image";
 
   let baseImageData: string;
   let baseMimeType = "image/png";
@@ -493,7 +493,7 @@ CRITICAL CONSTRAINTS:
 
 export async function convertColorToHex(colorName: string): Promise<string | null> {
   try {
-    const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+    const modelObj = getGenerativeModel(ai, { model: "gemini-3.1-flash" });
     const result = await modelObj.generateContent(`What is the closest hex code for the color "${colorName}"? Reply EXACTLY and ONLY with the 6-character hex code starting with #. Do not include any other text.`);
     const text = result.response.text().trim();
     const match = text.match(/#[0-9A-Fa-f]{6}/);
@@ -507,7 +507,7 @@ export async function convertColorToHex(colorName: string): Promise<string | nul
 export async function analyzeMarketPricing(
   garmentData: { name?: string | null, type?: string | null, details?: string | null, category?: string | null, fabric_details?: string | null }
 ): Promise<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }>> {
-  const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+  const modelObj = getGenerativeModel(ai, { model: "gemini-3.1-flash" });
   
   const prompt = `
   TASK: Perform a luxury market pricing analysis for a garment with the following specs:
