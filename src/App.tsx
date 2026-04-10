@@ -22,6 +22,16 @@ export function SortableDeckItem({ id, disabled, children }: { key?: React.Key |
   );
 }
 
+export function SortableVariationItem({ id, disabled, className, children }: { id: string, disabled?: boolean, className?: string, children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
+  const style = { transform: CSS.Translate.toString(transform), transition: transition || 'transform 200ms ease', zIndex: isDragging ? 50 : 'auto', touchAction: 'none' };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={`${className || ''} ${isDragging ? 'opacity-80 scale-[1.02] shadow-xl z-50' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
 function ColorPickerAdder({ onAdd }: { onAdd: (hex: string) => void }) {
   const [color, setColor] = useState('#000000');
 
@@ -4264,6 +4274,11 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
+
   const [mockupStatus, setMockupStatus] = useState<'New Mock Needed' | 'Working' | 'Final Mock Uploaded'>(
     (item.mockup_status as 'New Mock Needed' | 'Working' | 'Final Mock Uploaded') || 'Final Mock Uploaded'
   );
@@ -4499,57 +4514,74 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="w-12 h-12 border-2 border-zinc-900 rounded-lg overflow-hidden shrink-0 flex items-center justify-center relative group p-0.5">
-                         <img src={mockImage} className="w-full h-full object-contain" />
-                         <div className="absolute bottom-1 right-1">
-                           <div className="w-2 h-2 bg-emerald-500 rounded-full border border-white" />
-                         </div>
-                      </div>
-                      {variations.map((v, i) => (
-                        <div key={i} className="w-12 h-12 border border-zinc-200 rounded-lg overflow-hidden shrink-0 relative group p-0.5">
-                          <button
-                            title="Set as Main Image"
-                            onClick={() => {
-                              setMockImage(v);
-                              setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
-                            }}
-                            className="w-full h-full block absolute inset-0 z-0 bg-transparent cursor-pointer"
-                          />
-                          <img src={v} className="w-full h-full object-contain pointer-events-none mix-blend-multiply" />
-                          <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors" />
-                          <button
-                            title="Remove Variation"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setVariations(variations.filter((_, index) => index !== i));
-                            }}
-                            className="absolute top-0 right-0 p-1 bg-white/90 text-zinc-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-bl-lg z-10 backdrop-blur-sm"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                          <button
-                            title={hiddenVariations.includes(v) ? "Show in Presentation" : "Hide in Presentation"}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (hiddenVariations.includes(v)) {
-                                setHiddenVariations(hiddenVariations.filter(hv => hv !== v));
-                              } else {
-                                setHiddenVariations([...hiddenVariations, v]);
-                              }
-                            }}
-                            className={`absolute top-0 left-0 p-1 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-br-lg z-10 backdrop-blur-sm ${hiddenVariations.includes(v) ? 'text-red-500 opacity-100' : 'text-zinc-400 hover:text-zinc-600'}`}
-                          >
-                            {hiddenVariations.includes(v) ? <EyeOff size={12} /> : <Eye size={12} />}
-                          </button>
-                          {hiddenVariations.includes(v) && <div className="absolute inset-0 bg-white/40 pointer-events-none" />}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={({ active, over }) => {
+                        if (over && active.id !== over.id) {
+                          setVariations(items => {
+                            const oldIndex = items.indexOf(active.id as string);
+                            const newIndex = items.indexOf(over.id as string);
+                            return arrayMove(items, oldIndex, newIndex);
+                          });
+                        }
+                      }}
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        <div className="w-12 h-12 border-2 border-zinc-900 rounded-lg overflow-hidden shrink-0 flex items-center justify-center relative group p-0.5">
+                           <img src={mockImage} className="w-full h-full object-contain" />
+                           <div className="absolute bottom-1 right-1">
+                             <div className="w-2 h-2 bg-emerald-500 rounded-full border border-white" />
+                           </div>
                         </div>
-                      ))}
-                      <label className="w-12 h-12 border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-zinc-400 hover:bg-zinc-50 shrink-0 transition-colors text-zinc-400 hover:text-zinc-600" title="Add Variation">
-                        <Plus size={14} />
-                        <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
-                      </label>
-                    </div>
+                        <SortableContext items={variations} strategy={rectSortingStrategy}>
+                          {variations.map((v, i) => (
+                            <SortableVariationItem key={v} id={v} className="w-12 h-12 border border-zinc-200 rounded-lg overflow-hidden shrink-0 relative group p-0.5">
+                              <button
+                                title="Set as Main Image"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMockImage(v);
+                                  setVariations(variations.map((val, idx) => idx === i ? mockImage : val));
+                                }}
+                                className="w-full h-full block absolute inset-0 z-0 bg-transparent cursor-pointer"
+                              />
+                              <img src={v} className="w-full h-full object-contain pointer-events-none mix-blend-multiply" />
+                              <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors" />
+                              <button
+                                title="Remove Variation"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVariations(variations.filter((_, index) => index !== i));
+                                }}
+                                className="absolute top-0 right-0 p-1 bg-white/90 text-zinc-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-bl-lg z-10 backdrop-blur-sm"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                              <button
+                                title={hiddenVariations.includes(v) ? "Show in Presentation" : "Hide in Presentation"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (hiddenVariations.includes(v)) {
+                                    setHiddenVariations(hiddenVariations.filter(hv => hv !== v));
+                                  } else {
+                                    setHiddenVariations([...hiddenVariations, v]);
+                                  }
+                                }}
+                                className={`absolute top-0 left-0 p-1 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-all rounded-br-lg z-10 backdrop-blur-sm ${hiddenVariations.includes(v) ? 'text-red-500 opacity-100' : 'text-zinc-400 hover:text-zinc-600'}`}
+                              >
+                                {hiddenVariations.includes(v) ? <EyeOff size={12} /> : <Eye size={12} />}
+                              </button>
+                              {hiddenVariations.includes(v) && <div className="absolute inset-0 bg-white/40 pointer-events-none" />}
+                            </SortableVariationItem>
+                          ))}
+                        </SortableContext>
+                        <label className="w-12 h-12 border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-zinc-400 hover:bg-zinc-50 shrink-0 transition-colors text-zinc-400 hover:text-zinc-600" title="Add Variation">
+                          <Plus size={14} />
+                          <input type="file" className="hidden" accept="image/*" onChange={handleAddVariation} />
+                        </label>
+                      </div>
+                    </DndContext>
                   </div>
                 </div>
               </div>
