@@ -4252,7 +4252,22 @@ function ImageCropModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClo
 function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClose: () => void, onSave: (dataUrl: string) => void }) {
   const [hue, setHue] = useState(0); 
   const [temperature, setTemperature] = useState(0); 
+  const [saturation, setSaturation] = useState(100);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const getFilterString = () => {
+    let filterStr = `hue-rotate(${hue}deg) brightness(${brightness}%) contrast(${contrast}%) `;
+    if (temperature > 0) {
+       filterStr += `sepia(${temperature * 0.5}%) saturate(${saturation + temperature}%) hue-rotate(-${temperature * 0.15}deg)`;
+    } else if (temperature < 0) {
+       filterStr += `saturate(${Math.max(0, saturation - temperature * 0.5)}%) hue-rotate(${-temperature * 0.1}deg)`;
+    } else {
+       filterStr += `saturate(${saturation}%)`;
+    }
+    return filterStr.trim();
+  };
 
   const handleSave = async () => {
     setIsProcessing(true);
@@ -4267,14 +4282,7 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
         canvas.width = img.width;
         canvas.height = img.height;
 
-        let filterStr = `hue-rotate(${hue}deg) `;
-        if (temperature > 0) {
-           filterStr += `sepia(${temperature * 0.5}%) saturate(${100 + temperature}%) hue-rotate(-${temperature * 0.15}deg)`;
-        } else if (temperature < 0) {
-           filterStr += `saturate(${100 - temperature * 0.5}%) hue-rotate(${-temperature * 0.1}deg)`;
-        }
-        
-        ctx.filter = filterStr.trim();
+        ctx.filter = getFilterString();
         ctx.drawImage(img, 0, 0);
 
         if (temperature < 0) {
@@ -4299,25 +4307,18 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
     }
   };
 
-  let filterStr = `hue-rotate(${hue}deg) `;
-  if (temperature > 0) {
-     filterStr += `sepia(${temperature * 0.5}%) saturate(${100 + temperature}%) hue-rotate(-${temperature * 0.15}deg)`;
-  } else if (temperature < 0) {
-     filterStr += `saturate(${100 - temperature * 0.5}%) hue-rotate(${-temperature * 0.1}deg)`;
-  }
-
   return (
     <div className="fixed inset-0 bg-black/80 z-[120] flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-[2rem] overflow-hidden w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <div className="p-6 md:p-8 border-b border-zinc-100 flex justify-between items-center shrink-0 w-full">
+      <div className="bg-white rounded-[2rem] overflow-hidden w-full max-w-[500px] shadow-2xl flex flex-col max-h-[95vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-5 md:p-6 border-b border-zinc-100 flex justify-between items-center shrink-0 w-full">
           <h3 className="font-serif text-2xl">Adjust Color</h3>
           <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900"><X size={20} /></button>
         </div>
-        <div className="p-8 bg-zinc-50 flex items-center justify-center relative flex-1 overflow-hidden min-h-[40vh] w-full">
-          <div className="w-full aspect-[3/4] max-w-[280px] bg-white border border-zinc-200 overflow-hidden relative shadow-inner flex items-center justify-center bg-[url('https://transparenttextures.com/patterns/cubes.png')]">
+        <div className="p-6 bg-zinc-50 flex items-center justify-center relative flex-1 overflow-hidden min-h-[30vh] w-full">
+          <div className="w-full h-full max-w-[280px] bg-white border border-zinc-200 overflow-hidden relative shadow-inner flex items-center justify-center bg-[url('https://transparenttextures.com/patterns/cubes.png')] rounded-lg">
             <img 
               src={imageUrl} 
-              style={{ filter: filterStr }}
+              style={{ filter: getFilterString() }}
               className="w-[80%] h-[80%] object-contain mix-blend-multiply" 
               crossOrigin="anonymous"
             />
@@ -4325,23 +4326,45 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
             {temperature > 0 && <div className="absolute inset-0 pointer-events-none mix-blend-color" style={{ backgroundColor: `rgba(255, 140, 0, ${temperature * 0.003})` }} />}
           </div>
         </div>
-        <div className="p-6 md:p-8 border-t border-zinc-100 bg-white shrink-0 w-full flex flex-col gap-4">
+        <div className="p-5 md:p-6 border-t border-zinc-100 bg-white shrink-0 w-full flex flex-col gap-3 custom-scrollbar overflow-y-auto" style={{ maxHeight: '40vh' }}>
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Hue</label>
-              <span className="text-xs text-zinc-400">{hue}°</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Hue</label>
+              <span className="text-[10px] font-bold text-zinc-400">{hue}°</span>
             </div>
-            <input type="range" min="0" max="360" value={hue} onChange={e => setHue(parseInt(e.target.value))} className="w-full" />
+            <input type="range" min="0" max="360" value={hue} onChange={e => setHue(parseInt(e.target.value))} className="w-full accent-zinc-900 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
           </div>
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Temperature</label>
-              <span className="text-xs text-zinc-400">{temperature > 0 ? '+' : ''}{temperature}</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Temperature</label>
+              <span className="text-[10px] font-bold text-zinc-400">{temperature > 0 ? '+' : ''}{temperature}</span>
             </div>
-            <input type="range" min="-100" max="100" value={temperature} onChange={e => setTemperature(parseInt(e.target.value))} className="w-full" />
+            <input type="range" min="-100" max="100" value={temperature} onChange={e => setTemperature(parseInt(e.target.value))} className="w-full accent-zinc-900 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
           </div>
-          <button onClick={handleSave} disabled={isProcessing} className="w-full bg-zinc-900 text-white rounded-full py-4 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex justify-center items-center gap-2 mt-2">
-            {isProcessing && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Color (Saturation)</label>
+              <span className="text-[10px] font-bold text-zinc-400">{saturation}%</span>
+            </div>
+            <input type="range" min="0" max="200" value={saturation} onChange={e => setSaturation(parseInt(e.target.value))} className="w-full accent-zinc-900 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Brightness</label>
+              <span className="text-[10px] font-bold text-zinc-400">{brightness}%</span>
+            </div>
+            <input type="range" min="50" max="150" value={brightness} onChange={e => setBrightness(parseInt(e.target.value))} className="w-full accent-zinc-900 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Contrast</label>
+              <span className="text-[10px] font-bold text-zinc-400">{contrast}%</span>
+            </div>
+            <input type="range" min="50" max="150" value={contrast} onChange={e => setContrast(parseInt(e.target.value))} className="w-full accent-zinc-900 h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
+          </div>
+
+          <button onClick={handleSave} disabled={isProcessing} className="w-full bg-zinc-900 text-white rounded-full py-3.5 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex justify-center items-center gap-2 mt-3 shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 outline-none">
+            {isProcessing && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             Extract Variant
           </button>
         </div>
