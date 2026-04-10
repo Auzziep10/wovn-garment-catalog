@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -4249,6 +4249,107 @@ function ImageCropModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClo
   );
 }
 
+function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onClose: () => void, onSave: (dataUrl: string) => void }) {
+  const [hue, setHue] = useState(0); 
+  const [temperature, setTemperature] = useState(0); 
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSave = async () => {
+    setIsProcessing(true);
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = async () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        let filterStr = `hue-rotate(${hue}deg) `;
+        if (temperature > 0) {
+           filterStr += `sepia(${temperature * 0.5}%) saturate(${100 + temperature}%) hue-rotate(-${temperature * 0.15}deg)`;
+        } else if (temperature < 0) {
+           filterStr += `saturate(${100 - temperature * 0.5}%) hue-rotate(${-temperature * 0.1}deg)`;
+        }
+        
+        ctx.filter = filterStr.trim();
+        ctx.drawImage(img, 0, 0);
+
+        if (temperature < 0) {
+           ctx.globalCompositeOperation = 'source-atop';
+           ctx.fillStyle = `rgba(0, 100, 255, ${-temperature * 0.0015})`;
+           ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (temperature > 0) {
+           ctx.globalCompositeOperation = 'source-atop';
+           ctx.fillStyle = `rgba(255, 140, 0, ${temperature * 0.0015})`;
+           ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const finalUrl = await uploadImageToFirebase(dataUrl);
+        onSave(finalUrl);
+      };
+      img.onerror = () => setIsProcessing(false);
+      img.src = imageUrl;
+    } catch (e) {
+      console.error(e);
+      setIsProcessing(false);
+    }
+  };
+
+  let filterStr = `hue-rotate(${hue}deg) `;
+  if (temperature > 0) {
+     filterStr += `sepia(${temperature * 0.5}%) saturate(${100 + temperature}%) hue-rotate(-${temperature * 0.15}deg)`;
+  } else if (temperature < 0) {
+     filterStr += `saturate(${100 - temperature * 0.5}%) hue-rotate(${-temperature * 0.1}deg)`;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-[120] flex flex-col items-center justify-center p-4">
+      <div className="bg-white rounded-[2rem] overflow-hidden w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex justify-between items-center shrink-0 w-full">
+          <h3 className="font-serif text-2xl">Adjust Color</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors text-zinc-400 hover:text-zinc-900"><X size={20} /></button>
+        </div>
+        <div className="p-8 bg-zinc-50 flex items-center justify-center relative flex-1 overflow-hidden min-h-[40vh] w-full">
+          <div className="w-full aspect-[3/4] max-w-[280px] bg-white border border-zinc-200 overflow-hidden relative shadow-inner flex items-center justify-center bg-[url('https://transparenttextures.com/patterns/cubes.png')]">
+            <img 
+              src={imageUrl} 
+              style={{ filter: filterStr }}
+              className="w-[80%] h-[80%] object-contain mix-blend-multiply" 
+              crossOrigin="anonymous"
+            />
+            {temperature < 0 && <div className="absolute inset-0 pointer-events-none mix-blend-color" style={{ backgroundColor: `rgba(0, 100, 255, ${-temperature * 0.003})` }} />}
+            {temperature > 0 && <div className="absolute inset-0 pointer-events-none mix-blend-color" style={{ backgroundColor: `rgba(255, 140, 0, ${temperature * 0.003})` }} />}
+          </div>
+        </div>
+        <div className="p-6 md:p-8 border-t border-zinc-100 bg-white shrink-0 w-full flex flex-col gap-4">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Hue</label>
+              <span className="text-xs text-zinc-400">{hue}°</span>
+            </div>
+            <input type="range" min="0" max="360" value={hue} onChange={e => setHue(parseInt(e.target.value))} className="w-full" />
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Temperature</label>
+              <span className="text-xs text-zinc-400">{temperature > 0 ? '+' : ''}{temperature}</span>
+            </div>
+            <input type="range" min="-100" max="100" value={temperature} onChange={e => setTemperature(parseInt(e.target.value))} className="w-full" />
+          </div>
+          <button onClick={handleSave} disabled={isProcessing} className="w-full bg-zinc-900 text-white rounded-full py-4 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex justify-center items-center gap-2 mt-2">
+            {isProcessing && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            Extract Variant
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditItemModal({ item, customer, onClose, onSave }: {
   item: DeckItem,
   customer?: Customer | null,
@@ -4272,6 +4373,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
   const [variations, setVariations] = useState<string[]>(Array.from(new Set(item.variations || [])).filter(v => v !== item.mock_image));
   const [hiddenVariations, setHiddenVariations] = useState<string[]>(item.hidden_variations || []);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -4472,9 +4574,12 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 <div className="space-y-6">
                   <div className="aspect-[3/4] bg-zinc-50 rounded-lg overflow-hidden border-2 border-zinc-200 flex items-center justify-center p-4 relative group">
                     <img src={mockImage} className="w-full h-full object-contain" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                    <div className="absolute inset-0 bg-black/40 flex flex-wrap items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2 p-2">
                       <button type="button" onClick={() => setIsCropModalOpen(true)} className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm hover:bg-white transition-colors">
                         <Crop size={14} /> Crop
+                      </button>
+                      <button type="button" onClick={() => setIsAdjustModalOpen(true)} className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm hover:bg-white transition-colors">
+                        <SlidersHorizontal size={14} /> Adjust
                       </button>
                       <label className="bg-white/90 text-zinc-900 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 backdrop-blur-sm hover:bg-white cursor-pointer transition-colors">
                         <Upload size={14} /> Replace
@@ -4982,6 +5087,25 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               } catch (err) {
                 console.error("Failed to save crop", err);
                 alert("Failed to upload cropped image.");
+              }
+            }}
+          />
+        )}
+        {isAdjustModalOpen && (
+          <ImageAdjustModal
+            imageUrl={mockImage}
+            onClose={() => setIsAdjustModalOpen(false)}
+            onSave={async (uploadedUrl) => {
+              try {
+                if (uploadedUrl && uploadedUrl.startsWith('http')) {
+                  setVariations(prev => [uploadedUrl, ...prev]);
+                  setIsAdjustModalOpen(false);
+                } else {
+                  throw new Error("Invalid uploaded URL from adjust modal");
+                }
+              } catch (err) {
+                console.error("Failed to save adjusted image", err);
+                alert("Failed to upload adjusted image.");
               }
             }}
           />
