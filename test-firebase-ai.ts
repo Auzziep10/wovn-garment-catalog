@@ -15,5 +15,5 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const ai = getAI(app);
 console.log(ai);
-const model = getGenerativeModel(ai, { model: 'gemini-3.1-flash-image' });
+const model = getGenerativeModel(ai, { model: 'gemini-2.5-flash-image' });
 console.log("Model ok", !!model);
