@@ -1935,12 +1935,13 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                         onAnalysisUpdate={(data) => {
                           setMarketAnalysis(data);
                           if (data && data.length > 0) {
-                            const highestPriceStr = data.reduce((max, item) => {
+                            const totalMarketPrice = data.reduce((sum, item) => {
                               const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
-                              return val > max ? val : max;
+                              return sum + (isNaN(val) ? 0 : val);
                             }, 0);
-                            if (highestPriceStr > 0) {
-                              const msrp = highestPriceStr * 1.2;
+                            if (totalMarketPrice > 0) {
+                              const averagePrice = totalMarketPrice / data.length;
+                              const msrp = averagePrice * 1.2;
                               const wholesale = msrp * 0.5;
                               const cost = wholesale * 0.5;
                               const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
@@ -4726,12 +4727,13 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 onAnalysisUpdate={(data) => {
                   setMarketAnalysis(data);
                   if (data && data.length > 0) {
-                    const highestPriceStr = data.reduce((max, item) => {
+                    const totalMarketPrice = data.reduce((sum, item) => {
                       const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
-                      return val > max ? val : max;
+                      return sum + (isNaN(val) ? 0 : val);
                     }, 0);
-                    if (highestPriceStr > 0) {
-                      const msrpVal = highestPriceStr * 1.2;
+                    if (totalMarketPrice > 0) {
+                      const averagePrice = totalMarketPrice / data.length;
+                      const msrpVal = averagePrice * 1.2;
                       const wsVal = msrpVal * 0.5;
                       const cVal = wsVal * 0.5;
                       setPrice(msrpVal.toFixed(2));
