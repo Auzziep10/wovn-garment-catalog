@@ -59,7 +59,7 @@ function ColorPickerAdder({ onAdd }: { onAdd: (hex: string) => void }) {
   );
 }
 
-function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate }: { itemDetails: any, initialAnalysis?: any[] | null, onAnalysisUpdate?: (data: any[] | null) => void }) {
+function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate, onApplyMSRP }: { itemDetails: any, initialAnalysis?: any[] | null, onAnalysisUpdate?: (data: any[] | null) => void, onApplyMSRP?: (msrp: number) => void }) {
   const [marketAnalysis, setMarketAnalysis] = useState<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }> | null>(initialAnalysis || null);
   const [analyzingMarket, setAnalyzingMarket] = useState(false);
 
@@ -111,6 +111,26 @@ function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate 
                  </a>
             </div>
           ))}
+          {marketAnalysis.length > 0 && onApplyMSRP && (() => {
+            const total = marketAnalysis.reduce((sum, ma) => {
+              const val = parseFloat(ma.msrp.replace(/[^0-9.]/g, ''));
+              return sum + (isNaN(val) ? 0 : val);
+            }, 0);
+            const avg = total / marketAnalysis.length;
+            return (
+              <div className="flex items-center justify-between mt-4 border-t border-zinc-100 pt-3">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Average Comp Price</div>
+                <button 
+                  type="button"
+                  onClick={() => onApplyMSRP(avg * 1.35)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 font-bold rounded-md hover:bg-emerald-100 border border-emerald-200 transition-colors text-xs"
+                  title="Apply 1.35x multiple on average to MSRP"
+                >
+                  ${avg.toFixed(2)} — Apply to MSRP
+                </button>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div className="text-center py-6 px-4 bg-zinc-50 rounded-lg border border-dashed border-zinc-200">
@@ -1934,23 +1954,28 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                         initialAnalysis={marketAnalysis}
                         onAnalysisUpdate={(data) => {
                           setMarketAnalysis(data);
-                          if (data && data.length > 0) {
-                            const totalMarketPrice = data.reduce((sum, item) => {
-                              const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
-                              return sum + (isNaN(val) ? 0 : val);
-                            }, 0);
-                            if (totalMarketPrice > 0) {
-                              const averagePrice = totalMarketPrice / data.length;
-                              const msrp = averagePrice * 1.35;
-                              const wholesale = msrp * 0.5;
-                              const cost = wholesale * 0.5;
-                              const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
-                              const wsEl = document.getElementById('admin_wholesale_price') as HTMLInputElement;
-                              const costEl = document.getElementById('admin_cost_price') as HTMLInputElement;
-                              if (msrpEl) msrpEl.value = msrp.toFixed(2);
-                              if (wsEl) wsEl.value = wholesale.toFixed(2);
-                              if (costEl) costEl.value = cost.toFixed(2);
-                            }
+                        }}
+                        onApplyMSRP={(msrp) => {
+                          const wholesale = msrp * 0.5;
+                          const cost = wholesale * 0.5;
+                          const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
+                          const wsEl = document.getElementById('admin_wholesale_price') as HTMLInputElement;
+                          const costEl = document.getElementById('admin_cost_price') as HTMLInputElement;
+                          if (msrpEl) {
+                            msrpEl.value = msrp.toFixed(2);
+                            // Trigger React synth event if needed, but for unconditional inputs we might rely on the DOM
+                            const e = new Event('input', { bubbles: true });
+                            msrpEl.dispatchEvent(e);
+                          }
+                          if (wsEl) {
+                            wsEl.value = wholesale.toFixed(2);
+                            const e = new Event('input', { bubbles: true });
+                            wsEl.dispatchEvent(e);
+                          }
+                          if (costEl) {
+                            costEl.value = cost.toFixed(2);
+                            const e = new Event('input', { bubbles: true });
+                            costEl.dispatchEvent(e);
                           }
                         }}
                       />
@@ -4726,21 +4751,13 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                 initialAnalysis={marketAnalysis}
                 onAnalysisUpdate={(data) => {
                   setMarketAnalysis(data);
-                  if (data && data.length > 0) {
-                    const totalMarketPrice = data.reduce((sum, item) => {
-                      const val = parseFloat(item.msrp.replace(/[^0-9.]/g, ''));
-                      return sum + (isNaN(val) ? 0 : val);
-                    }, 0);
-                    if (totalMarketPrice > 0) {
-                      const averagePrice = totalMarketPrice / data.length;
-                      const msrpVal = averagePrice * 1.35;
-                      const wsVal = msrpVal * 0.5;
-                      const cVal = wsVal * 0.5;
-                      setPrice(msrpVal.toFixed(2));
-                      setWholesalePrice(wsVal.toFixed(2));
-                      setCostPrice(cVal.toFixed(2));
-                    }
-                  }
+                }}
+                onApplyMSRP={(msrp) => {
+                  const wsVal = msrp * 0.5;
+                  const cVal = wsVal * 0.5;
+                  setPrice(msrp.toFixed(2));
+                  setWholesalePrice(wsVal.toFixed(2));
+                  setCostPrice(cVal.toFixed(2));
                 }}
               />
             </div>
