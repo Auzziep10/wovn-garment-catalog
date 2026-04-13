@@ -1941,7 +1941,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                             }, 0);
                             if (totalMarketPrice > 0) {
                               const averagePrice = totalMarketPrice / data.length;
-                              const msrp = averagePrice * 1.2;
+                              const msrp = averagePrice * 1.35;
                               const wholesale = msrp * 0.5;
                               const cost = wholesale * 0.5;
                               const msrpEl = document.getElementById('admin_msrp') as HTMLInputElement;
@@ -4733,7 +4733,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     }, 0);
                     if (totalMarketPrice > 0) {
                       const averagePrice = totalMarketPrice / data.length;
-                      const msrpVal = averagePrice * 1.2;
+                      const msrpVal = averagePrice * 1.35;
                       const wsVal = msrpVal * 0.5;
                       const cVal = wsVal * 0.5;
                       setPrice(msrpVal.toFixed(2));
