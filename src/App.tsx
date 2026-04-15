@@ -499,6 +499,48 @@ export default function App() {
     }
   }, []);
 
+  // Auto-Refresh Background Polling Loop for Collaborative Work
+  useEffect(() => {
+    let isSubscribed = true;
+    const interval = setInterval(async () => {
+      try {
+        // Always sync customer decks for the sidebar
+        const custRes = await fetch('/api/customers');
+        if (custRes.ok && isSubscribed) {
+          const cData = await custRes.json();
+          setCustomers(cData);
+        }
+
+        // Sync garments if viewing the library or admin panels
+        if (view === 'catalog' || view === 'admin') {
+          const catRes = await fetch(`/api/garments?category=${selectedCategory}&gender=${selectedGender}&type=${selectedType}`);
+          if (catRes.ok && isSubscribed) {
+            const data = await catRes.json();
+            setGarments(data);
+          }
+        }
+
+        // Sync current active deck presentation
+        if (view === 'deck-view' || view === 'presentation' || view === 'shared-presentation') {
+          if (currentDeck?.id) {
+            const deckRes = await fetch(`/api/decks/${currentDeck.id}`);
+            if (deckRes.ok && isSubscribed) {
+              const deckData = await deckRes.json();
+              setCurrentDeck(deckData);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Auto-fetch interval failed", err);
+      }
+    }, 5000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, [view, currentDeck?.id, selectedCategory, selectedGender, selectedType]);
+
   const fetchGarments = async () => {
     const res = await fetch(`/api/garments?category=${selectedCategory}&gender=${selectedGender}&type=${selectedType}`);
     const data = await res.json();
