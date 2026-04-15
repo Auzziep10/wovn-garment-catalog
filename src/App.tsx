@@ -1526,6 +1526,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
   const [marketAnalysis, setMarketAnalysis] = useState<any[] | null>(null);
   const [fabricCompositions, setFabricCompositions] = useState<{ id: string, percentage: string, fabric: string }[]>([{ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' }]);
+  const [fabricFinishes, setFabricFinishes] = useState<{ id: string, finish: string }[]>([{ id: Math.random().toString(), finish: '' }]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [librarySortBy, setLibrarySortBy] = useState<'default' | 'recent' | 'category' | 'gender' | 'type'>('default');
   const [filterCategory, setFilterCategory] = useState<string>('');
@@ -1589,12 +1590,19 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
        parsedComp.push({ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' });
     }
     setFabricCompositions(parsedComp);
+    
+    if (g.fabric_finish) {
+      setFabricFinishes(g.fabric_finish.split(',').map(f => ({ id: Math.random().toString(), finish: f.trim() })).filter(f => f.finish));
+    } else {
+      setFabricFinishes([{ id: Math.random().toString(), finish: '' }]);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingGarment(null);
     setImages([]);
     setFabricCompositions([{ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' }]);
+    setFabricFinishes([{ id: Math.random().toString(), finish: '' }]);
     setIsModalOpen(false);
     if (onClearEdit) onClearEdit();
   };
@@ -1642,7 +1650,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
     const data = {
       name: formData.get('name'),
       fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
-      fabric_finish: formData.get('fabric_finish'),
+      fabric_finish: fabricFinishes.map(f => f.finish.trim()).filter(Boolean).join(', '),
       care_instructions: formData.get('care_instructions'),
       fit: formData.get('fit'),
       fabric_weight_gsm: formData.get('fabric_weight_gsm'),
@@ -1714,7 +1722,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
     const data = {
       name: formData.get('name') + ' (Copy)',
       fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
-      fabric_finish: formData.get('fabric_finish'),
+      fabric_finish: fabricFinishes.map(f => f.finish.trim()).filter(Boolean).join(', '),
       care_instructions: formData.get('care_instructions'),
       fit: formData.get('fit'),
       fabric_weight_gsm: formData.get('fabric_weight_gsm'),
@@ -2106,8 +2114,26 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                               </div>
                             </div>
                             <div>
-                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Finish</label>
-                              <textarea name="fabric_finish" rows={2} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all resize-none" defaultValue={editingGarment?.fabric_finish || ""} placeholder="e.g. Enzyme wash" />
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 flex items-center justify-between">
+                                <span>Fabric Finish</span>
+                                <button type="button" onClick={() => setFabricFinishes(prev => [...prev, { id: Math.random().toString(), finish: '' }])} className="text-zinc-500 hover:text-zinc-900 transition-colors flex items-center gap-1"><PlusCircle size={12} /> Add</button>
+                              </label>
+                              <div className="space-y-2">
+                                {fabricFinishes.map((fin, idx) => (
+                                  <div key={fin.id} className="flex gap-2 items-center">
+                                    <input value={fin.finish} onChange={e => {
+                                      const newFins = [...fabricFinishes];
+                                      newFins[idx].finish = e.target.value;
+                                      setFabricFinishes(newFins);
+                                    }} placeholder="e.g. Enzyme wash" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                                    {fabricFinishes.length > 1 && (
+                                      <button type="button" onClick={() => setFabricFinishes(prev => prev.filter((_, i) => i !== idx))} className="p-1 text-zinc-400 hover:text-red-500 transition-colors shrink-0 outline-none">
+                                        <MinusCircle size={16} />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
                           <div>
@@ -4452,7 +4478,13 @@ function EditItemModal({ item, customer, onClose, onSave }: {
     }
     return parsedComp;
   });
-  const [fabricFinish, setFabricFinish] = useState(item.fabric_finish || '');
+  const [fabricFinishes, setFabricFinishes] = useState<{ id: string, finish: string }[]>(() => {
+    if (item.fabric_finish) {
+      const parts = item.fabric_finish.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length > 0) return parts.map(f => ({ id: Math.random().toString(), finish: f }));
+    }
+    return [{ id: Math.random().toString(), finish: '' }];
+  });
   const [careInstructions, setCareInstructions] = useState(item.care_instructions || '');
   const [fit, setFit] = useState(item.fit || '');
   const [fabricWeightGsm, setFabricWeightGsm] = useState(item.fabric_weight_gsm || '');
@@ -4502,7 +4534,11 @@ function EditItemModal({ item, customer, onClose, onSave }: {
       }
       setFabricCompositions(parsedComp);
       
-      setFabricFinish(garment.fabric_finish || '');
+      if (garment.fabric_finish) {
+        setFabricFinishes(garment.fabric_finish.split(',').map(f => ({ id: Math.random().toString(), finish: f.trim() })).filter(f => f.finish));
+      } else {
+        setFabricFinishes([{ id: Math.random().toString(), finish: '' }]);
+      }
       setCareInstructions(garment.care_instructions || '');
       setFit(garment.fit || '');
       setFabricWeightGsm(garment.fabric_weight_gsm || '');
@@ -4897,8 +4933,26 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Fabric Finish</label>
-                      <input value={fabricFinish} onChange={e => setFabricFinish(e.target.value)} className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 flex items-center justify-between">
+                        <span>Fabric Finish</span>
+                        <button type="button" onClick={() => setFabricFinishes(prev => [...prev, { id: Math.random().toString(), finish: '' }])} className="text-zinc-500 hover:text-zinc-900 transition-colors flex items-center gap-1"><PlusCircle size={12} /> Add</button>
+                      </label>
+                      <div className="space-y-2">
+                        {fabricFinishes.map((fin, idx) => (
+                          <div key={fin.id} className="flex gap-2 items-center">
+                            <input value={fin.finish} onChange={e => {
+                              const newFins = [...fabricFinishes];
+                              newFins[idx].finish = e.target.value;
+                              setFabricFinishes(newFins);
+                            }} placeholder="e.g. Enzyme wash" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all" />
+                            {fabricFinishes.length > 1 && (
+                              <button type="button" onClick={() => setFabricFinishes(prev => prev.filter((_, i) => i !== idx))} className="p-1 text-zinc-400 hover:text-red-500 transition-colors shrink-0 outline-none">
+                                <MinusCircle size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -5087,7 +5141,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   hidden_variations: hiddenVariations,
                   mockup_status: mockupStatus,
                   custom_fabric_details: fabricCompositions.map(c => [c.percentage ? `${c.percentage}%` : '', c.fabric].filter(Boolean).join(' ')).join(', '),
-                  custom_fabric_finish: fabricFinish,
+                  custom_fabric_finish: fabricFinishes.map(f => f.finish.trim()).filter(Boolean).join(', '),
                   custom_care_instructions: careInstructions,
                   custom_fit: fit,
                   custom_fabric_weight_gsm: fabricWeightGsm,
