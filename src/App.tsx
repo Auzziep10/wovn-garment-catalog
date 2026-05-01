@@ -163,7 +163,7 @@ const formatFabric = (str: string) => {
   }).join(' ');
 };
 
-export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear' | 'Swimwear' | 'Elevated Basics';
+export type Category = 'Athleisure' | 'Executive' | 'Auto-Industry' | 'Golf' | 'Streetwear' | 'Swimwear' | 'Elevated Basics' | 'Latin';
 export type Gender = 'Male' | 'Female' | 'Accessories';
 export type GarmentType = 'Tops' | 'Bottom' | 'Headwear' | 'Bags' | 'Tumblers' | 'Other' | 'T-Shirt' | 'Hoodie' | 'Polo' | 'Pants' | 'Outerwear' | 'Swim' | 'Quarter Zip' | 'Long Sleeve';
 
@@ -1004,7 +1004,7 @@ export default function App() {
                 <section>
                   <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-6 font-bold">Category</h3>
                   <div className="flex flex-col gap-4">
-                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map((cat) => (
+                    {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics', 'Latin'].map((cat) => (
                       <button
                         key={cat}
                         onClick={() => { setSelectedCategory(selectedCategory === cat ? '' : cat as Category); setView('catalog'); }}
@@ -1850,6 +1850,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
             <option value="Streetwear">Streetwear</option>
             <option value="Swimwear">Swimwear</option>
             <option value="Elevated Basics">Elevated Basics</option>
+            <option value="Latin">Latin</option>
           </select>
           <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[120px]">
             <option value="">All Genders</option>
@@ -2230,7 +2231,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                               <div>
                                 <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Categories</label>
                                 <div className="flex flex-wrap gap-2">
-                                  {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics'].map(cat => (
+                                  {['Athleisure', 'Executive', 'Auto-Industry', 'Golf', 'Streetwear', 'Swimwear', 'Elevated Basics', 'Latin'].map(cat => (
                                     <label key={cat} className="relative cursor-pointer">
                                       <input type="checkbox" name="categories" value={cat} defaultChecked={editingGarment?.categories?.includes(cat as any) || (!editingGarment?.categories?.length && editingGarment?.category === cat)} className="peer sr-only" />
                                       <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
@@ -3364,6 +3365,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     <option value="Streetwear">Streetwear</option>
                     <option value="Swimwear">Swimwear</option>
                     <option value="Elevated Basics">Elevated Basics</option>
+                    <option value="Latin">Latin</option>
                   </select>
                   <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="bg-transparent border-b border-zinc-200 py-2 flex-1 focus:outline-none focus:border-zinc-900 cursor-pointer min-w-[100px]">
                     <option value="">All Genders</option>
