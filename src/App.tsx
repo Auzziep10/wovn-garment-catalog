@@ -833,7 +833,7 @@ export default function App() {
             e.preventDefault();
             // Defaulting to "Wovn1!" for easy testing, override in Vercel if wanted.
             // @ts-ignore
-            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'Wovn1!';
+            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'Wovn26!';
             if (passwordInput === correctPass) {
               setIsAuthenticated(true);
               localStorage.setItem('wovn-auth', JSON.stringify({ timestamp: Date.now() }));
