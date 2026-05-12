@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
 , ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -175,6 +175,41 @@ function MaterialBuildAnalyzer({
     >
       {analyzing ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Wand2 size={12} />}
       {analyzing ? 'Analyzing...' : 'Auto-Fill Details'}
+    </button>
+  );
+}
+
+function ProductionLogisticsAnalyzer({ 
+  itemDetails, 
+  onApply 
+}: { 
+  itemDetails: any, 
+  onApply: (data: { moq: string, turn_time: string }) => void 
+}) {
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const handleAnalyze = async () => {
+    setAnalyzing(true);
+    try {
+      const result = await analyzeProductionLogistics(itemDetails);
+      onApply(result);
+    } catch (e) {
+      alert("Failed to analyze production logistics. Please try again.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  return (
+    <button 
+      type="button" 
+      onClick={handleAnalyze} 
+      disabled={analyzing}
+      className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors flex items-center gap-2"
+      title="Analyze markets (Portugal, China, Middle East) for fastest turnaround and lowest MOQ"
+    >
+      {analyzing ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+      {analyzing ? 'Scanning...' : 'Optimize Logistics'}
     </button>
   );
 }
@@ -2073,7 +2108,23 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                       
                       {/* CARD 1: Core Details */}
                       <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Core Details</label>
+                        <div className="flex items-center justify-between mb-5 border-b border-zinc-100 pb-3">
+                          <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">Core Details</label>
+                          <ProductionLogisticsAnalyzer 
+                            itemDetails={{
+                              type: editingGarment?.type,
+                              category: editingGarment?.category,
+                              fabric_details: editingGarment?.fabric_details
+                            }}
+                            onApply={(data) => {
+                              const moqEl = document.querySelector('input[name="moq"]') as HTMLInputElement;
+                              if (moqEl && data.moq) moqEl.value = data.moq.toString();
+                              
+                              const turnTimeEl = document.querySelector('input[name="turn_time"]') as HTMLInputElement;
+                              if (turnTimeEl && data.turn_time) turnTimeEl.value = data.turn_time;
+                            }}
+                          />
+                        </div>
                         <div className="space-y-5">
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Item Name</label>
@@ -5138,7 +5189,20 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               </div>
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Customization & Production</label>
+                <div className="flex items-center justify-between mb-5 border-b border-zinc-100 pb-3">
+                  <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">Customization & Production</label>
+                  <ProductionLogisticsAnalyzer 
+                    itemDetails={{
+                      type: item.type,
+                      category: item.category,
+                      fabric_details: item.fabric_details || fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                    }}
+                    onApply={(data) => {
+                      if (data.moq) setMoq(data.moq.toString());
+                      if (data.turn_time) setTurnTime(data.turn_time);
+                    }}
+                  />
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Decorating Methods</label>

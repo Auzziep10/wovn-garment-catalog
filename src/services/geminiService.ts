@@ -648,3 +648,38 @@ export async function analyzeMaterialsAndBuild(garmentData: { image?: string | n
   }
 }
 
+export async function analyzeProductionLogistics(garmentData: { type?: string | null, category?: string | null, fabric_details?: string | null }) {
+  const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+  
+  const prompt = `
+  TASK: Analyze the production logistics for a garment with the following specs:
+  - Type: ${garmentData.type || 'Unknown'}
+  - Category: ${garmentData.category || 'Unknown'}
+  - Fabric Details: ${garmentData.fabric_details || 'Unknown'}
+  
+  Please search your knowledge base (as if scanning the current internet) for real-world garment manufacturing data in Portugal, China, and the Middle East for this type of item and fabric.
+  Look at how long it would take to get the MOQ from these regions.
+  Choose the fastest turnaround time and the smallest MOQ by analyzing the real world markets and not using mock data.
+  
+  Return the output EXACTLY as a valid JSON object with NO markdown formatting, NO backticks. Do not include \`\`\`json.
+  The JSON object MUST have these exact keys:
+  - "moq": String or Number representing the smallest realistic MOQ (e.g. 50, 100). Just the number is fine.
+  - "turn_time": String representing the fastest realistic turnaround time (e.g. "4-6 Weeks").
+  `;
+
+  const result = await modelObj.generateContent([{ text: prompt }]);
+  let text = result.response.text().trim();
+  
+  try {
+    if (text.startsWith('\`\`\`json')) {
+      text = text.replace(/^\`\`\`json/, '').replace(/\`\`\`$/, '').trim();
+    } else if (text.startsWith('\`\`\`')) {
+      text = text.replace(/^\`\`\`/, '').replace(/\`\`\`$/, '').trim();
+    }
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Failed to parse Logistics JSON:", text, err);
+    throw new Error("Logistics analysis failed to return valid JSON.");
+  }
+}
+
