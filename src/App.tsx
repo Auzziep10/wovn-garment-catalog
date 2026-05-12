@@ -2128,20 +2128,42 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                             }}
                             onApply={(data) => {
                               if (data.fabric_compositions && data.fabric_compositions.length > 0) {
-                                setFabricCompositions(data.fabric_compositions.map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric })));
+                                setFabricCompositions(prev => {
+                                  const existing = prev.filter(p => p.fabric && p.fabric.trim() !== '' && p.percentage);
+                                  const existingNames = existing.map(p => p.fabric.toLowerCase());
+                                  const newComps = data.fabric_compositions
+                                    .filter((c: any) => !existingNames.includes(c.fabric.toLowerCase()))
+                                    .map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric }));
+                                  return existing.length > 0 ? [...existing, ...newComps] : newComps;
+                                });
                               }
                               if (data.fabric_finishes && data.fabric_finishes.length > 0) {
-                                setFabricFinishes(data.fabric_finishes.map((f: string) => ({ id: Math.random().toString(), finish: f })));
+                                setFabricFinishes(prev => {
+                                  const existing = prev.filter(p => p.finish && p.finish.trim() !== '');
+                                  const existingNames = existing.map(p => p.finish.toLowerCase());
+                                  const newFins = data.fabric_finishes
+                                    .filter((f: string) => !existingNames.includes(f.toLowerCase()))
+                                    .map((f: string) => ({ id: Math.random().toString(), finish: f }));
+                                  return existing.length > 0 ? [...existing, ...newFins] : newFins;
+                                });
                               }
                               
                               const fitEl = document.querySelector('select[name="fit"]') as HTMLSelectElement;
-                              if (fitEl && data.fit) { fitEl.value = data.fit; }
+                              if (fitEl && data.fit && (!fitEl.value || fitEl.value === 'Regular')) { fitEl.value = data.fit; }
                               
                               const weightEl = document.querySelector('input[name="fabric_weight_gsm"]') as HTMLInputElement;
-                              if (weightEl && data.fabric_weight_gsm) { weightEl.value = data.fabric_weight_gsm; }
+                              if (weightEl && data.fabric_weight_gsm && !weightEl.value.trim()) { weightEl.value = data.fabric_weight_gsm; }
 
                               const careEl = document.querySelector('textarea[name="care_instructions"]') as HTMLTextAreaElement;
-                              if (careEl && data.care_instructions) { careEl.value = data.care_instructions; }
+                              if (careEl && data.care_instructions) { 
+                                if (careEl.value.trim()) {
+                                  if (!careEl.value.toLowerCase().includes(data.care_instructions.toLowerCase())) {
+                                    careEl.value = `${careEl.value.trim()} ${data.care_instructions}`;
+                                  }
+                                } else {
+                                  careEl.value = data.care_instructions; 
+                                }
+                              }
                             }}
                           />
                         </div>
@@ -4977,14 +4999,42 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                     }}
                     onApply={(data) => {
                       if (data.fabric_compositions && data.fabric_compositions.length > 0) {
-                        setFabricCompositions(data.fabric_compositions.map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric })));
+                        setFabricCompositions(prev => {
+                          const existing = prev.filter(p => p.fabric && p.fabric.trim() !== '' && p.percentage);
+                          const existingNames = existing.map(p => p.fabric.toLowerCase());
+                          const newComps = data.fabric_compositions
+                            .filter((c: any) => !existingNames.includes(c.fabric.toLowerCase()))
+                            .map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric }));
+                          return existing.length > 0 ? [...existing, ...newComps] : newComps;
+                        });
                       }
                       if (data.fabric_finishes && data.fabric_finishes.length > 0) {
-                        setFabricFinishes(data.fabric_finishes.map((f: string) => ({ id: Math.random().toString(), finish: f })));
+                        setFabricFinishes(prev => {
+                          const existing = prev.filter(p => p.finish && p.finish.trim() !== '');
+                          const existingNames = existing.map(p => p.finish.toLowerCase());
+                          const newFins = data.fabric_finishes
+                            .filter((f: string) => !existingNames.includes(f.toLowerCase()))
+                            .map((f: string) => ({ id: Math.random().toString(), finish: f }));
+                          return existing.length > 0 ? [...existing, ...newFins] : newFins;
+                        });
                       }
-                      if (data.fit) setFit(data.fit);
-                      if (data.fabric_weight_gsm) setFabricWeightGsm(data.fabric_weight_gsm);
-                      if (data.care_instructions) setCareInstructions(data.care_instructions);
+                      if (data.fit) {
+                        setFit(prev => prev && prev.trim() !== '' && prev !== 'Regular' ? prev : data.fit);
+                      }
+                      if (data.fabric_weight_gsm) {
+                        setFabricWeightGsm(prev => prev && prev.trim() !== '' ? prev : data.fabric_weight_gsm);
+                      }
+                      if (data.care_instructions) {
+                        setCareInstructions(prev => {
+                          if (prev && prev.trim() !== '') {
+                            if (!prev.toLowerCase().includes(data.care_instructions.toLowerCase())) {
+                              return `${prev.trim()} ${data.care_instructions}`;
+                            }
+                            return prev;
+                          }
+                          return data.care_instructions;
+                        });
+                      }
                     }}
                   />
                 </div>
