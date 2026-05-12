@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
 , ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -141,6 +141,41 @@ function MarketPricingAnalyzer({ itemDetails, initialAnalysis, onAnalysisUpdate,
         </div>
       )}
     </div>
+  );
+}
+
+function MaterialBuildAnalyzer({ 
+  itemDetails, 
+  onApply 
+}: { 
+  itemDetails: any, 
+  onApply: (data: { fabric_compositions: any[], fabric_finishes: string[], fit: string, fabric_weight_gsm: string, care_instructions: string }) => void 
+}) {
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const handleAnalyze = async () => {
+    setAnalyzing(true);
+    try {
+      const result = await analyzeMaterialsAndBuild(itemDetails);
+      onApply(result);
+    } catch (e) {
+      alert("Failed to analyze materials. Please try again.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  return (
+    <button 
+      type="button" 
+      onClick={handleAnalyze} 
+      disabled={analyzing}
+      className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors flex items-center gap-2"
+      title="Analyze image and link to infer materials and build"
+    >
+      {analyzing ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Wand2 size={12} />}
+      {analyzing ? 'Analyzing...' : 'Auto-Fill Details'}
+    </button>
   );
 }
 
@@ -2000,7 +2035,8 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                           type: editingGarment?.type,
                           category: editingGarment?.category,
                           details: editingGarment?.description,
-                          fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                          fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', '),
+                          image: editingGarment?.image || editingGarment?.images?.[0]
                         }} 
                         initialAnalysis={marketAnalysis}
                         onAnalysisUpdate={(data) => {
@@ -2081,7 +2117,34 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
 
                       {/* CARD 2: Fabric & Options */}
                       <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                        <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Fabric & Finish</label>
+                        <div className="flex items-center justify-between mb-5 border-b border-zinc-100 pb-3">
+                          <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">Fabric & Finish</label>
+                          <MaterialBuildAnalyzer 
+                            itemDetails={{
+                              name: editingGarment?.name,
+                              details: editingGarment?.description,
+                              link: editingGarment?.supplier_link || document.querySelector<HTMLInputElement>('input[name="supplier_link"]')?.value,
+                              image: editingGarment?.image || editingGarment?.images?.[0]
+                            }}
+                            onApply={(data) => {
+                              if (data.fabric_compositions && data.fabric_compositions.length > 0) {
+                                setFabricCompositions(data.fabric_compositions.map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric })));
+                              }
+                              if (data.fabric_finishes && data.fabric_finishes.length > 0) {
+                                setFabricFinishes(data.fabric_finishes.map((f: string) => ({ id: Math.random().toString(), finish: f })));
+                              }
+                              
+                              const fitEl = document.querySelector('select[name="fit"]') as HTMLSelectElement;
+                              if (fitEl && data.fit) { fitEl.value = data.fit; }
+                              
+                              const weightEl = document.querySelector('input[name="fabric_weight_gsm"]') as HTMLInputElement;
+                              if (weightEl && data.fabric_weight_gsm) { weightEl.value = data.fabric_weight_gsm; }
+
+                              const careEl = document.querySelector('textarea[name="care_instructions"]') as HTMLTextAreaElement;
+                              if (careEl && data.care_instructions) { careEl.value = data.care_instructions; }
+                            }}
+                          />
+                        </div>
                         <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-2">
@@ -4826,7 +4889,8 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                   type: item.category,
                   category: item.category,
                   details: description,
-                  fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', ')
+                  fabric_details: typeof fabricCompositions === 'string' ? fabricCompositions : fabricCompositions.map(c => `${c.percentage}% ${c.fabric}`).join(', '),
+                  image: item.mock_image || item.original_image || pendingMockupImage
                 }} 
                 initialAnalysis={marketAnalysis}
                 onAnalysisUpdate={(data) => {
@@ -4902,7 +4966,28 @@ function EditItemModal({ item, customer, onClose, onSave }: {
               </div>
 
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Material & Build</label>
+                <div className="flex items-center justify-between mb-5 border-b border-zinc-100 pb-3">
+                  <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none">Material & Build</label>
+                  <MaterialBuildAnalyzer 
+                    itemDetails={{
+                      name: name,
+                      details: description,
+                      link: item.supplier_link,
+                      image: item.mock_image || item.original_image || pendingMockupImage
+                    }}
+                    onApply={(data) => {
+                      if (data.fabric_compositions && data.fabric_compositions.length > 0) {
+                        setFabricCompositions(data.fabric_compositions.map((c: any) => ({ id: Math.random().toString(), percentage: c.percentage, fabric: c.fabric })));
+                      }
+                      if (data.fabric_finishes && data.fabric_finishes.length > 0) {
+                        setFabricFinishes(data.fabric_finishes.map((f: string) => ({ id: Math.random().toString(), finish: f })));
+                      }
+                      if (data.fit) setFit(data.fit);
+                      if (data.fabric_weight_gsm) setFabricWeightGsm(data.fabric_weight_gsm);
+                      if (data.care_instructions) setCareInstructions(data.care_instructions);
+                    }}
+                  />
+                </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">

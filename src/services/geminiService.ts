@@ -505,7 +505,7 @@ export async function convertColorToHex(colorName: string): Promise<string | nul
 }
 
 export async function analyzeMarketPricing(
-  garmentData: { name?: string | null, type?: string | null, details?: string | null, category?: string | null, fabric_details?: string | null }
+  garmentData: { name?: string | null, type?: string | null, details?: string | null, category?: string | null, fabric_details?: string | null, image?: string | null }
 ): Promise<Array<{ brand: string, name: string, msrp: string, link: string, summary: string }>> {
   const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
   
@@ -516,8 +516,9 @@ export async function analyzeMarketPricing(
   - Category: ${garmentData.category || 'Unknown'}
   - Details: ${garmentData.details || 'Unknown'}
   - Fabric: ${garmentData.fabric_details || 'Unknown'}
+  ${garmentData.image ? '- Image: Provided. Please carefully analyze the visual design, silhouette, quality, and style.' : ''}
   
-  Please search your knowledge base (as if scanning the current internet) for 3 similar luxury or premium items from top brands (e.g. Vuori, G-Star, Tropic of C, Lululemon, Alo Yoga, Rhone, Kith, etc.) that match this style and market tier.
+  Please search your knowledge base (as if scanning the current internet) for 3 similar luxury or premium items from top brands (e.g. Vuori, G-Star, Tropic of C, Lululemon, Alo Yoga, Rhone, Kith, etc.) that match this style, visual appearance, and market tier.
   
   Return the output EXACTLY as a valid JSON array of objects, with NO markdown formatting, NO backticks. Do not include \`\`\`json. Just the raw array.
   Each object MUST have these exact string keys:
@@ -525,10 +526,44 @@ export async function analyzeMarketPricing(
   - "name": The name of the comparable garment
   - "msrp": The estimated retail price (e.g. "$128")
   - "link": A realistic URL link to the product or brand's category page
-  - "summary": A 1-sentence explanation of why it's comparable
+  - "summary": A 1-sentence explanation of why it's comparable (referencing its visual similarity, material, or style)
   `;
 
-  const result = await modelObj.generateContent(prompt);
+  const parts: any[] = [{ text: prompt }];
+
+  if (garmentData.image) {
+    try {
+      let baseImageData: string;
+      let baseMimeType = "image/jpeg";
+
+      if (garmentData.image.startsWith('http')) {
+        const response = await fetch(garmentData.image);
+        const blob = await response.blob();
+        baseMimeType = blob.type;
+        baseImageData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        baseImageData = garmentData.image.split(",")[1] || garmentData.image;
+        const match = garmentData.image.match(/^data:(image\/[a-zA-Z]+);base64,/);
+        if (match) baseMimeType = match[1];
+      }
+
+      parts.push({
+        inlineData: {
+          data: baseImageData,
+          mimeType: baseMimeType,
+        }
+      });
+    } catch (err) {
+      console.warn("Failed to load image for market analysis, proceeding with text only", err);
+    }
+  }
+
+  const result = await modelObj.generateContent(parts);
   let text = result.response.text().trim();
   
   try {
@@ -543,3 +578,73 @@ export async function analyzeMarketPricing(
     throw new Error("Market analysis failed to return valid JSON. Please try again.");
   }
 }
+
+export async function analyzeMaterialsAndBuild(garmentData: { image?: string | null, link?: string | null, name?: string | null, details?: string | null }) {
+  const modelObj = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+  
+  const prompt = `
+  TASK: Analyze the provided garment information (and image/link if available) to infer its likely materials, build, and care instructions.
+  - Name: ${garmentData.name || 'Unknown'}
+  - Details: ${garmentData.details || 'Unknown'}
+  ${garmentData.link ? `- Supplier Link: ${garmentData.link} (Please extract info if you recognize the URL or can guess from it)` : ''}
+  ${garmentData.image ? '- Image: Provided. Please carefully analyze the visual texture, drape, thickness, and style of the garment.' : ''}
+  
+  Return the output EXACTLY as a valid JSON object with NO markdown formatting, NO backticks. Do not include \`\`\`json.
+  The JSON object MUST have these exact keys:
+  - "fabric_compositions": Array of objects, each with "percentage" (number or string) and "fabric" (string, e.g. "Cotton", "Polyester"). Keep it realistic. If you don't know, default to {"percentage": "100", "fabric": "Cotton"}.
+  - "fabric_finishes": Array of strings (e.g. "Enzyme wash", "Pre-shrunk", "Water repellent"). Can be empty.
+  - "fit": String (e.g. "Regular", "Oversize", "Slim", "Relaxed").
+  - "fabric_weight_gsm": String (e.g. "250", "400", "150"). Just the number is fine, or "250 GSM".
+  - "care_instructions": String (e.g. "Machine wash cold, tumble dry low").
+  `;
+
+  const parts: any[] = [{ text: prompt }];
+
+  if (garmentData.image) {
+    try {
+      let baseImageData: string;
+      let baseMimeType = "image/jpeg";
+
+      if (garmentData.image.startsWith('http')) {
+        const response = await fetch(garmentData.image);
+        const blob = await response.blob();
+        baseMimeType = blob.type || 'image/jpeg';
+        baseImageData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        baseImageData = garmentData.image.split(",")[1] || garmentData.image;
+        const match = garmentData.image.match(/^data:(image\/[a-zA-Z]+);base64,/);
+        if (match) baseMimeType = match[1];
+      }
+
+      parts.push({
+        inlineData: {
+          data: baseImageData,
+          mimeType: baseMimeType,
+        }
+      });
+    } catch (err) {
+      console.warn("Failed to load image for material analysis", err);
+    }
+  }
+
+  const result = await modelObj.generateContent(parts);
+  let text = result.response.text().trim();
+  
+  try {
+    if (text.startsWith('\`\`\`json')) {
+      text = text.replace(/^\`\`\`json/, '').replace(/\`\`\`$/, '').trim();
+    } else if (text.startsWith('\`\`\`')) {
+      text = text.replace(/^\`\`\`/, '').replace(/\`\`\`$/, '').trim();
+    }
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Failed to parse Material JSON:", text, err);
+    throw new Error("Material analysis failed to return valid JSON.");
+  }
+}
+
