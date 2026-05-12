@@ -2156,13 +2156,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
 
                               const careEl = document.querySelector('textarea[name="care_instructions"]') as HTMLTextAreaElement;
                               if (careEl && data.care_instructions) { 
-                                if (careEl.value.trim()) {
-                                  if (!careEl.value.toLowerCase().includes(data.care_instructions.toLowerCase())) {
-                                    careEl.value = `${careEl.value.trim()} ${data.care_instructions}`;
-                                  }
-                                } else {
-                                  careEl.value = data.care_instructions; 
-                                }
+                                careEl.value = data.care_instructions;
                               }
                             }}
                           />
@@ -5025,15 +5019,7 @@ function EditItemModal({ item, customer, onClose, onSave }: {
                         setFabricWeightGsm(prev => prev && prev.trim() !== '' ? prev : data.fabric_weight_gsm);
                       }
                       if (data.care_instructions) {
-                        setCareInstructions(prev => {
-                          if (prev && prev.trim() !== '') {
-                            if (!prev.toLowerCase().includes(data.care_instructions.toLowerCase())) {
-                              return `${prev.trim()} ${data.care_instructions}`;
-                            }
-                            return prev;
-                          }
-                          return data.care_instructions;
-                        });
+                        setCareInstructions(data.care_instructions);
                       }
                     }}
                   />
