@@ -184,14 +184,19 @@ function ProductionLogisticsAnalyzer({
   onApply 
 }: { 
   itemDetails: any, 
-  onApply: (data: { moq: string, turn_time: string }) => void 
+  onApply: (data: { moq: string, turn_time: string, region?: string }) => void 
 }) {
   const [analyzing, setAnalyzing] = useState(false);
+  const [sourcedRegion, setSourcedRegion] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
+    setSourcedRegion(null);
     try {
       const result = await analyzeProductionLogistics(itemDetails);
+      if (result.region) {
+        setSourcedRegion(result.region);
+      }
       onApply(result);
     } catch (e) {
       alert("Failed to analyze production logistics. Please try again.");
@@ -201,16 +206,23 @@ function ProductionLogisticsAnalyzer({
   };
 
   return (
-    <button 
-      type="button" 
-      onClick={handleAnalyze} 
-      disabled={analyzing}
-      className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors flex items-center gap-2"
-      title="Analyze markets (Portugal, China, Middle East) for fastest turnaround and lowest MOQ"
-    >
-      {analyzing ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
-      {analyzing ? 'Scanning...' : 'Optimize Logistics'}
-    </button>
+    <div className="flex items-center gap-3">
+      {sourcedRegion && (
+        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100 flex items-center gap-1 shadow-sm">
+          Sourced: {sourcedRegion}
+        </span>
+      )}
+      <button 
+        type="button" 
+        onClick={handleAnalyze} 
+        disabled={analyzing}
+        className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors flex items-center gap-2"
+        title="Analyze markets (Portugal, China, Middle East) for fastest turnaround and lowest MOQ"
+      >
+        {analyzing ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+        {analyzing ? 'Scanning...' : 'Optimize Logistics'}
+      </button>
+    </div>
   );
 }
 

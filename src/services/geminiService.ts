@@ -665,6 +665,7 @@ export async function analyzeProductionLogistics(garmentData: { type?: string | 
   The JSON object MUST have these exact keys:
   - "moq": String or Number representing the smallest realistic MOQ (e.g. 50, 100). Just the number is fine.
   - "turn_time": String representing the fastest realistic turnaround time (e.g. "4-6 Weeks").
+  - "region": String representing the chosen region (e.g. "Portugal", "China", "Middle East").
   `;
 
   const result = await modelObj.generateContent([{ text: prompt }]);
