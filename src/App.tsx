@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -349,6 +349,7 @@ export interface DeckItem {
   mock_image: string;
   proposal_quantity?: number;
   proposal_price?: number;
+  proposal_selected?: boolean;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -3236,6 +3237,57 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     setItems(prev => prev.map(item => item.id === itemId ? { ...item, proposal_price: price } : item));
   };
 
+  const handleToggleProposalSelection = async (item: DeckItem) => {
+    if (isSharedProposal || proposalStatus === 'accepted') return;
+    const newSelected = item.proposal_selected === false ? true : false;
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, proposal_selected: newSelected } : i));
+    try {
+      const res = await fetch(`/api/deck-items/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposal_selected: newSelected })
+      });
+      if (!res.ok) throw new Error("Failed to update item selection");
+    } catch (err) {
+      console.error("Error toggling proposal selection:", err);
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, proposal_selected: !newSelected } : i));
+    }
+  };
+
+  const handleSelectAllProposal = async () => {
+    if (isSharedProposal || proposalStatus === 'accepted') return;
+    setItems(prev => prev.map(i => ({ ...i, proposal_selected: true })));
+    try {
+      await Promise.all(items.map(item => 
+        fetch(`/api/deck-items/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ proposal_selected: true })
+        })
+      ));
+    } catch (err) {
+      console.error("Error selecting all items:", err);
+      fetchItems();
+    }
+  };
+
+  const handleClearAllProposal = async () => {
+    if (isSharedProposal || proposalStatus === 'accepted') return;
+    setItems(prev => prev.map(i => ({ ...i, proposal_selected: false })));
+    try {
+      await Promise.all(items.map(item => 
+        fetch(`/api/deck-items/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ proposal_selected: false })
+        })
+      ));
+    } catch (err) {
+      console.error("Error clearing all items:", err);
+      fetchItems();
+    }
+  };
+
   const handleSaveProposal = async () => {
     setIsSavingProposal(true);
     try {
@@ -3266,7 +3318,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             proposal_quantity: qty,
-            proposal_price: price
+            proposal_price: price,
+            proposal_selected: item.proposal_selected !== false
           })
         });
       }));
@@ -3711,7 +3764,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     }
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (getProposalQty(item) * getProposalPrice(item)), 0);
+  const proposalItems = items.filter(item => item.proposal_selected !== false);
+  const subtotal = proposalItems.reduce((sum, item) => sum + (getProposalQty(item) * getProposalPrice(item)), 0);
   const discountAmount = subtotal * (proposalDiscount / 100);
   const totalAfterDiscount = subtotal - discountAmount;
   const taxAmount = (totalAfterDiscount + proposalSetupFee) * (proposalTax / 100);
@@ -4049,7 +4103,27 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 md:gap-16 items-center`}
               >
                 <div className="flex-1 w-full">
-                  <div className="aspect-[4/5] bg-white shadow-2xl rounded-[2rem] overflow-hidden relative group">
+                  <div 
+                    onContextMenu={(e) => {
+                      if (isSharedProposal) return;
+                      const target = e.target as HTMLElement;
+                      if (target.closest('button') || target.closest('a') || target.closest('input')) {
+                        return;
+                      }
+                      e.preventDefault();
+                      handleToggleProposalSelection(item);
+                    }}
+                    className={`aspect-[4/5] bg-white rounded-[2rem] overflow-hidden relative group transition-all duration-300 ${
+                      item.proposal_selected !== false
+                        ? 'ring-[3px] ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                        : 'shadow-2xl'
+                    }`}
+                  >
+                    {item.proposal_selected !== false && (
+                      <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
+                        <Check size={14} className="stroke-[3]" />
+                      </div>
+                    )}
                     <img
                       src={activeVariations[item.id] || item.mock_image}
                       alt={item.garment_name}
@@ -4264,7 +4338,27 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   <SortableDeckItem key={item.id} id={item.id} disabled={sortBy !== 'default'}>
                     {(dragProps: any) => (
                       <div className="group relative rounded-2xl h-full">
-                        <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 shadow-sm border border-zinc-100 transition-all group-hover:border-zinc-300">
+                        <div 
+                          onContextMenu={(e) => {
+                            if (isSharedProposal) return;
+                            const target = e.target as HTMLElement;
+                            if (target.closest('button') || target.closest('a') || target.closest('input')) {
+                              return;
+                            }
+                            e.preventDefault();
+                            handleToggleProposalSelection(item);
+                          }}
+                          className={`aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 transition-all duration-300 border ${
+                            item.proposal_selected !== false
+                              ? 'ring-[3px] ring-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)] border-transparent'
+                              : 'shadow-sm border-zinc-100 group-hover:border-zinc-300'
+                          }`}
+                        >
+                          {item.proposal_selected !== false && (
+                            <div className="absolute top-3 left-3 bg-emerald-500 text-white p-1 rounded-full shadow z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
+                              <Check size={10} className="stroke-[3]" />
+                            </div>
+                          )}
 
                           <img
                             src={activeVariations[item.id] || item.mock_image}
@@ -4877,66 +4971,82 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             </tr>
                           </thead>
                           <tbody>
-                            {items.map((item) => {
-                              const qty = getProposalQty(item);
-                              const price = getProposalPrice(item);
-                              return (
-                                <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
-                                  <td className="py-4 pr-4">
-                                    <div className="flex items-start gap-4">
-                                      <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
-                                        <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
-                                      </div>
-                                      <div className="flex flex-col text-left">
-                                        <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
-                                        <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
-                                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
-                                          {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
-                                          {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
-                                          {item.sizes && <span>Sizes: {item.sizes}</span>}
+                            {proposalItems.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="py-12 text-center">
+                                  <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-200 rounded-2xl bg-zinc-50/50">
+                                    <FileText className="text-zinc-400 mb-2" size={32} />
+                                    <p className="text-zinc-550 font-serif italic text-sm">No items selected for this proposal quote.</p>
+                                    {!isSharedProposal && (
+                                      <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mt-1">
+                                        Right-click items on the deck page to select/deselect them
+                                      </p>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              proposalItems.map((item) => {
+                                const qty = getProposalQty(item);
+                                const price = getProposalPrice(item);
+                                return (
+                                  <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                                    <td className="py-4 pr-4">
+                                      <div className="flex items-start gap-4">
+                                        <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
+                                          <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                          <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
+                                          <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
+                                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
+                                            {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
+                                            {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
+                                            {item.sizes && <span>Sizes: {item.sizes}</span>}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  </td>
-                                  
-                                  <td className="py-4 text-right align-middle">
-                                    {proposalStatus !== 'accepted' && !isSharedProposal ? (
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        value={qty}
-                                        onChange={(e) => updateItemProposalQty(item.id, parseInt(e.target.value) || 0)}
-                                        className="w-16 px-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
-                                      />
-                                    ) : (
-                                      <span className="text-xs font-semibold text-zinc-800">{qty}</span>
-                                    )}
-                                  </td>
-                                  
-                                  <td className="py-4 text-right align-middle">
-                                    {proposalStatus !== 'accepted' && !isSharedProposal ? (
-                                      <div className="relative inline-flex items-center">
-                                        <span className="absolute left-1.5 text-zinc-400 text-xs font-semibold">$</span>
+                                    </td>
+                                    
+                                    <td className="py-4 text-right align-middle">
+                                      {proposalStatus !== 'accepted' && !isSharedProposal ? (
                                         <input
                                           type="number"
-                                          step="0.01"
-                                          min="0"
-                                          value={price}
-                                          onChange={(e) => updateItemProposalPrice(item.id, parseFloat(e.target.value) || 0)}
-                                          className="w-20 pl-4 pr-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
+                                          min="1"
+                                          value={qty}
+                                          onChange={(e) => updateItemProposalQty(item.id, parseInt(e.target.value) || 0)}
+                                          className="w-16 px-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
                                         />
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs font-semibold text-zinc-800">${price.toFixed(2)}</span>
-                                    )}
-                                  </td>
-                                  
-                                  <td className="py-4 text-right align-middle font-semibold text-xs text-zinc-900">
-                                    ${(qty * price).toFixed(2)}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                      ) : (
+                                        <span className="text-xs font-semibold text-zinc-800">{qty}</span>
+                                      )}
+                                    </td>
+                                    
+                                    <td className="py-4 text-right align-middle">
+                                      {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                                        <div className="relative inline-flex items-center">
+                                          <span className="absolute left-1.5 text-zinc-400 text-xs font-semibold">$</span>
+                                          <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={price}
+                                            onChange={(e) => updateItemProposalPrice(item.id, parseFloat(e.target.value) || 0)}
+                                            className="w-20 pl-4 pr-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
+                                          />
+                                        </div>
+                                      ) : (
+                                        <span className="text-xs font-semibold text-zinc-800">${price.toFixed(2)}</span>
+                                      )}
+                                    </td>
+                                    
+                                    <td className="py-4 text-right align-middle font-semibold text-xs text-zinc-900">
+                                      ${(qty * price).toFixed(2)}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -5233,6 +5343,26 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         >
                           Apply MSRP Prices
                         </button>
+                      </div>
+
+                      <div className="border-t border-zinc-100 pt-4 flex flex-col gap-2">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-900 mb-1">Proposal Selection</h4>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSelectAllProposal}
+                            disabled={proposalStatus === 'accepted'}
+                            className="flex-1 py-2 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded-lg hover:bg-zinc-100 hover:text-zinc-900 text-zinc-650 transition-colors disabled:opacity-60"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={handleClearAllProposal}
+                            disabled={proposalStatus === 'accepted'}
+                            className="flex-1 py-2 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded-lg hover:bg-zinc-100 hover:text-zinc-900 text-zinc-650 transition-colors disabled:opacity-60"
+                          >
+                            Clear All
+                          </button>
+                        </div>
                       </div>
                       
                       <div className="border-t border-zinc-100 pt-4 flex flex-col gap-3">
