@@ -358,18 +358,25 @@ app.post("/api/decks", async (req, res) => {
 
 app.put("/api/decks/:id", async (req, res) => {
   try {
-    const { name, cover_images, show_pricing } = req.body;
+    const { name, cover_images, show_pricing, ...rest } = req.body;
     const deckRef = doc(db, "decks", req.params.id);
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (cover_images !== undefined) updates.cover_images = cover_images;
     if (show_pricing !== undefined) updates.show_pricing = show_pricing;
+    
+    // Copy any additional fields (like proposal settings)
+    Object.keys(rest).forEach(key => {
+      updates[key] = rest[key];
+    });
+
     await updateDoc(deckRef, updates);
     res.json({ status: "ok" });
   } catch (error) {
     res.status(500).json({ error: "Failed to update deck" });
   }
 });
+
 
 app.get("/api/decks/:id", async (req, res) => {
   try {

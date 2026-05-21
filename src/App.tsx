@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -22,7 +22,7 @@ export function SortableDeckItem({ id, disabled, children }: { key?: React.Key |
   );
 }
 
-export function SortableVariationItem({ id, disabled, className, children }: { id: string, disabled?: boolean, className?: string, children: React.ReactNode }) {
+export function SortableVariationItem({ id, disabled, className, children }: { key?: React.Key | null, id: string, disabled?: boolean, className?: string, children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   const style = { transform: CSS.Translate.toString(transform), transition: transition || 'transform 200ms ease', zIndex: isDragging ? 50 : 'auto', touchAction: 'none' };
   return (
@@ -327,6 +327,19 @@ export interface Deck {
   items?: DeckItem[];
   cover_images?: string[];
   show_pricing?: boolean;
+  proposal_title?: string;
+  proposal_date?: string;
+  proposal_expiry?: string;
+  proposal_terms?: string;
+  proposal_notes?: string;
+  proposal_shipping?: number;
+  proposal_setup_fee?: number;
+  proposal_discount?: number;
+  proposal_tax?: number;
+  proposal_status?: 'draft' | 'sent' | 'accepted';
+  proposal_approved_by?: string;
+  proposal_approved_title?: string;
+  proposal_approved_date?: string;
 }
 
 export interface DeckItem {
@@ -334,6 +347,8 @@ export interface DeckItem {
   deck_id: number;
   garment_id?: number | null;
   mock_image: string;
+  proposal_quantity?: number;
+  proposal_price?: number;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -372,6 +387,8 @@ export interface DeckItem {
   custom_wholesale_price?: number | null;
   custom_cost_price?: number | null;
   custom_market_analysis?: any[] | null;
+  custom_moq?: number | null;
+  custom_turn_time?: string | null;
 }
 
 export const getDisplayPrice = (item: any) => {
@@ -382,7 +399,7 @@ export const getDisplayPrice = (item: any) => {
   return base;
 };
 
-type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation';
+type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation' | 'shared-proposal';
 
 const uploadImageToFirebase = async (base64Str: string): Promise<string> => {
   if (!base64Str.startsWith('data:image/')) return base64Str;
@@ -438,6 +455,9 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('deck')) {
+        if (params.get('view') === 'proposal') {
+          return 'shared-proposal';
+        }
         return 'shared-presentation';
       }
       const saved = localStorage.getItem('lastView');
@@ -453,7 +473,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && view !== 'shared-presentation') {
+    if (typeof window !== 'undefined' && view !== 'shared-presentation' && view !== 'shared-proposal') {
       localStorage.setItem('lastView', view);
     }
   }, [view]);
@@ -557,7 +577,7 @@ export default function App() {
           .then(deck => {
             if (deck && deck.id) {
               setCurrentDeck(deck);
-              setView('shared-presentation');
+              setView(params.get('view') === 'proposal' ? 'shared-proposal' : 'shared-presentation');
             }
           })
           .catch(err => console.error("Could not load shared deck:", err));
@@ -603,7 +623,7 @@ export default function App() {
         }
 
         // Sync current active deck presentation
-        if (view === 'deck-view' || view === 'presentation' || view === 'shared-presentation') {
+        if (view === 'deck-view' || view === 'presentation' || view === 'shared-presentation' || view === 'shared-proposal') {
           if (currentDeck?.id) {
             const deckRes = await fetch(`/api/decks/${currentDeck.id}`);
             if (deckRes.ok && isSubscribed) {
@@ -904,7 +924,7 @@ export default function App() {
     }
   };
 
-  if (!isAuthenticated && view !== 'shared-presentation') {
+  if (!isAuthenticated && view !== 'shared-presentation' && view !== 'shared-proposal') {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
         <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl w-full max-w-sm text-center">
@@ -915,7 +935,7 @@ export default function App() {
             e.preventDefault();
             // Defaulting to "Wovn1!" for easy testing, override in Vercel if wanted.
             // @ts-ignore
-            const correctPass = import.meta.env.VITE_APP_PASSWORD || 'Wovn26!';
+            const correctPass = (import.meta as any).env.VITE_APP_PASSWORD || 'Wovn26!';
             if (passwordInput === correctPass) {
               setIsAuthenticated(true);
               localStorage.setItem('wovn-auth', JSON.stringify({ timestamp: Date.now() }));
@@ -946,7 +966,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      {view !== 'shared-presentation' && (
+      {view !== 'shared-presentation' && view !== 'shared-proposal' && (
         <header className="border-b border-zinc-100 sticky top-0 bg-white/80 backdrop-blur-md z-50 print:hidden">
           <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
             <div className="flex items-center gap-8">
@@ -1232,6 +1252,19 @@ export default function App() {
             onClose={() => { }}
             showPricing={showPricing}
             isSharedView={true}
+          />
+        )}
+        {view === 'shared-proposal' && currentDeck && (
+          <DeckPresentationView
+            deck={currentDeck}
+            customer={customers.find(c => c.id === currentDeck.customer_id) || null}
+            showPricing={showPricing}
+            setShowPricing={setShowPricing}
+            onBack={() => { }}
+            onGarmentClick={() => { }}
+            onPresent={() => { }}
+            onRemoveItem={async () => { }}
+            isSharedProposal={true}
           />
         )}
         {view === 'mockup-studio' && selectedGarment && (
@@ -3112,7 +3145,7 @@ function EditCustomerModal({ customer, onClose, onSave }: {
   );
 }
 
-function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing }: {
+function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing, isSharedProposal = false }: {
   deck: Deck,
   customer: Customer | null,
   onBack: () => void,
@@ -3120,9 +3153,246 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   onPresent: () => void,
   onRemoveItem: (itemId: number) => void,
   showPricing: boolean,
-  setShowPricing: (show: boolean) => void
+  setShowPricing: (show: boolean) => void,
+  isSharedProposal?: boolean
 }) {
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
+
+  const [proposalMode, setProposalMode] = useState<boolean>(isSharedProposal);
+  
+  // Proposal fields matching Firestore keys
+  const [proposalTitle, setProposalTitle] = useState(deck.proposal_title || deck.name || 'GARMENT PROPOSAL');
+  const [proposalDate, setProposalDate] = useState(deck.proposal_date || new Date().toISOString().substring(0, 10));
+  const [proposalExpiry, setProposalExpiry] = useState(deck.proposal_expiry || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10));
+  const [proposalTerms, setProposalTerms] = useState(deck.proposal_terms || '50% deposit, 50% upon delivery');
+  const [proposalNotes, setProposalNotes] = useState(deck.proposal_notes || 'Thank you for your business!');
+  const [proposalShipping, setProposalShipping] = useState<number>(deck.proposal_shipping !== undefined ? deck.proposal_shipping : 0);
+  const [proposalSetupFee, setProposalSetupFee] = useState<number>(deck.proposal_setup_fee !== undefined ? deck.proposal_setup_fee : 0);
+  const [proposalDiscount, setProposalDiscount] = useState<number>(deck.proposal_discount !== undefined ? deck.proposal_discount : 0);
+  const [proposalTax, setProposalTax] = useState<number>(deck.proposal_tax !== undefined ? deck.proposal_tax : 0);
+  const [proposalStatus, setProposalStatus] = useState<'draft' | 'sent' | 'accepted'>(deck.proposal_status || 'draft');
+  const [proposalApprovedBy, setProposalApprovedBy] = useState(deck.proposal_approved_by || '');
+  const [proposalApprovedTitle, setProposalApprovedTitle] = useState(deck.proposal_approved_title || '');
+  const [proposalApprovedDate, setProposalApprovedDate] = useState(deck.proposal_approved_date || '');
+
+  const [isSavingProposal, setIsSavingProposal] = useState(false);
+  const [approverName, setApproverName] = useState('');
+  const [approverTitle, setApproverTitle] = useState('');
+  const [isSigning, setIsSigning] = useState(false);
+
+  const isFirstLoad = useRef(true);
+
+  // Keep state synced with deck prop changes (in case deck updates asynchronously or is refetched)
+  useEffect(() => {
+    if (isSharedProposal) {
+      setProposalMode(true);
+    }
+  }, [isSharedProposal]);
+
+  useEffect(() => {
+    if (isFirstLoad.current || isSharedProposal || deck.proposal_status === 'accepted') {
+      setProposalTitle(deck.proposal_title || deck.name || 'GARMENT PROPOSAL');
+      setProposalDate(deck.proposal_date || new Date().toISOString().substring(0, 10));
+      setProposalExpiry(deck.proposal_expiry || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10));
+      setProposalTerms(deck.proposal_terms || '50% deposit, 50% upon delivery');
+      setProposalNotes(deck.proposal_notes || 'Thank you for your business!');
+      setProposalShipping(deck.proposal_shipping !== undefined ? deck.proposal_shipping : 0);
+      setProposalSetupFee(deck.proposal_setup_fee !== undefined ? deck.proposal_setup_fee : 0);
+      setProposalDiscount(deck.proposal_discount !== undefined ? deck.proposal_discount : 0);
+      setProposalTax(deck.proposal_tax !== undefined ? deck.proposal_tax : 0);
+      isFirstLoad.current = false;
+    }
+    setProposalStatus(deck.proposal_status || 'draft');
+    setProposalApprovedBy(deck.proposal_approved_by || '');
+    setProposalApprovedTitle(deck.proposal_approved_title || '');
+    setProposalApprovedDate(deck.proposal_approved_date || '');
+  }, [deck, isSharedProposal]);
+
+  useEffect(() => {
+    if (isSharedProposal && deck.items) {
+      setItems(deck.items);
+    }
+  }, [deck.items, isSharedProposal]);
+
+  const getProposalQty = (item: DeckItem) => {
+    if (item.proposal_quantity !== undefined && item.proposal_quantity !== null && item.proposal_quantity > 0) {
+      return item.proposal_quantity;
+    }
+    return item.custom_moq || item.moq || 72;
+  };
+
+  const getProposalPrice = (item: DeckItem) => {
+    if (item.proposal_price !== undefined && item.proposal_price !== null && item.proposal_price >= 0) {
+      return item.proposal_price;
+    }
+    return item.custom_wholesale_price || item.wholesale_price || 0;
+  };
+
+  const updateItemProposalQty = (itemId: number, qty: number) => {
+    setItems(prev => prev.map(item => item.id === itemId ? { ...item, proposal_quantity: qty } : item));
+  };
+
+  const updateItemProposalPrice = (itemId: number, price: number) => {
+    setItems(prev => prev.map(item => item.id === itemId ? { ...item, proposal_price: price } : item));
+  };
+
+  const handleSaveProposal = async () => {
+    setIsSavingProposal(true);
+    try {
+      const deckRes = await fetch(`/api/decks/${deck.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposal_title: proposalTitle,
+          proposal_date: proposalDate,
+          proposal_expiry: proposalExpiry,
+          proposal_terms: proposalTerms,
+          proposal_notes: proposalNotes,
+          proposal_shipping: proposalShipping,
+          proposal_setup_fee: proposalSetupFee,
+          proposal_discount: proposalDiscount,
+          proposal_tax: proposalTax,
+          proposal_status: proposalStatus,
+        })
+      });
+
+      if (!deckRes.ok) throw new Error("Failed to save proposal settings");
+
+      await Promise.all(items.map(item => {
+        const qty = item.proposal_quantity !== undefined ? item.proposal_quantity : (item.custom_moq || item.moq || 72);
+        const price = item.proposal_price !== undefined ? item.proposal_price : (item.custom_wholesale_price || item.wholesale_price || 0);
+        return fetch(`/api/deck-items/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            proposal_quantity: qty,
+            proposal_price: price
+          })
+        });
+      }));
+
+      alert("Proposal saved successfully!");
+      fetchItems();
+    } catch (err: any) {
+      console.error(err);
+      alert("Error saving proposal: " + err.message);
+    } finally {
+      setIsSavingProposal(false);
+    }
+  };
+
+  const handleAcceptProposal = async () => {
+    if (!approverName.trim()) {
+      alert("Please enter your name to sign the proposal.");
+      return;
+    }
+    if (!approverTitle.trim()) {
+      alert("Please enter your title.");
+      return;
+    }
+
+    setIsSigning(true);
+    try {
+      const today = new Date().toISOString();
+      const res = await fetch(`/api/decks/${deck.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposal_status: 'accepted',
+          proposal_approved_by: approverName,
+          proposal_approved_title: approverTitle,
+          proposal_approved_date: today
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to sign proposal");
+
+      setProposalStatus('accepted');
+      setProposalApprovedBy(approverName);
+      setProposalApprovedTitle(approverTitle);
+      setProposalApprovedDate(today);
+      alert("Proposal accepted and digitally signed!");
+    } catch (err: any) {
+      console.error(err);
+      alert("Error signing proposal: " + err.message);
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
+  const handleUnlockProposal = async () => {
+    if (!confirm("Are you sure you want to unlock this proposal? This will clear the signature and allow making edits again.")) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/decks/${deck.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposal_status: 'draft',
+          proposal_approved_by: '',
+          proposal_approved_title: '',
+          proposal_approved_date: ''
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to unlock proposal");
+
+      setProposalStatus('draft');
+      setProposalApprovedBy('');
+      setProposalApprovedTitle('');
+      setProposalApprovedDate('');
+      alert("Proposal unlocked. You can now edit quantities and pricing.");
+    } catch (err: any) {
+      console.error(err);
+      alert("Error unlocking proposal: " + err.message);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
+      const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&view=proposal`;
+      const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+
+      if (!response.ok) throw new Error('Shortening failed');
+
+      const shortUrl = await response.text();
+      await navigator.clipboard.writeText(shortUrl);
+      alert('Proposal share link copied to clipboard!');
+    } catch (err) {
+      const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
+      const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&view=proposal`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Proposal share link copied to clipboard! (Original URL)');
+      }).catch(() => {
+        alert('Failed to copy link. Please manually copy: ' + url);
+      });
+    }
+  };
+
+  const handleLoadWholesalePrices = () => {
+    if (confirm("Reset all proposal prices to wholesale prices? Any manual changes to prices will be overwritten.")) {
+      setItems(prev => prev.map(item => ({
+        ...item,
+        proposal_price: item.custom_wholesale_price || item.wholesale_price || 0
+      })));
+    }
+  };
+
+  const handleLoadMSRPRerices = () => {
+    if (confirm("Reset all proposal prices to MSRP prices? Any manual changes to prices will be overwritten.")) {
+      setItems(prev => prev.map(item => ({
+        ...item,
+        proposal_price: item.custom_msrp || item.msrp || 0
+      })));
+    }
+  };
+
+  const setExpiryDays = (days: number) => {
+    const date = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    setProposalExpiry(date.toISOString().substring(0, 10));
+  };
   const [customerAssets, setCustomerAssets] = useState<CustomerAsset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<CustomerAsset | null>(null);
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('grid');
@@ -3161,6 +3431,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const customFontFamily = FONT_CLASS_MAP[lineSheetTitleFont] ? undefined : `"${lineSheetTitleFont}", sans-serif`;
   const customFontClass = FONT_CLASS_MAP[lineSheetTitleFont] || '';
 
+
   const fetchItems = () => {
     fetch(`/api/decks/${deck.id}`)
       .then(res => res.json())
@@ -3172,15 +3443,16 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   }, [deck.id]);
 
   useEffect(() => {
-    if (customer?.id) {
-      fetch(`/api/customers/${customer.id}/assets`)
+    const cid = customer?.id || deck.customer_id;
+    if (cid) {
+      fetch(`/api/customers/${cid}/assets`)
         .then(res => res.json())
         .then(assets => {
           setCustomerAssets(assets);
           if (assets.length > 0) setSelectedAsset(assets[0]);
         });
     }
-  }, [customer?.id]);
+  }, [customer?.id, deck.customer_id]);
 
   useEffect(() => {
     if (isGarmentSelectorOpen && libraryGarments.length === 0) {
@@ -3447,6 +3719,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       document.body.removeChild(link);
     }
   };
+
+  const subtotal = items.reduce((sum, item) => sum + (getProposalQty(item) * getProposalPrice(item)), 0);
+  const discountAmount = subtotal * (proposalDiscount / 100);
+  const totalAfterDiscount = subtotal - discountAmount;
+  const taxAmount = (totalAfterDiscount + proposalSetupFee) * (proposalTax / 100);
+  const grandTotal = totalAfterDiscount + proposalSetupFee + taxAmount + proposalShipping;
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
@@ -3724,7 +4002,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 onClick={async () => {
                   try {
                     // @ts-ignore
-                    const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                    const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
                     const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
                     const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
 
@@ -3736,7 +4014,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   } catch (err) {
                     // Fallback
                     // @ts-ignore
-                    const baseDomain = import.meta.env.VITE_CUSTOM_DOMAIN || window.location.origin;
+                    const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
                     const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
                     navigator.clipboard.writeText(url).then(() => {
                       alert('Share link copied to clipboard! (Fallback original URL)');
@@ -3761,6 +4039,14 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                   <button onClick={() => setLineSheetMode('combo')} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 rounded-lg">Combo (4 per page)</button>
                 </div>
               </div>
+
+              <button
+                onClick={() => setProposalMode(true)}
+                className="bg-white border text-zinc-900 border-zinc-200 px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <FileText size={14} /> Proposal Quote
+              </button>
+
               <button
                 onClick={() => onPresent()}
                 className="bg-zinc-900 text-white px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-sm"
@@ -4096,6 +4382,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           <EditItemModal
             item={editingItem}
             customer={customer}
+            pendingMockupImage={undefined}
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
           />
@@ -4383,6 +4670,637 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* PROPOSAL MODAL (BUILDER / CLIENT VIEW) */}
+        <AnimatePresence>
+          {proposalMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-zinc-100 z-[200] overflow-y-auto print:bg-white print:overflow-visible print:static print:h-auto print:w-full flex flex-col"
+            >
+              <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                  body {
+                    background-color: white !important;
+                    color: black !important;
+                  }
+                  .print\\:hidden {
+                    display: none !important;
+                  }
+                  .print\\:block {
+                    display: block !important;
+                  }
+                  .print\\:static {
+                    position: static !important;
+                  }
+                  .print\\:w-full {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                  }
+                  .print\\:p-0 {
+                    padding: 0 !important;
+                  }
+                  .print\\:shadow-none {
+                    box-shadow: none !important;
+                  }
+                  .print\\:border-none {
+                    border: none !important;
+                  }
+                  .print\\:rounded-none {
+                    border-radius: 0 !important;
+                  }
+                  .print-page-break {
+                    page-break-after: always;
+                  }
+                  tr {
+                    page-break-inside: avoid;
+                  }
+                  .signature-block {
+                    page-break-inside: avoid;
+                  }
+                }
+              `}} />
+
+              {/* Shared Client Header Toolbar */}
+              {isSharedProposal && (
+                <div className="sticky top-0 bg-white border-b border-zinc-200 px-4 md:px-8 py-4 flex justify-between items-center z-10 print:hidden shadow-sm w-full shrink-0">
+                  <div className="flex items-center gap-3">
+                    <span className="editorial-title text-sm tracking-widest">WOVN</span>
+                    <span className="text-[10px] uppercase tracking-widest font-extrabold px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
+                      Proposal Review
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => { setTimeout(() => window.print(), 100); }} 
+                      className="bg-zinc-900 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-800 transition-colors shadow-sm whitespace-nowrap"
+                    >
+                      <Printer size={14} /> Save to PDF / Print
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Header Toolbar */}
+              {!isSharedProposal && (
+                <div className="sticky top-0 bg-white border-b border-zinc-200 px-4 md:px-8 py-4 flex justify-between items-center z-10 print:hidden shadow-sm w-full shrink-0">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900 flex items-center gap-2">
+                      <FileText size={16} /> Proposal Builder
+                    </h2>
+                    <span className={`text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-1 rounded-full ${
+                      proposalStatus === 'accepted' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                        : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                    }`}>
+                      {proposalStatus}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {customerAssets.length > 0 && (
+                      <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg p-1 hidden sm:flex">
+                        <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 px-2">Proposal Logo:</span>
+                        <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar max-w-[200px]">
+                          {customerAssets.map((asset) => (
+                            <button
+                              key={asset.id}
+                              onClick={() => setSelectedAsset(asset)}
+                              className={`w-7 h-7 rounded shrink-0 overflow-hidden border-2 transition-colors ${selectedAsset?.id === asset.id ? 'border-zinc-900 border-opacity-100' : 'border-transparent hover:border-zinc-200'}`}
+                            >
+                              <img src={asset.image} className="w-full h-full object-contain bg-white mix-blend-multiply" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={handleCopyShareLink}
+                        className="bg-white border text-zinc-700 border-zinc-200 px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm"
+                      >
+                        <ExternalLink size={14} /> Copy Share Link
+                      </button>
+                      <button 
+                        onClick={() => { setTimeout(() => window.print(), 100); }} 
+                        className="bg-white border text-zinc-700 border-zinc-200 px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm"
+                      >
+                        <Printer size={14} /> Print / Save PDF
+                      </button>
+                      <button 
+                        onClick={() => setProposalMode(false)}
+                        className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-900 transition-colors"
+                      >
+                        <X size={20}/>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Layout Area */}
+              <div className="flex-1 flex flex-col md:flex-row print:flex-col print:h-auto overflow-hidden print:overflow-visible">
+                
+                {/* Scrollable Document Container */}
+                <div className={`flex-1 overflow-y-auto p-4 md:p-8 print:p-0 flex flex-col items-center justify-start print:block print:w-full print:static print:h-auto`}>
+                  
+                  {/* The A4 style sheet */}
+                  <div className="w-full max-w-[8.5in] min-h-[11in] bg-white border border-zinc-200 print:border-none shadow-xl print:shadow-none p-8 md:p-12 rounded-[2rem] print:rounded-none relative mx-auto my-8 print:my-0 flex flex-col justify-between print:static">
+                    
+                    <div>
+                      {/* Document Header */}
+                      <div className="flex justify-between items-start mb-8 pb-8 border-b border-zinc-100">
+                        <div className="flex flex-col gap-2">
+                          {selectedAsset ? (
+                            <img src={selectedAsset.image} className="max-h-12 max-w-[200px] object-contain mix-blend-multiply" />
+                          ) : (
+                            <div className="h-12 flex items-center">
+                              <span className="font-serif text-2xl font-bold tracking-tight text-zinc-900">{deck.customer_name || 'VALUED CUSTOMER'}</span>
+                            </div>
+                          )}
+                          <div className="text-left mt-2">
+                            <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400">Prepared For</p>
+                            <p className="text-xs font-bold text-zinc-800">{customer?.company || deck.customer_name || 'Valued Client'}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end gap-1">
+                          <img src="/wovn-logo.png" alt="WOVN Logo" className="h-10 object-contain brightness-0" />
+                          <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mt-2">Prepared By</p>
+                          <p className="text-xs font-bold text-zinc-800">WOVN Co.</p>
+                        </div>
+                      </div>
+
+                      {/* Proposal Title */}
+                      <div className="text-left mb-6">
+                        {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                          <input
+                            type="text"
+                            value={proposalTitle}
+                            onChange={(e) => setProposalTitle(e.target.value)}
+                            className="font-serif text-3xl md:text-4xl text-zinc-900 border-b border-dashed border-zinc-300 focus:border-zinc-900 outline-none w-full bg-transparent py-1"
+                            placeholder="Enter Proposal Title..."
+                          />
+                        ) : (
+                          <h1 className="font-serif text-3xl md:text-4xl text-zinc-900">{proposalTitle}</h1>
+                        )}
+                      </div>
+
+                      {/* Metadata Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-6 my-8 border-y border-zinc-100 text-left">
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Proposal Date</span>
+                          <span className="text-xs font-semibold text-zinc-800">{proposalDate}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Expiry Date</span>
+                          <span className="text-xs font-semibold text-zinc-800">{proposalExpiry}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Payment Terms</span>
+                          {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                            <input
+                              type="text"
+                              value={proposalTerms}
+                              onChange={(e) => setProposalTerms(e.target.value)}
+                              className="text-xs font-semibold text-zinc-800 border-b border-dashed border-zinc-200 focus:border-zinc-850 outline-none bg-transparent w-full"
+                            />
+                          ) : (
+                            <span className="text-xs font-semibold text-zinc-800">{proposalTerms}</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Status</span>
+                          <span className={`text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-1 rounded-full inline-block ${
+                            proposalStatus === 'accepted' 
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                              : proposalStatus === 'sent' 
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                          }`}>
+                            {proposalStatus}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Line Items Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse my-6">
+                          <thead>
+                            <tr className="border-b border-zinc-250 text-[9px] uppercase tracking-widest font-bold text-zinc-400">
+                              <th className="py-3 font-bold">Item Details</th>
+                              <th className="py-3 font-bold text-right">Quantity</th>
+                              <th className="py-3 font-bold text-right">Unit Price</th>
+                              <th className="py-3 font-bold text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.map((item) => {
+                              const qty = getProposalQty(item);
+                              const price = getProposalPrice(item);
+                              return (
+                                <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                                  <td className="py-4 pr-4 flex items-start gap-4">
+                                    <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
+                                      <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                      <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
+                                      <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
+                                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
+                                        {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
+                                        {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
+                                        {item.sizes && <span>Sizes: {item.sizes}</span>}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  
+                                  <td className="py-4 text-right align-middle">
+                                    {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={qty}
+                                        onChange={(e) => updateItemProposalQty(item.id, parseInt(e.target.value) || 0)}
+                                        className="w-16 px-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-semibold text-zinc-800">{qty}</span>
+                                    )}
+                                  </td>
+                                  
+                                  <td className="py-4 text-right align-middle">
+                                    {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                                      <div className="relative inline-flex items-center">
+                                        <span className="absolute left-1.5 text-zinc-400 text-xs font-semibold">$</span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          min="0"
+                                          value={price}
+                                          onChange={(e) => updateItemProposalPrice(item.id, parseFloat(e.target.value) || 0)}
+                                          className="w-20 pl-4 pr-1.5 py-0.5 text-right text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded focus:outline-none focus:border-zinc-900"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs font-semibold text-zinc-800">${price.toFixed(2)}</span>
+                                    )}
+                                  </td>
+                                  
+                                  <td className="py-4 text-right align-middle font-semibold text-xs text-zinc-900">
+                                    ${(qty * price).toFixed(2)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Calculations & Notes Grid */}
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-8 mt-6">
+                        <div className="w-full md:w-1/2 flex flex-col gap-6 text-left">
+                          <div>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-2">Proposal Notes / Instructions</span>
+                            {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                              <textarea
+                                value={proposalNotes}
+                                onChange={(e) => setProposalNotes(e.target.value)}
+                                rows={3}
+                                className="w-full text-xs text-zinc-650 bg-zinc-50 border border-zinc-200 rounded-xl p-3 focus:outline-none focus:border-zinc-900 resize-none"
+                                placeholder="Add notes for the client..."
+                              />
+                            ) : (
+                              <p className="text-xs text-zinc-600 whitespace-pre-line bg-zinc-50 rounded-xl p-4 border border-zinc-100 leading-relaxed">{proposalNotes || 'No notes provided.'}</p>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-2">Terms & Conditions</span>
+                            {proposalStatus !== 'accepted' && !isSharedProposal ? (
+                              <textarea
+                                value={proposalTerms}
+                                onChange={(e) => setProposalTerms(e.target.value)}
+                                rows={3}
+                                className="w-full text-xs text-zinc-650 bg-zinc-50 border border-zinc-200 rounded-xl p-3 focus:outline-none focus:border-zinc-900 resize-none"
+                                placeholder="Specify payment and delivery terms..."
+                              />
+                            ) : (
+                              <p className="text-xs text-zinc-600 whitespace-pre-line bg-zinc-50 rounded-xl p-4 border border-zinc-100 leading-relaxed">{proposalTerms}</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="w-full md:w-1/3 ml-auto shrink-0">
+                          <div className="bg-zinc-50/50 rounded-2xl p-4 border border-zinc-100 flex flex-col gap-2.5 text-xs text-zinc-600">
+                            <div className="flex justify-between">
+                              <span>Subtotal</span>
+                              <span className="font-semibold text-zinc-950">${subtotal.toFixed(2)}</span>
+                            </div>
+                            {proposalDiscount > 0 && (
+                              <div className="flex justify-between text-emerald-600">
+                                <span>Discount ({proposalDiscount}%)</span>
+                                <span>-${discountAmount.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {proposalSetupFee > 0 && (
+                              <div className="flex justify-between">
+                                <span>Setup / Digitizing Fee</span>
+                                <span className="font-semibold text-zinc-950">${proposalSetupFee.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {proposalTax > 0 && (
+                              <div className="flex justify-between">
+                                <span>Tax ({proposalTax}%)</span>
+                                <span className="font-semibold text-zinc-950">${taxAmount.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {proposalShipping > 0 && (
+                              <div className="flex justify-between">
+                                <span>Shipping & Handling</span>
+                                <span className="font-semibold text-zinc-950">${proposalShipping.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="border-t border-zinc-200 pt-2.5 flex justify-between text-sm font-bold text-zinc-900 uppercase tracking-wider">
+                              <span>Total Quote</span>
+                              <span>${grandTotal.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sign-off Certificate / Form */}
+                    <div className="mt-12 pt-8 border-t border-zinc-100">
+                      {proposalStatus === 'accepted' ? (
+                        <div className="border-2 border-emerald-500/20 bg-emerald-50/30 rounded-3xl p-6 text-left relative overflow-hidden signature-block shadow-sm">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-8 -mt-8 flex items-center justify-center">
+                            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                              <Lock className="text-emerald-600" size={32} />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+                              <Lock size={16} />
+                            </div>
+                            <div>
+                              <h4 className="font-serif text-lg text-emerald-950 font-bold">Proposal Accepted & Signed</h4>
+                              <p className="text-[10px] text-emerald-700 uppercase tracking-widest font-bold">Secured & Encrypted digital sign-off</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-emerald-500/10">
+                            <div>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Approved By</span>
+                              <span className="text-xs font-bold text-zinc-800">{proposalApprovedBy}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Title</span>
+                              <span className="text-xs font-bold text-zinc-800">{proposalApprovedTitle}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Signed Timestamp</span>
+                              <span className="text-xs font-bold text-zinc-800">{new Date(proposalApprovedDate).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-emerald-500/5 flex justify-between items-center text-[8px] text-zinc-450 uppercase tracking-widest font-mono">
+                            <span>Verification Hash: WOVN-PROP-{deck.id}-{proposalApprovedDate.substring(0, 10)}</span>
+                            <span className="text-emerald-600 font-bold">✓ Signature Verified</span>
+                          </div>
+                        </div>
+                      ) : isSharedProposal ? (
+                        <div className="bg-zinc-50 border border-zinc-200 rounded-3xl p-6 mt-4 max-w-xl mx-auto text-left shadow-sm print:hidden">
+                          <h4 className="font-serif text-lg text-zinc-900 mb-2">Digitally Sign & Accept Proposal</h4>
+                          <p className="text-xs text-zinc-550 mb-4">Please review the proposal. By signing, you approve the quantities, pricing, and terms of service listed above.</p>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Authorized Name</label>
+                              <input
+                                type="text"
+                                value={approverName}
+                                onChange={(e) => setApproverName(e.target.value)}
+                                className="w-full px-3 py-2 text-xs font-semibold bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900"
+                                placeholder="e.g. Sarah Jenkins"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Title / Designation</label>
+                              <input
+                                type="text"
+                                value={approverTitle}
+                                onChange={(e) => setApproverTitle(e.target.value)}
+                                className="w-full px-3 py-2 text-xs font-semibold bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900"
+                                placeholder="e.g. Director of Operations"
+                              />
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={handleAcceptProposal}
+                            disabled={isSigning}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors shadow-sm disabled:bg-zinc-400 flex items-center justify-center gap-2"
+                          >
+                            {isSigning ? "Signing Proposal..." : "Accept & Digitally Sign Proposal"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 border border-dashed border-zinc-200 rounded-3xl p-6 text-center text-zinc-400 text-xs">
+                          Proposal is in Draft / Sent mode. Copy the shared link to send it to the client for digital sign-off.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="absolute bottom-5 left-10 right-10 flex justify-between items-center text-[7px] md:text-[8px] uppercase tracking-widest font-bold text-zinc-350 hidden print:flex">
+                      <span>CONFIDENTIAL - WOVN GARMENT PROPOSAL</span>
+                      <span>PAGE 1 OF 1</span>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Admin Settings Sidebar */}
+                {!isSharedProposal && (
+                  <div className="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l border-zinc-200 p-6 flex flex-col gap-6 print:hidden overflow-y-auto max-h-screen md:sticky md:top-0">
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-950 mb-1">Proposal Builder</h3>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Configure quote settings</p>
+                    </div>
+                    
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Proposal Title</label>
+                        <input
+                          type="text"
+                          value={proposalTitle}
+                          onChange={(e) => setProposalTitle(e.target.value)}
+                          disabled={proposalStatus === 'accepted'}
+                          className="w-full px-3 py-2 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900 disabled:opacity-60"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={proposalDate}
+                            onChange={(e) => setProposalDate(e.target.value)}
+                            disabled={proposalStatus === 'accepted'}
+                            className="w-full px-2 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900 disabled:opacity-60"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Valid Until</label>
+                          <input
+                            type="date"
+                            value={proposalExpiry}
+                            onChange={(e) => setProposalExpiry(e.target.value)}
+                            disabled={proposalStatus === 'accepted'}
+                            className="w-full px-2 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900 disabled:opacity-60"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setExpiryDays(14)}
+                          disabled={proposalStatus === 'accepted'}
+                          className="flex-1 py-1 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded hover:bg-zinc-100 transition-colors disabled:opacity-60"
+                        >
+                          +14 Days
+                        </button>
+                        <button
+                          onClick={() => setExpiryDays(30)}
+                          disabled={proposalStatus === 'accepted'}
+                          className="flex-1 py-1 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded hover:bg-zinc-100 transition-colors disabled:opacity-60"
+                        >
+                          +30 Days
+                        </button>
+                      </div>
+                      
+                      <div className="border-t border-zinc-100 pt-4 flex flex-col gap-4">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-900">Fees & Adjustments</h4>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Discount (%)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={proposalDiscount}
+                              onChange={(e) => setProposalDiscount(parseFloat(e.target.value) || 0)}
+                              disabled={proposalStatus === 'accepted'}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Setup Fee ($)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={proposalSetupFee}
+                              onChange={(e) => setProposalSetupFee(parseFloat(e.target.value) || 0)}
+                              disabled={proposalStatus === 'accepted'}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Tax (%)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={proposalTax}
+                              onChange={(e) => setProposalTax(parseFloat(e.target.value) || 0)}
+                              disabled={proposalStatus === 'accepted'}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Shipping ($)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={proposalShipping}
+                              onChange={(e) => setProposalShipping(parseFloat(e.target.value) || 0)}
+                              disabled={proposalStatus === 'accepted'}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-zinc-100 pt-4 flex flex-col gap-2">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-900 mb-1">Defaults</h4>
+                        <button
+                          onClick={handleLoadWholesalePrices}
+                          disabled={proposalStatus === 'accepted'}
+                          className="w-full py-2 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded-lg hover:bg-zinc-100 hover:text-zinc-900 text-zinc-650 transition-colors disabled:opacity-60"
+                        >
+                          Apply Wholesale Prices
+                        </button>
+                        <button
+                          onClick={handleLoadMSRPRerices}
+                          disabled={proposalStatus === 'accepted'}
+                          className="w-full py-2 text-[9px] uppercase tracking-widest font-bold bg-zinc-50 border border-zinc-200 rounded-lg hover:bg-zinc-100 hover:text-zinc-900 text-zinc-650 transition-colors disabled:opacity-60"
+                        >
+                          Apply MSRP Prices
+                        </button>
+                      </div>
+                      
+                      <div className="border-t border-zinc-100 pt-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-900">Proposal Status</h4>
+                        <select
+                          value={proposalStatus}
+                          onChange={(e) => setProposalStatus(e.target.value as any)}
+                          disabled={proposalStatus === 'accepted'}
+                          className="w-full px-3 py-2 text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900 disabled:opacity-60"
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="sent">Sent</option>
+                          {proposalStatus === 'accepted' && <option value="accepted">Accepted</option>}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto border-t border-zinc-100 pt-6 flex flex-col gap-2">
+                      {proposalStatus === 'accepted' && (
+                        <button
+                          onClick={handleUnlockProposal}
+                          className="w-full bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
+                        >
+                          <Unlock size={12} /> Unlock & Edit
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={handleSaveProposal}
+                        disabled={isSavingProposal || proposalStatus === 'accepted'}
+                        className="w-full bg-zinc-950 hover:bg-zinc-800 text-white py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <Save size={12} /> {isSavingProposal ? "Saving..." : "Save Proposal"}
+                      </button>
+                      
+                      <button
+                        onClick={() => setProposalMode(false)}
+                        className="w-full bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors"
+                      >
+                        Close Builder
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+            </motion.div>
+          )}
+        </AnimatePresence>
+
     </div >
   );
 }
@@ -4611,9 +5529,10 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
   );
 }
 
-function EditItemModal({ item, customer, onClose, onSave }: {
+function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: {
   item: DeckItem,
   customer?: Customer | null,
+  pendingMockupImage?: string | null,
   onClose: () => void,
   onSave: (details: any) => void
 }) {
