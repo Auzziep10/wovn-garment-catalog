@@ -350,6 +350,7 @@ export interface DeckItem {
   proposal_quantity?: number;
   proposal_price?: number;
   proposal_selected?: boolean;
+  proposal_thumbnail?: string | null;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -3177,6 +3178,22 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   const [proposalApprovedDate, setProposalApprovedDate] = useState(deck.proposal_approved_date || '');
 
   const [isSavingProposal, setIsSavingProposal] = useState(false);
+  const [activeThumbnailPickerItemId, setActiveThumbnailPickerItemId] = useState<number | null>(null);
+
+  const handleUpdateProposalThumbnail = async (itemId: number, thumbnailUrl: string) => {
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, proposal_thumbnail: thumbnailUrl } : i));
+    try {
+      const res = await fetch(`/api/deck-items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposal_thumbnail: thumbnailUrl })
+      });
+      if (!res.ok) throw new Error("Failed to update proposal thumbnail");
+    } catch (err) {
+      console.error("Error updating proposal thumbnail:", err);
+    }
+  };
+
   const [approverName, setApproverName] = useState('');
   const [approverTitle, setApproverTitle] = useState('');
   const [isSigning, setIsSigning] = useState(false);
@@ -3319,7 +3336,8 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           body: JSON.stringify({
             proposal_quantity: qty,
             proposal_price: price,
-            proposal_selected: item.proposal_selected === true
+            proposal_selected: item.proposal_selected === true,
+            proposal_thumbnail: item.proposal_thumbnail || null
           })
         });
       }));
@@ -4989,24 +5007,73 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                               proposalItems.map((item) => {
                                 const qty = getProposalQty(item);
                                 const price = getProposalPrice(item);
+                                const currentThumbnail = item.proposal_thumbnail || activeVariations[item.id] || item.mock_image || item.original_image || '';
+                                const allImages = Array.from(new Set([
+                                  item.mock_image,
+                                  item.original_image,
+                                  ...(item.variations || [])
+                                ].filter((img): img is string => typeof img === 'string' && img !== '')));
+
                                 return (
-                                  <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
-                                    <td className="py-4 pr-4">
-                                      <div className="flex items-start gap-4">
-                                        <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
-                                          <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                          <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
-                                          <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
-                                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
-                                            {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
-                                            {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
-                                            {item.sizes && <span>Sizes: {item.sizes}</span>}
+                                    <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                                      <td className="py-4 pr-4">
+                                        <div className="flex items-start gap-4">
+                                          <div className="relative group/thumb shrink-0">
+                                            <div 
+                                              className={`w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 overflow-hidden relative ${
+                                                !isSharedProposal && proposalStatus !== 'accepted' && allImages.length > 1 ? 'cursor-pointer hover:border-zinc-300' : ''
+                                              }`}
+                                              onClick={() => {
+                                                if (!isSharedProposal && proposalStatus !== 'accepted' && allImages.length > 1) {
+                                                  setActiveThumbnailPickerItemId(activeThumbnailPickerItemId === item.id ? null : item.id);
+                                                }
+                                              }}
+                                            >
+                                              <img src={currentThumbnail} className="w-full h-full object-contain" />
+                                              {!isSharedProposal && proposalStatus !== 'accepted' && allImages.length > 1 && (
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                  <ImageIcon size={16} className="text-white" />
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            {activeThumbnailPickerItemId === item.id && (
+                                              <>
+                                                <div 
+                                                  className="fixed inset-0 z-40" 
+                                                  onClick={() => setActiveThumbnailPickerItemId(null)}
+                                                />
+                                                <div className="absolute top-full left-0 mt-2 bg-white border border-zinc-200 rounded-xl shadow-xl p-3 z-55 min-w-[200px] max-w-[280px]">
+                                                  <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-2">Select Thumbnail Image</p>
+                                                  <div className="grid grid-cols-3 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                                                    {allImages.map((imgUrl, idx) => (
+                                                      <button
+                                                        key={idx}
+                                                        onClick={() => {
+                                                          handleUpdateProposalThumbnail(item.id, imgUrl);
+                                                          setActiveThumbnailPickerItemId(null);
+                                                        }}
+                                                        className={`aspect-[3/4] rounded-lg border-2 overflow-hidden bg-zinc-50 p-0.5 hover:border-zinc-400 transition-all ${
+                                                          currentThumbnail === imgUrl ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-zinc-200'
+                                                        }`}
+                                                      >
+                                                        <img src={imgUrl} className="w-full h-full object-contain" />
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+
+                                          <div className="flex flex-col text-left justify-center min-h-[5rem]">
+                                            <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
+                                            <span className="text-[10px] text-zinc-500 font-medium mt-1">
+                                              Sizes: {(Array.isArray(item.custom_sizes) ? item.custom_sizes.join(', ') : item.custom_sizes) || (Array.isArray(item.sizes) ? item.sizes.join(', ') : item.sizes) || 'N/A'}
+                                            </span>
                                           </div>
                                         </div>
-                                      </div>
-                                    </td>
+                                      </td>
                                     
                                     <td className="py-4 text-right align-middle">
                                       {proposalStatus !== 'accepted' && !isSharedProposal ? (
