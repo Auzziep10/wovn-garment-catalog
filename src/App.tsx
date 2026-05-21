@@ -4806,7 +4806,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                 <div className={`flex-1 overflow-y-auto p-4 md:p-8 print:p-0 flex flex-col items-center justify-start print:block print:w-full print:static print:h-auto`}>
                   
                   {/* The A4 style sheet */}
-                  <div className="w-full max-w-[8.5in] min-h-[11in] bg-white border border-zinc-200 print:border-none shadow-xl print:shadow-none p-8 md:p-12 rounded-[2rem] print:rounded-none relative mx-auto my-8 print:my-0 flex flex-col justify-between print:static">
+                  <div className="w-full max-w-[8.5in] min-h-[11in] bg-white border border-zinc-200 print:border-none shadow-xl print:shadow-none p-8 md:p-12 rounded-[2rem] print:rounded-none relative mx-auto my-8 print:my-0 flex flex-col justify-between print:static shrink-0">
                     
                     <div>
                       {/* Document Header */}
