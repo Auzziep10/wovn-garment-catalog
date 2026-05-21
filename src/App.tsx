@@ -4791,30 +4791,32 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     
                     <div>
                       {/* Document Header */}
-                      <div className="flex justify-between items-start mb-8 pb-8 border-b border-zinc-100">
-                        <div className="flex flex-col gap-2">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-4 border-b border-zinc-100 gap-4">
+                        <div className="flex items-center gap-3">
                           {selectedAsset ? (
-                            <img src={selectedAsset.image} className="max-h-12 max-w-[200px] object-contain mix-blend-multiply" />
+                            <img src={selectedAsset.image} className="max-h-10 max-w-[150px] object-contain mix-blend-multiply" />
                           ) : (
-                            <div className="h-12 flex items-center">
-                              <span className="font-serif text-2xl font-bold tracking-tight text-zinc-900">{deck.customer_name || 'VALUED CUSTOMER'}</span>
-                            </div>
+                            <span className="font-serif text-lg font-bold tracking-tight text-zinc-900">{deck.customer_name || 'VALUED CUSTOMER'}</span>
                           )}
-                          <div className="text-left mt-2">
-                            <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400">Prepared For</p>
-                            <p className="text-xs font-bold text-zinc-800">{customer?.company || deck.customer_name || 'Valued Client'}</p>
+                          <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
+                          <div className="text-left">
+                            <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 leading-none">Prepared For</p>
+                            <p className="text-[10px] font-bold text-zinc-700 mt-0.5">{customer?.company || deck.customer_name || 'Valued Client'}</p>
                           </div>
                         </div>
                         
-                        <div className="flex flex-col items-end gap-1">
-                          <img src="/wovn-logo.png" alt="WOVN Logo" className="h-10 object-contain brightness-0" />
-                          <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 mt-2">Prepared By</p>
-                          <p className="text-xs font-bold text-zinc-800">WOVN Co.</p>
+                        <div className="flex items-center gap-3 ml-auto sm:ml-0">
+                          <div className="text-right">
+                            <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 leading-none">Prepared By</p>
+                            <p className="text-[10px] font-bold text-zinc-700 mt-0.5">WOVN Co.</p>
+                          </div>
+                          <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
+                          <img src="/wovn-logo.png" alt="WOVN Logo" className="h-8 object-contain brightness-0" />
                         </div>
                       </div>
 
                       {/* Proposal Title */}
-                      <div className="text-left mb-6">
+                      <div className="text-left mb-4">
                         {proposalStatus !== 'accepted' && !isSharedProposal ? (
                           <input
                             type="text"
@@ -4829,7 +4831,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
 
                       {/* Metadata Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-6 my-8 border-y border-zinc-100 text-left">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-3 my-4 border-y border-zinc-100 text-left">
                         <div>
                           <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Proposal Date</span>
                           <span className="text-xs font-semibold text-zinc-800">{proposalDate}</span>
@@ -4867,7 +4869,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
 
                       {/* Line Items Table */}
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse my-6">
+                        <table className="w-full text-left border-collapse mt-2 mb-4">
                           <thead>
                             <tr className="border-b border-zinc-250 text-[9px] uppercase tracking-widest font-bold text-zinc-400">
                               <th className="py-3 font-bold">Item Details</th>
