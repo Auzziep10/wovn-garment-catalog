@@ -4801,14 +4801,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
                           <div className="text-left">
                             <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 leading-none">Prepared For</p>
-                            <p className="text-[10px] font-bold text-zinc-700 mt-0.5">{customer?.company || deck.customer_name || 'Valued Client'}</p>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-3 ml-auto sm:ml-0">
                           <div className="text-right">
                             <p className="text-[8px] uppercase tracking-widest font-bold text-zinc-400 leading-none">Prepared By</p>
-                            <p className="text-[10px] font-bold text-zinc-700 mt-0.5">WOVN Co.</p>
                           </div>
                           <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
                           <img src="/wovn-logo.png" alt="WOVN Logo" className="h-8 object-contain brightness-0" />
