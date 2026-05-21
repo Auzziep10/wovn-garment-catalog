@@ -3239,7 +3239,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
 
   const handleToggleProposalSelection = async (item: DeckItem) => {
     if (isSharedProposal || proposalStatus === 'accepted') return;
-    const newSelected = item.proposal_selected === false ? true : false;
+    const newSelected = item.proposal_selected === true ? false : true;
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, proposal_selected: newSelected } : i));
     try {
       const res = await fetch(`/api/deck-items/${item.id}`, {
@@ -3319,7 +3319,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
           body: JSON.stringify({
             proposal_quantity: qty,
             proposal_price: price,
-            proposal_selected: item.proposal_selected !== false
+            proposal_selected: item.proposal_selected === true
           })
         });
       }));
@@ -3764,7 +3764,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     }
   };
 
-  const proposalItems = items.filter(item => item.proposal_selected !== false);
+  const proposalItems = items.filter(item => item.proposal_selected === true);
   const subtotal = proposalItems.reduce((sum, item) => sum + (getProposalQty(item) * getProposalPrice(item)), 0);
   const discountAmount = subtotal * (proposalDiscount / 100);
   const totalAfterDiscount = subtotal - discountAmount;
@@ -4114,12 +4114,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       handleToggleProposalSelection(item);
                     }}
                     className={`aspect-[4/5] bg-white rounded-[2rem] overflow-hidden relative group transition-all duration-300 ${
-                      item.proposal_selected !== false
+                      item.proposal_selected === true
                         ? 'ring-[3px] ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.35)]'
                         : 'shadow-2xl'
                     }`}
                   >
-                    {item.proposal_selected !== false && (
+                    {item.proposal_selected === true && (
                       <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
                         <Check size={14} className="stroke-[3]" />
                       </div>
@@ -4349,12 +4349,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                             handleToggleProposalSelection(item);
                           }}
                           className={`aspect-[3/4] bg-white rounded-2xl overflow-hidden relative mb-4 transition-all duration-300 border ${
-                            item.proposal_selected !== false
+                            item.proposal_selected === true
                               ? 'ring-[3px] ring-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)] border-transparent'
                               : 'shadow-sm border-zinc-100 group-hover:border-zinc-300'
                           }`}
                         >
-                          {item.proposal_selected !== false && (
+                          {item.proposal_selected === true && (
                             <div className="absolute top-3 left-3 bg-emerald-500 text-white p-1 rounded-full shadow z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
                               <Check size={10} className="stroke-[3]" />
                             </div>

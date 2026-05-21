@@ -462,6 +462,7 @@ app.post("/api/decks/:id/items", async (req, res) => {
       mock_image,
       order_index: order_index || 0,
       variations: variations || [],
+      proposal_selected: false,
       created_at: new Date().toISOString()
     };
     const docRef = await addDoc(collection(db, "deck_items"), itemData);
