@@ -3353,21 +3353,12 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     try {
       const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
       const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&view=proposal`;
-      const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
-
-      if (!response.ok) throw new Error('Shortening failed');
-
-      const shortUrl = await response.text();
-      await navigator.clipboard.writeText(shortUrl);
+      await navigator.clipboard.writeText(url);
       alert('Proposal share link copied to clipboard!');
     } catch (err) {
       const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
       const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&view=proposal`;
-      navigator.clipboard.writeText(url).then(() => {
-        alert('Proposal share link copied to clipboard! (Original URL)');
-      }).catch(() => {
-        alert('Failed to copy link. Please manually copy: ' + url);
-      });
+      alert('Failed to copy link. Please manually copy: ' + url);
     }
   };
 
@@ -4004,23 +3995,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                     // @ts-ignore
                     const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
                     const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
-                    const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
-
-                    if (!response.ok) throw new Error('Shortening failed');
-
-                    const shortUrl = await response.text();
-                    await navigator.clipboard.writeText(shortUrl);
+                    await navigator.clipboard.writeText(url);
                     alert('Anonymous share link copied to clipboard!');
                   } catch (err) {
-                    // Fallback
                     // @ts-ignore
                     const baseDomain = (import.meta as any).env.VITE_CUSTOM_DOMAIN || window.location.origin;
                     const url = `${baseDomain}${window.location.pathname}?deck=${deck.id}&pricing=${showPricing ? 'on' : 'off'}`;
-                    navigator.clipboard.writeText(url).then(() => {
-                      alert('Share link copied to clipboard! (Fallback original URL)');
-                    }).catch(() => {
-                      alert('Failed to copy link. Please manually copy:' + url);
-                    });
+                    alert('Failed to copy link. Please manually copy: ' + url);
                   }
                 }}
                 className="bg-zinc-900 text-white px-6 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors shadow-sm"
@@ -4890,9 +4871,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           <thead>
                             <tr className="border-b border-zinc-250 text-[9px] uppercase tracking-widest font-bold text-zinc-400">
                               <th className="py-3 font-bold">Item Details</th>
-                              <th className="py-3 font-bold text-right">Quantity</th>
-                              <th className="py-3 font-bold text-right">Unit Price</th>
-                              <th className="py-3 font-bold text-right">Total</th>
+                              <th className="py-3 font-bold text-right w-24">Quantity</th>
+                              <th className="py-3 font-bold text-right w-28">Unit Price</th>
+                              <th className="py-3 font-bold text-right w-28">Total</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -4901,17 +4882,19 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                               const price = getProposalPrice(item);
                               return (
                                 <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
-                                  <td className="py-4 pr-4 flex items-start gap-4">
-                                    <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
-                                      <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                      <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
-                                      <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
-                                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
-                                        {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
-                                        {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
-                                        {item.sizes && <span>Sizes: {item.sizes}</span>}
+                                  <td className="py-4 pr-4">
+                                    <div className="flex items-start gap-4">
+                                      <div className="w-16 h-20 bg-zinc-50 border border-zinc-100 rounded-lg p-1 shrink-0 overflow-hidden relative">
+                                        <img src={item.mock_image || item.original_image || ''} className="w-full h-full object-contain" />
+                                      </div>
+                                      <div className="flex flex-col text-left">
+                                        <span className="font-semibold text-xs text-zinc-900">{item.garment_name}</span>
+                                        <span className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5">{item.garment_description}</span>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[8px] text-zinc-400 uppercase tracking-widest font-bold">
+                                          {item.fabric_details && <span>Fabric: {item.fabric_details}</span>}
+                                          {item.turn_time && <span>Turn Time: {item.turn_time}</span>}
+                                          {item.sizes && <span>Sizes: {item.sizes}</span>}
+                                        </div>
                                       </div>
                                     </div>
                                   </td>
