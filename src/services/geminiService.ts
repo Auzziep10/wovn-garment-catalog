@@ -684,3 +684,49 @@ export async function analyzeProductionLogistics(garmentData: { type?: string | 
   }
 }
 
+export async function generateInvisibleMockup(baseImage: string, garmentType: string, gender: string, viewPoint: string) {
+  const model = "gemini-2.5-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/jpeg";
+
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
+
+  const modelObj = getGenerativeModel(ai, { model });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Invisible Mannequin / Floating Garment Generator
+CRITICAL CONSTRAINTS:
+1. Remove any man or woman from the garment, keeping the garment ONLY.
+2. Make the garment look like it's floating as if an invisible man or woman is wearing it.
+3. The garment is a ${gender}'s ${garmentType}.
+4. Viewpoint: ${viewPoint}. Ensure the garment is rotated/displayed from this angle.
+5. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.
+6. Keep the fabric textures, details, colors, and lighting authentic to the original image.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to generate invisible mockup image");
+}

@@ -7,7 +7,7 @@ import {
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
 , ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1687,6 +1687,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
   const [fabricCompositions, setFabricCompositions] = useState<{ id: string, percentage: string, fabric: string }[]>([{ id: Math.random().toString(), percentage: '100', fabric: 'Cotton' }]);
   const [fabricFinishes, setFabricFinishes] = useState<{ id: string, finish: string }[]>([{ id: Math.random().toString(), finish: '' }]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showInvisibleModal, setShowInvisibleModal] = useState(false);
   const [librarySortBy, setLibrarySortBy] = useState<'default' | 'recent' | 'category' | 'gender' | 'type'>('default');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterGender, setFilterGender] = useState<string>('');
@@ -2108,6 +2109,20 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                             <span className="text-xs uppercase tracking-widest font-bold text-zinc-500">Upload Media</span>
                             <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
                           </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (images.length === 0) {
+                                alert("Please upload a base garment image first.");
+                                return;
+                              }
+                              setShowInvisibleModal(true);
+                            }}
+                            className="flex items-center justify-center gap-2 w-full py-4 bg-zinc-900 text-white rounded-lg cursor-pointer hover:bg-zinc-800 transition-colors shadow-sm"
+                          >
+                            <Sparkles size={16} />
+                            <span className="text-xs uppercase tracking-widest font-bold">✨ AI Invisible Mannequin</span>
+                          </button>
                         </div>
                       </div>
                       
@@ -2520,6 +2535,19 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                </div>
              </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInvisibleModal && (
+          <InvisibleMockupGeneratorModal 
+            baseImage={images[0] || ""}
+            onClose={() => setShowInvisibleModal(false)}
+            onSave={(img) => {
+              setImages(prev => [...prev, img]);
+              setShowInvisibleModal(false);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -7143,6 +7171,144 @@ function ModelSceneGeneratorModal({ item, baseImage, onClose, onSave }: {
                     className="w-full bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
                   >
                     <Save size={16} /> Add as Variation to Item
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
+  baseImage: string,
+  onClose: () => void,
+  onSave: (img: string) => void
+}) {
+  const [gender, setGender] = useState('Man');
+  const [garmentType, setGarmentType] = useState('T-Shirt');
+  const [viewPoint, setViewPoint] = useState('Front View');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [resultImage, setResultImage] = useState<string>('');
+  const [error, setError] = useState('');
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    setError('');
+    try {
+      const generated = await generateInvisibleMockup(baseImage, garmentType, gender, viewPoint);
+      setResultImage(generated);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to generate floating garment. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[160] flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">AI Mockup Generator</p>
+            <h3 className="font-serif text-2xl">Create Invisible Mannequin</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-4">
+              <div className="aspect-[3/4] bg-white rounded-2xl overflow-hidden border border-zinc-100 flex items-center justify-center relative bg-checkerboard">
+                <img src={resultImage || baseImage} className="w-full h-full object-contain p-2" />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Gender</label>
+                  <select
+                    value={gender}
+                    onChange={e => setGender(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="Man">Man</option>
+                    <option value="Woman">Woman</option>
+                    <option value="Unisex">Unisex</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Garment Type</label>
+                  <select
+                    value={garmentType}
+                    onChange={e => setGarmentType(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="T-Shirt">T-Shirt</option>
+                    <option value="Hoodie">Hoodie</option>
+                    <option value="Polo">Polo</option>
+                    <option value="Pants">Pants</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Quarter Zip">Quarter Zip</option>
+                    <option value="Long Sleeve">Long Sleeve</option>
+                    <option value="Tank Top">Tank Top</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block">Viewpoint</label>
+                  <select
+                    value={viewPoint}
+                    onChange={e => setViewPoint(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="Front View">Front View</option>
+                    <option value="Back View">Back View</option>
+                    <option value="Right Side View">Right Side View</option>
+                    <option value="Left Side View">Left Side View</option>
+                  </select>
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-red-500 text-xs font-medium">{error}</p>
+              )}
+
+              <div className="space-y-4 pt-4 border-t border-zinc-100">
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="w-full bg-zinc-900 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Sparkles size={16} /> {isGenerating ? 'Generating...' : (resultImage ? 'Regenerate' : 'Create 3D Floating Garment')}
+                </button>
+
+                {resultImage && (
+                  <button
+                    onClick={() => onSave(resultImage)}
+                    className="w-full bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
+                  >
+                    <Plus size={16} /> Add to Garment Images
                   </button>
                 )}
               </div>
