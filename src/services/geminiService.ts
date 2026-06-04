@@ -704,7 +704,8 @@ CRITICAL CONSTRAINTS:
 3. The garment is a ${gender}'s ${garmentType}.
 4. VIEWPOINT: ${viewPoint}. Ensure the garment is rotated and fully displayed from this exact perspective.
 5. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.
-6. PRESERVE DETAILS: Keep the fabric textures, details, colors, and lighting authentic to the original garment, but enhance the lighting to emphasize the new 3D volume.`
+6. PRESERVE DETAILS: Keep the fabric textures, details, colors, and lighting authentic to the original garment, but enhance the lighting to emphasize the new 3D volume.
+7. ARMS AT SIDES: If the garment has sleeves (e.g. hoodies, t-shirts), ensure the sleeves/arms are resting naturally straight down at the sides. Do NOT cross, bend, or lift the arms.`
     },
     {
       inlineData: {
