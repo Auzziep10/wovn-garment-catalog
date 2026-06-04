@@ -7191,6 +7191,7 @@ function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
   const [garmentType, setGarmentType] = useState('T-Shirt');
   const [viewPoint, setViewPoint] = useState('Front View');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
   const [error, setError] = useState('');
 
@@ -7304,10 +7305,22 @@ function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
 
                 {resultImage && (
                   <button
-                    onClick={() => onSave(resultImage)}
-                    className="w-full bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm"
+                    onClick={async () => {
+                      try {
+                        setIsUploading(true);
+                        setError('');
+                        const compressedUrl = await uploadImageToFirebase(resultImage);
+                        onSave(compressedUrl);
+                      } catch (err) {
+                        console.error(err);
+                        setError('Failed to process and upload image.');
+                        setIsUploading(false);
+                      }
+                    }}
+                    disabled={isUploading}
+                    className="w-full bg-emerald-600 border border-emerald-600 text-white py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 animate-in fade-in shadow-sm disabled:opacity-50"
                   >
-                    <Plus size={16} /> Add to Garment Images
+                    <Plus size={16} /> {isUploading ? 'Uploading...' : 'Add to Garment Images'}
                   </button>
                 )}
               </div>
