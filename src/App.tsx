@@ -7296,6 +7296,9 @@ function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
                     <option value="Hoodie">Hoodie</option>
                     <option value="Polo">Polo</option>
                     <option value="Pants">Pants</option>
+                    <option value="Shorts">Shorts</option>
+                    <option value="Swimwear">Swimwear</option>
+                    <option value="Hats">Hats</option>
                     <option value="Outerwear">Outerwear</option>
                     <option value="Quarter Zip">Quarter Zip</option>
                     <option value="Long Sleeve">Long Sleeve</option>
