@@ -2121,7 +2121,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                             className="flex items-center justify-center gap-2 w-full py-4 bg-zinc-900 text-white rounded-lg cursor-pointer hover:bg-zinc-800 transition-colors shadow-sm"
                           >
                             <Sparkles size={16} />
-                            <span className="text-xs uppercase tracking-widest font-bold">✨ AI Invisible Mannequin</span>
+                            <span className="text-xs uppercase tracking-widest font-bold">✨ Invisible Mannequin</span>
                           </button>
                         </div>
                       </div>
