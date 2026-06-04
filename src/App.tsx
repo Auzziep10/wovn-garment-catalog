@@ -7225,7 +7225,7 @@ function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
       >
         <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">AI Mockup Generator</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">Mockup Generator</p>
             <h3 className="font-serif text-2xl">Create Invisible Mannequin</h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors">
