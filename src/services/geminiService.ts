@@ -703,8 +703,8 @@ CRITICAL CONSTRAINTS:
 2. REMOVE HUMAN MODELS: If there is a person (man or woman) in the image, completely remove their body, head, arms, and legs. KEEP THE GARMENT ONLY, floating with 3D volume.
 3. The garment is a ${gender}'s ${garmentType}.
 4. VIEWPOINT: ${viewPoint}. Ensure the garment is rotated and fully displayed from this exact perspective.
-5. BACKGROUND & LIGHTING (CRITICAL): Place the garment against a professional, clean, soft light-grey or off-white photography studio backdrop. Include realistic, soft, diffused drop shadows behind and below the garment to ground it in 3D space. Do NOT use a harsh pure white background without shadows.
-6. PRESERVE DETAILS: Keep the fabric textures, details, and colors authentic to the original garment. Use soft, premium studio lighting to emphasize the new 3D volume, contours, and fabric quality.
+5. BACKGROUND & LIGHTING (CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows casting on a wall behind it or on the floor. NO grey, off-white, or textured backdrops. Every single non-garment pixel MUST be exactly #FFFFFF.
+6. PRESERVE DETAILS: Keep the fabric textures, details, and colors authentic to the original garment. Use soft, clean studio lighting to emphasize the 3D volume and contours of the garment itself.
 7. ARMS AT SIDES: If the garment has sleeves (e.g. hoodies, t-shirts), ensure the sleeves/arms are resting naturally straight down at the sides. Do NOT cross, bend, or lift the arms.`
     },
     {
