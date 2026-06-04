@@ -7178,7 +7178,6 @@ function ModelSceneGeneratorModal({ item, baseImage, onClose, onSave }: {
           </div>
         </div>
       </motion.div>
-      </motion.div>
     </motion.div>
   );
 }
