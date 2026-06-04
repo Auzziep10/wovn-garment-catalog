@@ -697,14 +697,14 @@ export async function generateInvisibleMockup(baseImage: string, garmentType: st
 
   const result = await modelObj.generateContent([
     {
-      text: `TASK: Invisible Mannequin / Floating Garment Generator
+      text: `TASK: Ghost Mannequin / Invisible Person 3D Effect
 CRITICAL CONSTRAINTS:
-1. Remove any man or woman from the garment, keeping the garment ONLY.
-2. Make the garment look like it's floating as if an invisible man or woman is wearing it.
+1. GHOST MANNEQUIN EFFECT (CRITICAL): Transform the garment into a 3D, filled-out shape as if worn by an invisible person. It MUST look like it has volume and depth (a "ghost mannequin" or "hollow" look), NOT flat-layed on a table. If it is currently flat, you MUST add 3D depth and shape to it!
+2. REMOVE HUMAN MODELS: If there is a person (man or woman) in the image, completely remove their body, head, arms, and legs. KEEP THE GARMENT ONLY, floating with 3D volume.
 3. The garment is a ${gender}'s ${garmentType}.
-4. Viewpoint: ${viewPoint}. Ensure the garment is rotated/displayed from this angle.
+4. VIEWPOINT: ${viewPoint}. Ensure the garment is rotated and fully displayed from this exact perspective.
 5. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.
-6. Keep the fabric textures, details, colors, and lighting authentic to the original image.`
+6. PRESERVE DETAILS: Keep the fabric textures, details, colors, and lighting authentic to the original garment, but enhance the lighting to emphasize the new 3D volume.`
     },
     {
       inlineData: {
