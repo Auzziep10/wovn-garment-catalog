@@ -1729,6 +1729,34 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
     }
   }, [initialEditingGarment]);
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!isModalOpen) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              try {
+                const compressed = await uploadImageToFirebase(reader.result as string);
+                setImages(prev => [...prev, compressed]);
+              } catch (err) {
+                console.error("Failed to upload pasted image", err);
+                alert("Failed to upload pasted image");
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [isModalOpen]);
+
   const handleEditClick = (g: Garment) => {
     setEditingGarment(g);
     setImages(g.images && g.images.length > 0 ? g.images : [g.image]);
