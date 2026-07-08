@@ -4,7 +4,7 @@ import {
   Menu, X, ChevronRight, Plus, Upload, Image as ImageIcon,
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
-  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy
+  Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy, Undo
 , ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup } from './services/geminiService';
@@ -8110,6 +8110,10 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
   const stateRef = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
   const [viewState, setViewState] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
 
+  const handleUndo = () => {
+    setClickPositions(prev => prev.slice(0, -1));
+  };
+
   // Keyboard listeners for spacebar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -8374,6 +8378,14 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
               className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 flex items-center gap-1.5 transition-colors pt-4 cursor-pointer"
             >
               <RotateCw size={12} /> Reset Image
+            </button>
+            <button 
+              onClick={handleUndo}
+              disabled={clickPositions.length === 0}
+              className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 disabled:text-zinc-200 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors pt-4 cursor-pointer"
+              title="Undo Last Click"
+            >
+              <Undo size={12} /> Undo
             </button>
             <div className="flex items-center gap-1.5 border-l border-zinc-100 pl-6 pt-4">
               <button
