@@ -8137,25 +8137,23 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     if (!container) return;
     
     const handleNativeWheel = (e: WheelEvent) => {
-      if (e.altKey) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.15 : 0.15;
-        const current = stateRef.current;
-        const newZoom = Math.max(0.2, Math.min(25, current.zoom * (1 + delta)));
-        
-        const rect = container.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.15 : 0.15;
+      const current = stateRef.current;
+      const newZoom = Math.max(0.2, Math.min(25, current.zoom * (1 + delta)));
+      
+      const rect = container.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
 
-        const lx = (e.clientX - cx - current.pan.x) / current.zoom;
-        const ly = (e.clientY - cy - current.pan.y) / current.zoom;
+      const lx = (e.clientX - cx - current.pan.x) / current.zoom;
+      const ly = (e.clientY - cy - current.pan.y) / current.zoom;
 
-        const newPanX = e.clientX - cx - lx * newZoom;
-        const newPanY = e.clientY - cy - ly * newZoom;
-        
-        stateRef.current = { zoom: newZoom, pan: { x: newPanX, y: newPanY } };
-        setViewState(stateRef.current);
-      }
+      const newPanX = e.clientX - cx - lx * newZoom;
+      const newPanY = e.clientY - cy - ly * newZoom;
+      
+      stateRef.current = { zoom: newZoom, pan: { x: newPanX, y: newPanY } };
+      setViewState(stateRef.current);
     };
     
     container.addEventListener('wheel', handleNativeWheel, { passive: false });
@@ -8309,7 +8307,7 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
           }}
         >
           <div className="absolute top-4 left-4 bg-zinc-900/60 backdrop-blur text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full pointer-events-none z-10 flex items-center gap-2">
-            <span>Alt + Scroll to Zoom</span>
+            <span>Scroll/Pinch to Zoom</span>
             <span className="w-1 h-1 rounded-full bg-white/30"></span>
             <span>Space + Drag to Pan</span>
           </div>
@@ -8372,10 +8370,47 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
                 stateRef.current = { zoom: 1, pan: { x: 0, y: 0 } };
                 setViewState(stateRef.current);
               }} 
-              className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 flex items-center gap-1.5 transition-colors pt-4"
+              className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 flex items-center gap-1.5 transition-colors pt-4 cursor-pointer"
             >
               <RotateCw size={12} /> Reset Image
             </button>
+            <div className="flex items-center gap-1.5 border-l border-zinc-100 pl-6 pt-4">
+              <button
+                onClick={() => {
+                  const current = stateRef.current;
+                  const newZoom = Math.max(0.2, current.zoom - 0.25);
+                  stateRef.current = { ...current, zoom: newZoom };
+                  setViewState(stateRef.current);
+                }}
+                className="p-1.5 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut size={16} />
+              </button>
+              <span className="text-[10px] font-bold text-zinc-500 min-w-[40px] text-center">{Math.round(viewState.zoom * 100)}%</span>
+              <button
+                onClick={() => {
+                  const current = stateRef.current;
+                  const newZoom = Math.min(25, current.zoom + 0.25);
+                  stateRef.current = { ...current, zoom: newZoom };
+                  setViewState(stateRef.current);
+                }}
+                className="p-1.5 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  stateRef.current = { zoom: 1, pan: { x: 0, y: 0 } };
+                  setViewState(stateRef.current);
+                }}
+                className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 hover:text-zinc-900 transition-colors p-1.5 hover:bg-zinc-50 rounded-lg cursor-pointer"
+                title="Reset Zoom"
+              >
+                Reset
+              </button>
+            </div>
           </div>
           <div className="flex gap-4">
             <button onClick={onClose} className="px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors">Cancel</button>
