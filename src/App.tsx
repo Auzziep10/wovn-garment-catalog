@@ -2603,6 +2603,12 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [resolvingPantone, setResolvingPantone] = useState<Record<number, boolean>>({});
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
 
+  // Background removal / Paste States
+  const [pendingAssetImage, setPendingAssetImage] = useState<string | null>(null);
+  const [originalAssetImage, setOriginalAssetImage] = useState<string | null>(null);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [erasingAssetUrl, setErasingAssetUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (selectedCustId) {
       Promise.all([
@@ -2613,6 +2619,37 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
         setAssets(assetsData);
       });
     }
+  }, [selectedCustId]);
+
+  // Paste Event Listener for Asset Vault (Ctrl+V)
+  useEffect(() => {
+    if (!selectedCustId) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const dataUrl = reader.result as string;
+              setPendingAssetImage(dataUrl);
+              setOriginalAssetImage(dataUrl);
+            };
+            reader.readAsDataURL(file);
+            e.preventDefault();
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
   }, [selectedCustId]);
 
   const handleRecolorAsset = async (assetImageUrl: string, hexColor: string) => {
@@ -2662,28 +2699,54 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const handleUploadAsset = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && selectedCustId) {
-      setIsUploadingAsset(true);
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const compressed = await uploadImageToFirebase(reader.result as string);
-          const res = await fetch(`/api/customers/${selectedCustId}/assets`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: compressed })
-          });
-          if (res.ok) {
-            const newAsset = await res.json();
-            setAssets(prev => [...prev, newAsset]);
-          }
-        } catch (err) {
-          alert('Failed to upload asset');
-        } finally {
-          setIsUploadingAsset(false);
-          if (e.target) e.target.value = '';
-        }
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setPendingAssetImage(dataUrl);
+        setOriginalAssetImage(dataUrl);
+        if (e.target) e.target.value = '';
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProcessedAsset = async () => {
+    if (!pendingAssetImage || !selectedCustId) return;
+    setIsUploadingAsset(true);
+    try {
+      const compressed = await uploadImageToFirebase(pendingAssetImage);
+      const res = await fetch(`/api/customers/${selectedCustId}/assets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: compressed })
+      });
+      if (res.ok) {
+        const newAsset = await res.json();
+        setAssets(prev => [...prev, newAsset]);
+        setPendingAssetImage(null);
+        setOriginalAssetImage(null);
+      } else {
+        alert('Failed to save asset');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload asset');
+    } finally {
+      setIsUploadingAsset(false);
+    }
+  };
+
+  const handleAIRemoveBackground = async () => {
+    if (!pendingAssetImage) return;
+    setIsAIProcessing(true);
+    try {
+      const resImage = await removeImageBackground(pendingAssetImage);
+      setPendingAssetImage(resImage);
+    } catch (err) {
+      console.error(err);
+      alert('AI Background removal failed. Ensure image format is supported.');
+    } finally {
+      setIsAIProcessing(false);
     }
   };
 
@@ -3124,6 +3187,144 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
             initialCoverImages={editingDeck.cover_images}
             onClose={() => setEditingDeck(null)}
             onConfirm={handleRenameDeck}
+          />
+        )}
+        {pendingAssetImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
+            onClick={() => { if (!isAIProcessing && !isUploadingAsset) { setPendingAssetImage(null); setOriginalAssetImage(null); } }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif text-2xl">Process & Save Asset</h3>
+                  <p className="text-zinc-500 text-sm mt-1">Review your asset, remove its background if necessary, and save it to the customer vault.</p>
+                </div>
+                <button 
+                  onClick={() => { setPendingAssetImage(null); setOriginalAssetImage(null); }} 
+                  disabled={isAIProcessing || isUploadingAsset} 
+                  className="p-2 hover:bg-zinc-50 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+                {/* Left Side: Checkerboard Preview */}
+                <div className="bg-zinc-100 p-8 flex items-center justify-center border-r border-zinc-100 min-h-[300px] md:min-h-0 relative bg-checkerboard">
+                  {isAIProcessing && (
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 animate-in fade-in duration-200">
+                      <div className="relative w-16 h-16 mb-4">
+                        <div className="absolute inset-0 rounded-full border-4 border-zinc-200" />
+                        <div className="absolute inset-0 rounded-full border-4 border-t-zinc-900 animate-spin" />
+                        <Sparkles size={24} className="absolute inset-0 m-auto text-zinc-900 animate-pulse" />
+                      </div>
+                      <p className="font-serif text-lg text-zinc-950 font-bold">Removing background...</p>
+                      <p className="text-zinc-500 text-xs mt-1">AI is parsing image layers</p>
+                    </div>
+                  )}
+                  
+                  <img 
+                    src={pendingAssetImage} 
+                    alt="Asset Preview" 
+                    className="max-w-full max-h-[50vh] object-contain shadow-md rounded-lg transition-all duration-300"
+                  />
+                </div>
+
+                {/* Right Side: Options & Actions */}
+                <div className="p-8 flex flex-col justify-between bg-zinc-50/50">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-xs uppercase tracking-widest font-bold text-zinc-400 mb-2">Background Removal Options</h4>
+                      <p className="text-zinc-500 text-xs mb-4">To place this logo or image cleanly on garments, erase solid backgrounds to transparency (making it a PNG).</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleAIRemoveBackground}
+                        disabled={isAIProcessing || isUploadingAsset}
+                        className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-900 transition-all text-left shadow-sm disabled:opacity-50 group hover:shadow-md cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-gradient-to-tr from-violet-500 to-fuchsia-500 rounded-xl text-white group-hover:scale-110 transition-transform">
+                            <Sparkles size={18} />
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm block text-zinc-900">AI Background Remover</span>
+                            <span className="text-[11px] text-zinc-500 block mt-0.5">Instant automatic transparency using Gemini AI</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-1 transition-transform" />
+                      </button>
+
+                      <button
+                        onClick={() => setErasingAssetUrl(pendingAssetImage)}
+                        disabled={isAIProcessing || isUploadingAsset}
+                        className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-900 transition-all text-left shadow-sm disabled:opacity-50 group hover:shadow-md cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-zinc-100 rounded-xl text-zinc-900 group-hover:bg-zinc-900 group-hover:text-white transition-all group-hover:scale-110">
+                            <Eraser size={18} />
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm block text-zinc-900">Manual Background Eraser</span>
+                            <span className="text-[11px] text-zinc-500 block mt-0.5">Click sections of color to erase manually</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    {pendingAssetImage !== originalAssetImage && (
+                      <button
+                        onClick={() => setPendingAssetImage(originalAssetImage)}
+                        disabled={isAIProcessing || isUploadingAsset}
+                        className="text-xs text-zinc-500 hover:text-zinc-900 font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <RotateCw size={12} /> Reset to Original Image
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 border-t border-zinc-100 pt-6 mt-6">
+                    <button
+                      onClick={() => { setPendingAssetImage(null); setOriginalAssetImage(null); }}
+                      disabled={isAIProcessing || isUploadingAsset}
+                      className="flex-1 py-3.5 border border-zinc-200 hover:border-zinc-900 rounded-full text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveProcessedAsset}
+                      disabled={isAIProcessing || isUploadingAsset}
+                      className="flex-1 py-3.5 bg-zinc-900 text-white rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isUploadingAsset && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                      {isUploadingAsset ? 'Saving...' : 'Save Asset'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        {erasingAssetUrl && (
+          <BackgroundEraserModal
+            currentUrl={erasingAssetUrl}
+            onClose={() => setErasingAssetUrl(null)}
+            onSave={(newUrl) => {
+              setPendingAssetImage(newUrl);
+              setErasingAssetUrl(null);
+            }}
           />
         )}
       </AnimatePresence>
@@ -7932,7 +8133,7 @@ function DeckModal({ onClose, onConfirm, initialName = '', initialCoverImages = 
 
 
 function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
-  item: DeckItem,
+  item?: DeckItem,
   currentUrl: string,
   onClose: () => void,
   onSave: (newUrl: string) => void
