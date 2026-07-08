@@ -2606,7 +2606,6 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   // Background removal / Paste States
   const [pendingAssetImage, setPendingAssetImage] = useState<string | null>(null);
   const [originalAssetImage, setOriginalAssetImage] = useState<string | null>(null);
-  const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [erasingAssetUrl, setErasingAssetUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -2736,19 +2735,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
     }
   };
 
-  const handleAIRemoveBackground = async () => {
-    if (!pendingAssetImage) return;
-    setIsAIProcessing(true);
-    try {
-      const resImage = await removeImageBackground(pendingAssetImage);
-      setPendingAssetImage(resImage);
-    } catch (err) {
-      console.error(err);
-      alert('AI Background removal failed. Ensure image format is supported.');
-    } finally {
-      setIsAIProcessing(false);
-    }
-  };
+
 
   const handleDeleteAsset = async (assetId: string) => {
     if (!selectedCustId || !confirm('Delete this asset?')) return;
@@ -3195,7 +3182,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
-            onClick={() => { if (!isAIProcessing && !isUploadingAsset) { setPendingAssetImage(null); setOriginalAssetImage(null); } }}
+            onClick={() => { if (!isUploadingAsset) { setPendingAssetImage(null); setOriginalAssetImage(null); } }}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -3211,7 +3198,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 </div>
                 <button 
                   onClick={() => { setPendingAssetImage(null); setOriginalAssetImage(null); }} 
-                  disabled={isAIProcessing || isUploadingAsset} 
+                  disabled={isUploadingAsset} 
                   className="p-2 hover:bg-zinc-50 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <X size={20} />
@@ -3221,18 +3208,6 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
               <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
                 {/* Left Side: Checkerboard Preview */}
                 <div className="bg-zinc-100 p-8 flex items-center justify-center border-r border-zinc-100 min-h-[300px] md:min-h-0 relative bg-checkerboard">
-                  {isAIProcessing && (
-                    <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 animate-in fade-in duration-200">
-                      <div className="relative w-16 h-16 mb-4">
-                        <div className="absolute inset-0 rounded-full border-4 border-zinc-200" />
-                        <div className="absolute inset-0 rounded-full border-4 border-t-zinc-900 animate-spin" />
-                        <Sparkles size={24} className="absolute inset-0 m-auto text-zinc-900 animate-pulse" />
-                      </div>
-                      <p className="font-serif text-lg text-zinc-950 font-bold">Removing background...</p>
-                      <p className="text-zinc-500 text-xs mt-1">AI is parsing image layers</p>
-                    </div>
-                  )}
-                  
                   <img 
                     src={pendingAssetImage} 
                     alt="Asset Preview" 
@@ -3244,31 +3219,14 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                 <div className="p-8 flex flex-col justify-between bg-zinc-50/50">
                   <div className="space-y-6">
                     <div>
-                      <h4 className="text-xs uppercase tracking-widest font-bold text-zinc-400 mb-2">Background Removal Options</h4>
+                      <h4 className="text-xs uppercase tracking-widest font-bold text-zinc-400 mb-2">Background Removal</h4>
                       <p className="text-zinc-500 text-xs mb-4">To place this logo or image cleanly on garments, erase solid backgrounds to transparency (making it a PNG).</p>
                     </div>
 
                     <div className="space-y-3">
                       <button
-                        onClick={handleAIRemoveBackground}
-                        disabled={isAIProcessing || isUploadingAsset}
-                        className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-900 transition-all text-left shadow-sm disabled:opacity-50 group hover:shadow-md cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-gradient-to-tr from-violet-500 to-fuchsia-500 rounded-xl text-white group-hover:scale-110 transition-transform">
-                            <Sparkles size={18} />
-                          </div>
-                          <div>
-                            <span className="font-bold text-sm block text-zinc-900">AI Background Remover</span>
-                            <span className="text-[11px] text-zinc-500 block mt-0.5">Instant automatic transparency using Gemini AI</span>
-                          </div>
-                        </div>
-                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-1 transition-transform" />
-                      </button>
-
-                      <button
                         onClick={() => setErasingAssetUrl(pendingAssetImage)}
-                        disabled={isAIProcessing || isUploadingAsset}
+                        disabled={isUploadingAsset}
                         className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-900 transition-all text-left shadow-sm disabled:opacity-50 group hover:shadow-md cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
@@ -3287,7 +3245,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                     {pendingAssetImage !== originalAssetImage && (
                       <button
                         onClick={() => setPendingAssetImage(originalAssetImage)}
-                        disabled={isAIProcessing || isUploadingAsset}
+                        disabled={isUploadingAsset}
                         className="text-xs text-zinc-500 hover:text-zinc-900 font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <RotateCw size={12} /> Reset to Original Image
@@ -3298,14 +3256,14 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                   <div className="flex gap-4 border-t border-zinc-100 pt-6 mt-6">
                     <button
                       onClick={() => { setPendingAssetImage(null); setOriginalAssetImage(null); }}
-                      disabled={isAIProcessing || isUploadingAsset}
+                      disabled={isUploadingAsset}
                       className="flex-1 py-3.5 border border-zinc-200 hover:border-zinc-900 rounded-full text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-50 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveProcessedAsset}
-                      disabled={isAIProcessing || isUploadingAsset}
+                      disabled={isUploadingAsset}
                       className="flex-1 py-3.5 bg-zinc-900 text-white rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isUploadingAsset && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
