@@ -8260,12 +8260,13 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
     
-    // Calculate exact click coordinates within original image scale
-    const startX = Math.floor(e.nativeEvent.offsetX * scaleX);
-    const startY = Math.floor(e.nativeEvent.offsetY * scaleY);
+    // Calculate exact click coordinates within original image scale using clientX/clientY relative to bounding rect
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    const startX = Math.floor((clickX / rect.width) * canvas.width);
+    const startY = Math.floor((clickY / rect.height) * canvas.height);
     
     setClickPositions(prev => [...prev, { x: startX, y: startY }]);
   };
