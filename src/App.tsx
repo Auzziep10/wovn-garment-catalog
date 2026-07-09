@@ -6809,6 +6809,51 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState('CRITICAL: Perfectly preserve the text in the logo so it is flawless, sharp, and easy to read. Place the logo realistically, matching the angles and lighting of the fabric.');
+
+  const decorationTypes = [
+    'Screen Print',
+    'Embroidery',
+    'DTF',
+    'Laser Etched',
+    'Raised Silicon',
+    'Leather Patch',
+    'Vinyl'
+  ];
+
+  const handleToggleDecoration = (decoration: string) => {
+    const regexActive = new RegExp(`\\b${decoration}\\b`, 'i');
+    const isActive = regexActive.test(customPrompt);
+
+    if (isActive) {
+      const regexRemove = new RegExp(`\\b${decoration}\\b[.,\\s]*`, 'gi');
+      let newPrompt = customPrompt.replace(regexRemove, '').trim();
+      newPrompt = newPrompt.replace(/\s+/g, ' ');
+      newPrompt = newPrompt.replace(/^[.,\s]+/, '');
+      setCustomPrompt(newPrompt);
+    } else {
+      let newPrompt = customPrompt;
+      let replaced = false;
+
+      for (const type of decorationTypes) {
+        const regexType = new RegExp(`\\b${type}\\b`, 'i');
+        if (regexType.test(newPrompt)) {
+          newPrompt = newPrompt.replace(regexType, decoration);
+          replaced = true;
+          break;
+        }
+      }
+
+      if (!replaced) {
+        if (!newPrompt.trim()) {
+          newPrompt = decoration;
+        } else {
+          newPrompt = `${decoration}. ${newPrompt}`;
+        }
+      }
+      setCustomPrompt(newPrompt);
+    }
+  };
+
   const [garmentColor, setGarmentColor] = useState('Original (No Change)');
   const [logoColor, setLogoColor] = useState('Original (No Change)');
   const [garmentView, setGarmentView] = useState('Front View (Default)');
@@ -7181,10 +7226,30 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                className="w-full bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none mb-6"
+                className="w-full bg-zinc-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all resize-none mb-3"
                 rows={3}
                 placeholder="e.g. High-quality silver embroidery, screen printed with a vintage fade..."
               />
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {decorationTypes.map(type => {
+                  const active = new RegExp(`\\b${type}\\b`, 'i').test(customPrompt);
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => handleToggleDecoration(type)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all border cursor-pointer ${
+                        active
+                          ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
+                          : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:border-zinc-300'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
+              </div>
 
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
                 3. Garment View <HoverTooltip content="Regenerate the garment from a completely different camera perspective before placing the logo." />
