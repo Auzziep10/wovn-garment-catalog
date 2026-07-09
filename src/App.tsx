@@ -5,9 +5,9 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy, Undo
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check, FlipHorizontal } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
-import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup } from './services/geminiService';
+import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup, eraseBrandingRegion } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -6867,6 +6867,13 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useMotionValue(0);
+
+  const [isEraserMode, setIsEraserMode] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+  const eraserX = useMotionValue(0);
+  const eraserY = useMotionValue(0);
+  const [eraserWidth, setEraserWidth] = useState(128);
+  const [eraserHeight, setEraserHeight] = useState(64);
   const [vaultAssets, setVaultAssets] = useState<CustomerAsset[]>([]);
 
   useEffect(() => {
@@ -6972,6 +6979,85 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
     }
   };
 
+  const handleMirrorGarment = () => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Flip horizontally
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0);
+      
+      setActiveGarmentImage(canvas.toDataURL('image/jpeg', 1.0));
+      setResultImage('');
+    };
+    img.src = activeGarmentImage;
+  };
+
+  const handleRunEraser = async () => {
+    if (!bounds.width || !bounds.height) {
+      alert("Garment container not ready. Please try again.");
+      return;
+    }
+    setIsErasing(true);
+    try {
+      const canvas = document.createElement('canvas');
+      const garmentImg = new Image();
+      garmentImg.crossOrigin = "anonymous";
+      garmentImg.src = activeGarmentImage;
+
+      await new Promise((resolve, reject) => {
+        garmentImg.onload = resolve;
+        garmentImg.onerror = reject;
+      });
+
+      canvas.width = garmentImg.naturalWidth;
+      canvas.height = garmentImg.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Could not get canvas context");
+
+      // Draw white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Determine scale factor
+      const scale = Math.max(canvas.width / bounds.width, canvas.height / bounds.height);
+
+      // Eraser position in container space relative to center
+      const centerX = canvas.width / 2 + eraserX.get() * scale;
+      const centerY = canvas.height / 2 + eraserY.get() * scale;
+
+      // Draw black rectangle
+      const drawW = eraserWidth * scale;
+      const drawH = eraserHeight * scale;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(centerX - drawW / 2, centerY - drawH / 2, drawW, drawH);
+
+      const maskBase64 = canvas.toDataURL('image/png');
+
+      // Call Gemini Service to erase branding region
+      const erasedImageUrl = await eraseBrandingRegion(activeGarmentImage, maskBase64);
+      
+      setActiveGarmentImage(erasedImageUrl);
+      setResultImage('');
+      setIsEraserMode(false);
+      eraserX.set(0);
+      eraserY.set(0);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to erase branding. Please try again.');
+    } finally {
+      setIsErasing(false);
+    }
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
 
@@ -7021,7 +7107,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
           >
             <img src={resultImage || activeGarmentImage} className="w-full h-full object-contain pointer-events-none" />
 
-            {!resultImage && logo && (
+            {!resultImage && !isEraserMode && logo && (
               <motion.div
                 drag
                 dragMomentum={false}
@@ -7091,17 +7177,131 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
               </motion.div>
             )}
 
-            {(isGenerating || isRotating) && (
+            {!resultImage && isEraserMode && (
+              <motion.div
+                drag
+                dragMomentum={false}
+                dragElastic={0}
+                dragConstraints={containerRef}
+                style={{ 
+                  x: eraserX, 
+                  y: eraserY,
+                  width: eraserWidth,
+                  height: eraserHeight,
+                  marginLeft: -eraserWidth / 2,
+                  marginTop: -eraserHeight / 2
+                }}
+                className="absolute top-1/2 left-1/2 flex items-center justify-center cursor-move z-10"
+              >
+                <div className="w-full h-full border-2 border-dashed border-red-500 bg-red-500/10 flex items-center justify-center relative shadow-lg">
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-white bg-red-600 px-2 py-1 rounded shadow-sm select-none border border-red-500 flex items-center gap-1">
+                    <Eraser size={10} /> Erase Area
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {(isGenerating || isRotating || isErasing) && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center z-50">
                 <div className="w-16 h-16 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="font-serif text-2xl mb-2">{isRotating ? 'Rotating Garment' : 'Creating Realistic Mockup'}</h3>
-                <p className="text-zinc-500 text-sm">{isRotating ? 'Generating a professional view from the requested perspective...' : 'Meticulously placing the logo and adjusting lighting for a perfect result...'}</p>
+                <h3 className="font-serif text-2xl mb-2">
+                  {isRotating ? 'Rotating Garment' : isErasing ? 'Erasing Branding' : 'Creating Realistic Mockup'}
+                </h3>
+                <p className="text-zinc-500 text-sm">
+                  {isRotating 
+                    ? 'Generating a professional view from the requested perspective...' 
+                    : isErasing 
+                      ? 'Analyzing the region and seamlessly blending the fabric texture...' 
+                      : 'Meticulously placing the logo and adjusting lighting for a perfect result...'}
+                </p>
               </div>
             )}
           </div>
 
-          {!resultImage && logo && (
-            <div className="flex items-center gap-6 bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
+          {!resultImage && isEraserMode && (
+            <div className="w-full bg-red-50/40 p-6 rounded-2xl border border-red-100 space-y-4 animate-in slide-in-from-bottom duration-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Eraser size={14} className="text-red-600 animate-pulse" /> AI Branding Eraser
+                  </h4>
+                  <p className="text-[11px] text-red-700/80">Drag the red box over the branding area (e.g. tag, label) you want to remove.</p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleRunEraser}
+                    disabled={isErasing}
+                    className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    {isErasing ? 'Erasing...' : 'Confirm Erase'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEraserMode(false);
+                      eraserX.set(0);
+                      eraserY.set(0);
+                    }}
+                    className="flex-1 sm:flex-none bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-zinc-100 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 border-t border-red-100/60">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-red-800">
+                    <span>Box Width</span>
+                    <span>{eraserWidth}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="32"
+                    max="256"
+                    value={eraserWidth}
+                    onChange={(e) => setEraserWidth(parseInt(e.target.value))}
+                    className="w-full accent-red-600 cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-red-800">
+                    <span>Box Height</span>
+                    <span>{eraserHeight}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="16"
+                    max="256"
+                    value={eraserHeight}
+                    onChange={(e) => setEraserHeight(parseInt(e.target.value))}
+                    className="w-full accent-red-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!resultImage && !isEraserMode && (
+            <div className="w-full flex flex-col gap-4 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEraserMode(true);
+                  eraserX.set(0);
+                  eraserY.set(0);
+                }}
+                className="flex items-center justify-center gap-2 bg-white border border-zinc-200 hover:border-zinc-900 hover:text-zinc-900 px-4 py-3.5 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-zinc-700 transition-all cursor-pointer shadow-sm w-full"
+              >
+                <Eraser size={14} className="text-zinc-500" />
+                Erase Existing Branding / Label
+              </button>
+            </div>
+          )}
+
+          {!resultImage && !isEraserMode && logo && (
+            <div className="flex items-center gap-6 bg-zinc-50 p-6 rounded-2xl border border-zinc-100 mt-4 w-full">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 flex items-center">
@@ -7199,13 +7399,23 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                     ))}
                   </select>
                 </div>
-                <button
-                  onClick={handleRotateGarment}
-                  disabled={isRotating || garmentView === 'Front View (Default)'}
-                  className="bg-zinc-100 text-zinc-900 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap h-[52px] w-full sm:w-auto"
-                >
-                  <RotateCw size={16} /> {isRotating ? 'Rotating...' : 'Rotate Garment'}
-                </button>
+                <div className="flex gap-2 w-full sm:w-auto flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleMirrorGarment}
+                    className="flex-1 sm:flex-none bg-zinc-100 hover:bg-zinc-200 text-zinc-900 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-2 whitespace-nowrap h-[52px] cursor-pointer"
+                  >
+                    <FlipHorizontal size={16} /> Mirror Garment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRotateGarment}
+                    disabled={isRotating || garmentView === 'Front View (Default)'}
+                    className="flex-1 sm:flex-none bg-zinc-100 hover:bg-zinc-200 text-zinc-900 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap h-[52px] cursor-pointer"
+                  >
+                    <RotateCw size={16} /> {isRotating ? 'Rotating...' : 'Rotate'}
+                  </button>
+                </div>
               </div>
             </section>
 

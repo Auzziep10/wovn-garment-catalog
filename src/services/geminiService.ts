@@ -731,3 +731,58 @@ CRITICAL CONSTRAINTS:
 
   throw new Error("Failed to generate invisible mockup image");
 }
+
+export async function eraseBrandingRegion(baseImage: string, maskImageBase64: string) {
+  const model = "gemini-3.1-flash-image";
+
+  let baseImageData: string;
+  let baseMimeType = "image/jpeg";
+
+  const solidBaseImage = await ensureSolidBackground(baseImage);
+  baseImageData = solidBaseImage.split(",")[1] || solidBaseImage;
+
+  const maskData = maskImageBase64.split(",")[1] || maskImageBase64;
+  const maskMatch = maskImageBase64.match(/^data:(image\/[a-z]+);base64,/);
+  const maskMimeType = maskMatch ? maskMatch[1] : "image/png";
+
+  const modelObj = getGenerativeModel(ai, { model });
+
+  const result = await modelObj.generateContent([
+    {
+      text: `TASK: Erase Branding / Logos / Labels
+CRITICAL CONSTRAINTS:
+1. REMOVE all existing branding, labels, logos, tags, graphics, or text inside the black region of the mask provided in the second image.
+2. FILL the erased area seamlessly, matching the surrounding garment fabric color, texture, folds, and lighting so it looks completely clean, blank, and untouched.
+3. DO NOT change anything else on the garment. The rest of the garment, background, and lighting MUST remain identical to the first image.
+4. ISOLATE ON PURE WHITE (ULTRA-CRITICAL): The garment MUST be completely isolated on a flat, solid, mathematically pure white background (HEX #FFFFFF). Absolutely NO shadows on the floor. NO cream, off-white, light grey, or transparent backgrounds. NO gradients. Every non-garment pixel MUST be exactly #FFFFFF.`
+    },
+    {
+      inlineData: {
+        data: baseImageData,
+        mimeType: baseMimeType,
+      }
+    },
+    {
+      inlineData: {
+        data: maskData,
+        mimeType: maskMimeType,
+      }
+    }
+  ]);
+
+  const response = result.response;
+  const candidates = response.candidates;
+
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
+      }
+      if (part.text && part.text.startsWith('iVBORw0KGgo')) {
+        return `data:image/png;base64,${part.text}`;
+      }
+    }
+  }
+
+  throw new Error("Failed to erase branding region");
+}
