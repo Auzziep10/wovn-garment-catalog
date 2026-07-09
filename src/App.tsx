@@ -2607,6 +2607,7 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
   const [pendingAssetImage, setPendingAssetImage] = useState<string | null>(null);
   const [originalAssetImage, setOriginalAssetImage] = useState<string | null>(null);
   const [erasingAssetUrl, setErasingAssetUrl] = useState<string | null>(null);
+  const [isCroppingAsset, setIsCroppingAsset] = useState(false);
 
   useEffect(() => {
     if (selectedCustId) {
@@ -3240,6 +3241,23 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
                         </div>
                         <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-1 transition-transform" />
                       </button>
+
+                      <button
+                        onClick={() => setIsCroppingAsset(true)}
+                        disabled={isUploadingAsset}
+                        className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-900 transition-all text-left shadow-sm disabled:opacity-50 group hover:shadow-md cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-zinc-100 rounded-xl text-zinc-900 group-hover:bg-zinc-900 group-hover:text-white transition-all group-hover:scale-110">
+                            <Crop size={18} />
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm block text-zinc-900">Crop Image</span>
+                            <span className="text-[11px] text-zinc-500 block mt-0.5">Trim boundaries and cut out specific regions</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-1 transition-transform" />
+                      </button>
                     </div>
 
                     {pendingAssetImage !== originalAssetImage && (
@@ -3282,6 +3300,16 @@ function CustomersView({ customers, onAddCustomer, onSelectCustomer, onDeleteCus
             onSave={(newUrl) => {
               setPendingAssetImage(newUrl);
               setErasingAssetUrl(null);
+            }}
+          />
+        )}
+        {isCroppingAsset && pendingAssetImage && (
+          <AssetCropModal
+            imageUrl={pendingAssetImage}
+            onClose={() => setIsCroppingAsset(false)}
+            onSave={(croppedUrl) => {
+              setPendingAssetImage(croppedUrl);
+              setIsCroppingAsset(false);
             }}
           />
         )}
@@ -8432,6 +8460,205 @@ function BackgroundEraserModal({ item, currentUrl, onClose, onSave }: {
               {isProcessing ? 'Saving...' : 'Save & Replace'}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssetCropModal({ imageUrl, onClose, onSave }: {
+  imageUrl: string,
+  onClose: () => void,
+  onSave: (croppedDataUrl: string) => void
+}) {
+  const [crop, setCrop] = useState({ x: 10, y: 10, w: 80, h: 80 });
+  const [dragState, setDragState] = useState<{
+    type: 'move' | 'tl' | 'tr' | 'bl' | 'br',
+    startX: number,
+    startY: number,
+    startCrop: { x: number, y: number, w: number, h: number }
+  } | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [dims, setDims] = useState({ width: 0, height: 0 });
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const updateDims = () => {
+    if (imgRef.current) {
+      setDims({
+        width: imgRef.current.clientWidth,
+        height: imgRef.current.clientHeight
+      });
+    }
+  };
+
+  useEffect(() => {
+    updateDims();
+    window.addEventListener('resize', updateDims);
+    return () => window.removeEventListener('resize', updateDims);
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent, type: 'move' | 'tl' | 'tr' | 'bl' | 'br') => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    updateDims();
+    setDragState({
+      type,
+      startX: e.clientX,
+      startY: e.clientY,
+      startCrop: { ...crop }
+    });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragState || dims.width === 0 || dims.height === 0) return;
+    
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    
+    const dxPct = (dx / dims.width) * 100;
+    const dyPct = (dy / dims.height) * 100;
+    
+    let newCrop = { ...crop };
+    
+    if (dragState.type === 'move') {
+      newCrop.x = Math.max(0, Math.min(100 - dragState.startCrop.w, dragState.startCrop.x + dxPct));
+      newCrop.y = Math.max(0, Math.min(100 - dragState.startCrop.h, dragState.startCrop.y + dyPct));
+    } else if (dragState.type === 'br') {
+      newCrop.w = Math.max(5, Math.min(100 - dragState.startCrop.x, dragState.startCrop.w + dxPct));
+      newCrop.h = Math.max(5, Math.min(100 - dragState.startCrop.y, dragState.startCrop.h + dyPct));
+    } else if (dragState.type === 'tl') {
+      const maxX = dragState.startCrop.x + dragState.startCrop.w - 5;
+      newCrop.x = Math.max(0, Math.min(maxX, dragState.startCrop.x + dxPct));
+      newCrop.w = dragState.startCrop.x + dragState.startCrop.w - newCrop.x;
+      
+      const maxY = dragState.startCrop.y + dragState.startCrop.h - 5;
+      newCrop.y = Math.max(0, Math.min(maxY, dragState.startCrop.y + dyPct));
+      newCrop.h = dragState.startCrop.y + dragState.startCrop.h - newCrop.y;
+    } else if (dragState.type === 'tr') {
+      newCrop.w = Math.max(5, Math.min(100 - dragState.startCrop.x, dragState.startCrop.w + dxPct));
+      
+      const maxY = dragState.startCrop.y + dragState.startCrop.h - 5;
+      newCrop.y = Math.max(0, Math.min(maxY, dragState.startCrop.y + dyPct));
+      newCrop.h = dragState.startCrop.y + dragState.startCrop.h - newCrop.y;
+    } else if (dragState.type === 'bl') {
+      const maxX = dragState.startCrop.x + dragState.startCrop.w - 5;
+      newCrop.x = Math.max(0, Math.min(maxX, dragState.startCrop.x + dxPct));
+      newCrop.w = dragState.startCrop.x + dragState.startCrop.w - newCrop.x;
+      
+      newCrop.h = Math.max(5, Math.min(100 - dragState.startCrop.y, dragState.startCrop.h + dyPct));
+    }
+    
+    setCrop(newCrop);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (dragState) {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      setDragState(null);
+    }
+  };
+
+  const handleCrop = () => {
+    if (!imgRef.current) return;
+    setIsProcessing(true);
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const pixelX = (crop.x / 100) * img.naturalWidth;
+      const pixelY = (crop.y / 100) * img.naturalHeight;
+      const pixelW = (crop.w / 100) * img.naturalWidth;
+      const pixelH = (crop.h / 100) * img.naturalHeight;
+      
+      canvas.width = pixelW;
+      canvas.height = pixelH;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, pixelX, pixelY, pixelW, pixelH, 0, 0, pixelW, pixelH);
+        const dataUrl = canvas.toDataURL('image/png');
+        onSave(dataUrl);
+      }
+      setIsProcessing(false);
+    };
+    img.src = imageUrl;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[110] flex items-center justify-center p-6" onClick={onClose}>
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-6 md:p-8 border-b border-zinc-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-serif text-2xl">Crop Asset</h3>
+            <p className="text-zinc-500 text-sm mt-1">Drag the box and corners to adjust the crop region of your asset.</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-50 rounded-full transition-colors"><X size={20} /></button>
+        </div>
+        
+        <div className="p-12 flex-1 overflow-hidden flex items-center justify-center bg-zinc-100/50 relative min-h-[400px]">
+          <div ref={containerRef} className="relative select-none max-w-full max-h-[55vh] flex items-center justify-center shadow-lg bg-checkerboard rounded-xl overflow-hidden">
+            <img 
+              ref={imgRef}
+              src={imageUrl} 
+              onLoad={updateDims}
+              alt="To Crop"
+              className="max-w-full max-h-[55vh] object-contain select-none pointer-events-none"
+            />
+            
+            {dims.width > 0 && dims.height > 0 && (
+              <div 
+                className="absolute border-2 border-zinc-950/70 border-dashed"
+                style={{
+                  left: `${crop.x}%`,
+                  top: `${crop.y}%`,
+                  width: `${crop.w}%`,
+                  height: `${crop.h}%`,
+                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
+                  cursor: 'move'
+                }}
+                onPointerDown={e => handlePointerDown(e, 'move')}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              >
+                {/* Crop Handles */}
+                <div 
+                  className="absolute w-3 h-3 bg-zinc-900 border border-white rounded-full -top-1.5 -left-1.5 cursor-nwse-resize z-20 shadow-sm"
+                  onPointerDown={e => handlePointerDown(e, 'tl')}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                />
+                <div 
+                  className="absolute w-3 h-3 bg-zinc-900 border border-white rounded-full -top-1.5 -right-1.5 cursor-nesw-resize z-20 shadow-sm"
+                  onPointerDown={e => handlePointerDown(e, 'tr')}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                />
+                <div 
+                  className="absolute w-3 h-3 bg-zinc-900 border border-white rounded-full -bottom-1.5 -left-1.5 cursor-nesw-resize z-20 shadow-sm"
+                  onPointerDown={e => handlePointerDown(e, 'bl')}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                />
+                <div 
+                  className="absolute w-3 h-3 bg-zinc-900 border border-white rounded-full -bottom-1.5 -right-1.5 cursor-nwse-resize z-20 shadow-sm"
+                  onPointerDown={e => handlePointerDown(e, 'br')}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="p-6 md:px-8 border-t border-zinc-100 flex items-center justify-end bg-white shrink-0 gap-4">
+          <button onClick={onClose} className="px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors cursor-pointer">Cancel</button>
+          <button onClick={handleCrop} disabled={isProcessing} className="px-6 py-3 bg-zinc-900 text-white rounded-full text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer">
+            {isProcessing && <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />}
+            Crop Image
+          </button>
         </div>
       </div>
     </div>
