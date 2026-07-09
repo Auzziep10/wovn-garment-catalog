@@ -7215,20 +7215,20 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
           </div>
 
           {!resultImage && isEraserMode && (
-            <div className="w-full bg-red-50/40 p-6 rounded-2xl border border-red-100 space-y-4 animate-in slide-in-from-bottom duration-200">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full bg-red-50/40 p-5 rounded-2xl border border-red-100 space-y-4 animate-in slide-in-from-bottom duration-200">
+              <div className="space-y-3">
                 <div>
                   <h4 className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <Eraser size={14} className="text-red-600 animate-pulse" /> AI Branding Eraser
+                    <Eraser size={14} className="text-red-600 animate-pulse" /> Branding Eraser
                   </h4>
                   <p className="text-[11px] text-red-700/80">Drag the red box over the branding area (e.g. tag, label) you want to remove.</p>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full">
                   <button
                     type="button"
                     onClick={handleRunEraser}
                     disabled={isErasing}
-                    className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     {isErasing ? 'Erasing...' : 'Confirm Erase'}
                   </button>
@@ -7239,7 +7239,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                       eraserX.set(0);
                       eraserY.set(0);
                     }}
-                    className="flex-1 sm:flex-none bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-zinc-100 transition-colors cursor-pointer"
+                    className="flex-1 bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 px-4 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-zinc-100 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
