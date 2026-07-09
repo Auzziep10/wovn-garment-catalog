@@ -7182,7 +7182,36 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
-                1. Customer Logo <HoverTooltip content="Upload a high-quality graphic (transparent PNG works best) to overlay on the garment." />
+                1. Garment View <HoverTooltip content="Regenerate the garment from a completely different camera perspective before placing the logo." />
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-1 space-y-2 w-full">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Rotation / Perspective</label>
+                  <select
+                    value={garmentView}
+                    onChange={(e) => setGarmentView(e.target.value)}
+                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
+                  >
+                    {[
+                      'Front View (Default)', 'Back View', 'Left Side View', 'Right Side View', 'Slight Angle / Three-Quarter View'
+                    ].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleRotateGarment}
+                  disabled={isRotating || garmentView === 'Front View (Default)'}
+                  className="bg-zinc-100 text-zinc-900 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap h-[52px] w-full sm:w-auto"
+                >
+                  <RotateCw size={16} /> {isRotating ? 'Rotating...' : 'Rotate Garment'}
+                </button>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
+                2. Customer Logo <HoverTooltip content="Upload a high-quality graphic (transparent PNG works best) to overlay on the garment." />
               </h3>
               <div className="flex items-center gap-6 mb-6">
                 <div className="w-24 h-24 bg-checkerboard border-2 border-dashed border-zinc-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -7221,7 +7250,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
 
             <section>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-4 flex items-center">
-                2. Describe the Finish <HoverTooltip content="Optional details to follow (e.g. 'Faded vintage screenprint' or 'Thick 3D embroidery'). It will incorporate this lighting/texture." />
+                3. Describe the Finish <HoverTooltip content="Optional details to follow (e.g. 'Faded vintage screenprint' or 'Thick 3D embroidery'). It will incorporate this lighting/texture." />
               </h3>
               <textarea
                 value={customPrompt}
@@ -7249,33 +7278,6 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                     </button>
                   );
                 })}
-              </div>
-
-              <h3 className="text-xs uppercase tracking-widest font-bold mb-4 mt-6 flex items-center">
-                3. Garment View <HoverTooltip content="Regenerate the garment from a completely different camera perspective before placing the logo." />
-              </h3>
-              <div className="flex flex-col sm:flex-row gap-4 items-end">
-                <div className="flex-1 space-y-2 w-full">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Rotation / Perspective</label>
-                  <select
-                    value={garmentView}
-                    onChange={(e) => setGarmentView(e.target.value)}
-                    className="w-full bg-zinc-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 ring-zinc-900 transition-all appearance-none cursor-pointer"
-                  >
-                    {[
-                      'Front View (Default)', 'Back View', 'Left Side View', 'Right Side View', 'Slight Angle / Three-Quarter View'
-                    ].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  onClick={handleRotateGarment}
-                  disabled={isRotating || garmentView === 'Front View (Default)'}
-                  className="bg-zinc-100 text-zinc-900 py-4 px-6 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap h-[52px] w-full sm:w-auto"
-                >
-                  <RotateCw size={16} /> {isRotating ? 'Rotating...' : 'Rotate Garment'}
-                </button>
               </div>
             </section>
 
