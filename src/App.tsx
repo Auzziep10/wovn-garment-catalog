@@ -7193,11 +7193,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
                 }}
                 className="absolute top-1/2 left-1/2 flex items-center justify-center cursor-move z-10"
               >
-                <div className="w-full h-full border-2 border-dashed border-red-500 bg-red-500/10 flex items-center justify-center relative shadow-lg">
-                  <span className="text-[9px] uppercase tracking-wider font-bold text-white bg-red-600 px-2 py-1 rounded shadow-sm select-none border border-red-500 flex items-center gap-1">
-                    <Eraser size={10} /> Erase Area
-                  </span>
-                </div>
+                <div className="w-full h-full border-2 border-dashed border-red-500 bg-red-500/20 relative shadow-lg" />
               </motion.div>
             )}
 
