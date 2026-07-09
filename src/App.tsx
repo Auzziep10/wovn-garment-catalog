@@ -6994,7 +6994,7 @@ function MockupStudio({ garment, deck, deckItem, customer, onBack, onSave }: {
       ctx.scale(-1, 1);
       ctx.drawImage(img, 0, 0);
       
-      setActiveGarmentImage(canvas.toDataURL('image/jpeg', 1.0));
+      setActiveGarmentImage(canvas.toDataURL('image/png'));
       setResultImage('');
     };
     img.src = activeGarmentImage;
