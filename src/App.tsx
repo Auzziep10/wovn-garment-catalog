@@ -352,6 +352,7 @@ export interface DeckItem {
   proposal_selected?: boolean;
   proposal_thumbnail?: string | null;
   sample_ordered?: boolean;
+  sample_keep_item?: boolean;
   sample_receipt_url?: string | null;
   sample_return_by_date?: string | null;
   sample_returned?: boolean;
@@ -1133,7 +1134,11 @@ export default function App() {
                                       <span className="text-zinc-500 group-hover:text-zinc-900 truncate max-w-[150px] transition-colors">
                                         {item.garment_name}
                                       </span>
-                                      {item.sample_return_by_date ? (
+                                      {item.sample_keep_item ? (
+                                        <span className="text-[9px] font-semibold px-2 py-0.5 rounded shrink-0 bg-zinc-50 border border-zinc-100 text-zinc-500">
+                                          Keep / No Return
+                                        </span>
+                                      ) : item.sample_return_by_date ? (
                                         <span className={`text-[9px] font-semibold px-2 py-0.5 rounded shrink-0 transition-all ${isOverdue ? 'text-red-600 bg-red-50 font-bold animate-pulse' : 'text-zinc-400 bg-zinc-50 border border-zinc-100'}`}>
                                           {isOverdue ? 'Overdue: ' : 'Due '}{item.sample_return_by_date}
                                         </span>
@@ -3861,6 +3866,25 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       );
     }
     
+    if (item.sample_keep_item) {
+      return (
+        <span 
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingItem(item);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700 border border-zinc-200 shadow-sm cursor-pointer transition-colors"
+          title="Sample is ordered and kept final (no return required)."
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
+          <span>Ordered (Keep)</span>
+          {item.sample_cost !== undefined && item.sample_cost !== null && (
+            <span className="opacity-75 font-semibold">(${item.sample_cost})</span>
+          )}
+        </span>
+      );
+    }
+
     let isOverdue = false;
     if (item.sample_return_by_date) {
       const today = new Date();
@@ -6224,6 +6248,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const [sampleOrdered, setSampleOrdered] = useState(item.sample_ordered || false);
+  const [sampleKeepItem, setSampleKeepItem] = useState(item.sample_keep_item || false);
   const [sampleReceipt, setSampleReceipt] = useState(item.sample_receipt_url || null);
   const [sampleReturnByDate, setSampleReturnByDate] = useState(item.sample_return_by_date || '');
   const [sampleReturned, setSampleReturned] = useState(item.sample_returned || false);
@@ -7006,8 +7031,31 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                         exit={{ opacity: 0, height: 0 }}
                         className="space-y-5 overflow-hidden pt-4 border-t border-zinc-100"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="flex items-center justify-between bg-zinc-50 border border-zinc-100 rounded-xl p-3">
                           <div>
+                            <span className="text-xs font-semibold text-zinc-900 block">No Return Required (Keep Item)</span>
+                            <span className="text-[10px] text-zinc-400 block mt-0.5">This sample is a final purchase and will not be returned.</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={sampleKeepItem}
+                              onChange={(e) => {
+                                setSampleKeepItem(e.target.checked);
+                                if (e.target.checked) {
+                                  setSampleReturnByDate('');
+                                  setSampleReturned(false);
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-zinc-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
+                          </label>
+                        </div>
+
+                        <div className={`grid grid-cols-1 ${sampleKeepItem ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-4`}>
+                          {!sampleKeepItem && (
+                            <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Return By Date</label>
                             <input
                               type="date"
@@ -7015,7 +7063,8 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                               onChange={e => setSampleReturnByDate(e.target.value)}
                               className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-medium"
                             />
-                          </div>
+                            </div>
+                          )}
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt Image</label>
                             {sampleReceipt ? (
@@ -7083,63 +7132,65 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                           </div>
                         </div>
 
-                        <div className="pt-4 border-t border-zinc-100 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-sm font-medium text-zinc-950 block">Sample Returned</span>
-                              <span className="text-[10px] text-zinc-400 block mt-0.5">Has the sample item been returned?</span>
+                        {!sampleKeepItem && (
+                          <div className="pt-4 border-t border-zinc-100 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="text-sm font-medium text-zinc-950 block">Sample Returned</span>
+                                <span className="text-[10px] text-zinc-400 block mt-0.5">Has the sample item been returned?</span>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer select-none">
+                                <input 
+                                  type="checkbox" 
+                                  checked={sampleReturned}
+                                  onChange={(e) => setSampleReturned(e.target.checked)}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-zinc-100 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
+                              </label>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                              <input 
-                                type="checkbox" 
-                                checked={sampleReturned}
-                                onChange={(e) => setSampleReturned(e.target.checked)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-zinc-100 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
-                            </label>
-                          </div>
 
-                          <AnimatePresence initial={false}>
-                            {sampleReturned && (
-                              <motion.div 
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1"
-                              >
-                                <div>
-                                  <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Restock / Return Shipping Cost ($)</label>
-                                  <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      value={sampleReturnCost}
-                                      onChange={e => setSampleReturnCost(e.target.value)}
-                                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
-                                      placeholder="0.00"
-                                    />
+                            <AnimatePresence initial={false}>
+                              {sampleReturned && (
+                                <motion.div 
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="overflow-hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1"
+                                >
+                                  <div>
+                                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Restock / Return Shipping Cost ($)</label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={sampleReturnCost}
+                                        onChange={e => setSampleReturnCost(e.target.value)}
+                                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                                <div>
-                                  <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Refund Amount ($)</label>
-                                  <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      value={sampleRefundAmount}
-                                      onChange={e => setSampleRefundAmount(e.target.value)}
-                                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
-                                      placeholder="0.00"
-                                    />
+                                  <div>
+                                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Refund Amount ($)</label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={sampleRefundAmount}
+                                        onChange={e => setSampleRefundAmount(e.target.value)}
+                                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -7194,6 +7245,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                   rush_fee_percentage: parseFloat(rushFee) || null,
                   custom_market_analysis: marketAnalysis,
                   sample_ordered: sampleOrdered,
+                  sample_keep_item: sampleOrdered ? sampleKeepItem : false,
                   sample_receipt_url: sampleOrdered ? sampleReceipt : null,
                   sample_return_by_date: sampleOrdered ? (sampleReturnByDate || null) : null,
                   sample_returned: sampleOrdered ? sampleReturned : false,
