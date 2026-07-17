@@ -357,6 +357,7 @@ export interface DeckItem {
   sample_returned?: boolean;
   sample_return_cost?: number | null;
   sample_cost?: number | null;
+  sample_refund_amount?: number | null;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -3851,9 +3852,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
           <span>Returned</span>
-          {item.sample_return_cost !== undefined && item.sample_return_cost !== null && (
-            <span className="opacity-75 font-semibold">(${item.sample_return_cost})</span>
-          )}
+          {item.sample_refund_amount !== undefined && item.sample_refund_amount !== null ? (
+            <span className="opacity-75 font-semibold">(Refunded ${item.sample_refund_amount})</span>
+          ) : item.sample_return_cost !== undefined && item.sample_return_cost !== null ? (
+            <span className="opacity-75 font-semibold">(Cost ${item.sample_return_cost})</span>
+          ) : null}
         </span>
       );
     }
@@ -6226,6 +6229,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
   const [sampleReturned, setSampleReturned] = useState(item.sample_returned || false);
   const [sampleReturnCost, setSampleReturnCost] = useState(item.sample_return_cost?.toString() || '');
   const [sampleCost, setSampleCost] = useState(item.sample_cost?.toString() || '');
+  const [sampleRefundAmount, setSampleRefundAmount] = useState(item.sample_refund_amount?.toString() || '');
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
 
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -7102,19 +7106,35 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden space-y-1.5"
+                                className="overflow-hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1"
                               >
-                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 block">Restock / Return Shipping Cost ($)</label>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    value={sampleReturnCost}
-                                    onChange={e => setSampleReturnCost(e.target.value)}
-                                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
-                                    placeholder="0.00"
-                                  />
+                                <div>
+                                  <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Restock / Return Shipping Cost ($)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={sampleReturnCost}
+                                      onChange={e => setSampleReturnCost(e.target.value)}
+                                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Refund Amount ($)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={sampleRefundAmount}
+                                      onChange={e => setSampleRefundAmount(e.target.value)}
+                                      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                      placeholder="0.00"
+                                    />
+                                  </div>
                                 </div>
                               </motion.div>
                             )}
@@ -7179,6 +7199,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                   sample_returned: sampleOrdered ? sampleReturned : false,
                   sample_return_cost: (sampleOrdered && sampleReturned) ? (parseFloat(sampleReturnCost) || null) : null,
                   sample_cost: sampleOrdered ? (parseFloat(sampleCost) || null) : null,
+                  sample_refund_amount: (sampleOrdered && sampleReturned) ? (parseFloat(sampleRefundAmount) || null) : null,
                 });
               } catch (err: any) {
                 console.error(err);
