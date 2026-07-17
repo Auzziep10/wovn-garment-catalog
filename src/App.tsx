@@ -356,6 +356,7 @@ export interface DeckItem {
   sample_return_by_date?: string | null;
   sample_returned?: boolean;
   sample_return_cost?: number | null;
+  sample_cost?: number | null;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -3879,6 +3880,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
         >
           <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
           <span>Overdue: {item.sample_return_by_date}</span>
+          {item.sample_cost !== undefined && item.sample_cost !== null && (
+            <span className="opacity-75 font-semibold">(${item.sample_cost})</span>
+          )}
         </span>
       );
     }
@@ -3894,6 +3898,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       >
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
         <span>Ordered {item.sample_return_by_date ? `(Due ${item.sample_return_by_date})` : ''}</span>
+        {item.sample_cost !== undefined && item.sample_cost !== null && (
+          <span className="opacity-75 font-semibold">(${item.sample_cost})</span>
+        )}
       </span>
     );
   };
@@ -6218,6 +6225,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
   const [sampleReturnByDate, setSampleReturnByDate] = useState(item.sample_return_by_date || '');
   const [sampleReturned, setSampleReturned] = useState(item.sample_returned || false);
   const [sampleReturnCost, setSampleReturnCost] = useState(item.sample_return_cost?.toString() || '');
+  const [sampleCost, setSampleCost] = useState(item.sample_cost?.toString() || '');
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
 
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -6994,7 +7002,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                         exit={{ opacity: 0, height: 0 }}
                         className="space-y-5 overflow-hidden pt-4 border-t border-zinc-100"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
                             <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Return By Date</label>
                             <input
@@ -7054,6 +7062,20 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                 />
                               </label>
                             )}
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Purchase Cost ($)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={sampleCost}
+                                onChange={e => setSampleCost(e.target.value)}
+                                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                placeholder="0.00"
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -7156,6 +7178,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                   sample_return_by_date: sampleOrdered ? (sampleReturnByDate || null) : null,
                   sample_returned: sampleOrdered ? sampleReturned : false,
                   sample_return_cost: (sampleOrdered && sampleReturned) ? (parseFloat(sampleReturnCost) || null) : null,
+                  sample_cost: sampleOrdered ? (parseFloat(sampleCost) || null) : null,
                 });
               } catch (err: any) {
                 console.error(err);
