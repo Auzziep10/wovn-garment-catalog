@@ -6219,6 +6219,32 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
   );
 }
 
+const openDataUrlInNewTab = (dataUrl: string) => {
+  if (dataUrl.startsWith('data:')) {
+    try {
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || '';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (err) {
+      console.error("Failed to open data URL in new tab:", err);
+      const newTab = window.open();
+      if (newTab) {
+        newTab.document.write(`<iframe src="${dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      }
+    }
+  } else {
+    window.open(dataUrl, '_blank');
+  }
+};
+
 function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, onZoomImage }: {
   item: DeckItem,
   customer?: Customer | null,
@@ -7081,14 +7107,13 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                     />
                                   )}
                                 </div>
-                                <a 
-                                  href={sampleReceipt} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate flex-1"
+                                <button 
+                                  type="button"
+                                  onClick={() => openDataUrlInNewTab(sampleReceipt)} 
+                                  className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate flex-1 text-left cursor-pointer"
                                 >
                                   {sampleReceipt.toLowerCase().includes('.pdf') || sampleReceipt.startsWith('data:application/pdf') ? 'PDF Receipt' : 'View Full'}
-                                </a>
+                                </button>
                                 <button 
                                   type="button" 
                                   onClick={() => setSampleReceipt(null)}
