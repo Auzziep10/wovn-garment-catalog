@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy, Undo
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check, FlipHorizontal, Calendar, DollarSign } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check, FlipHorizontal, Calendar, DollarSign, Package } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup, eraseBrandingRegion } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -4453,6 +4453,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         <Check size={14} className="stroke-[3]" />
                       </div>
                     )}
+                    {!isSharedProposal && item.sample_ordered && !item.sample_returned && (
+                      <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-amber-500 text-white p-2 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none animate-bounce" style={{ animationDuration: '3s' }} title="Sample Ordered (Not Yet Returned)">
+                        <Package size={16} className="stroke-[2.5]" />
+                      </div>
+                    )}
                     {!isSharedProposal && item.sample_ordered && (
                       <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10">
                         {getSampleStatusBadge(item)}
@@ -4691,6 +4696,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           {item.proposal_selected === true && (
                             <div className="absolute top-3 left-3 bg-emerald-500 text-white p-1 rounded-full shadow z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
                               <Check size={10} className="stroke-[3]" />
+                            </div>
+                          )}
+                          {!isSharedProposal && item.sample_ordered && !item.sample_returned && (
+                            <div className="absolute top-3 right-3 bg-amber-500 text-white p-1.5 rounded-full shadow z-10 flex items-center justify-center pointer-events-none animate-bounce" style={{ animationDuration: '3s' }} title="Sample Ordered (Not Yet Returned)">
+                              <Package size={12} className="stroke-[2.5]" />
                             </div>
                           )}
                           {!isSharedProposal && item.sample_ordered && (
