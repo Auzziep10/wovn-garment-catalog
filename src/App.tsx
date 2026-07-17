@@ -496,6 +496,34 @@ export default function App() {
   const [currentDeck, setCurrentDeck] = useState<Deck | null>(null);
   const [selectedGarment, setSelectedGarment] = useState<Garment | null>(null);
   const [selectedDeckItem, setSelectedDeckItem] = useState<DeckItem | null>(null);
+  const [initialEditItemId, setInitialEditItemId] = useState<number | null>(null);
+  const [sampleDecks, setSampleDecks] = useState<any[]>([]);
+  const [sampleDecksCount, setSampleDecksCount] = useState<number>(0);
+  const [isSampleDropdownOpen, setIsSampleDropdownOpen] = useState(false);
+  const [isLoadingSamples, setIsLoadingSamples] = useState(false);
+
+  const fetchSampleDecks = async () => {
+    setIsLoadingSamples(true);
+    try {
+      const res = await fetch('/api/samples');
+      if (res.ok) {
+        const data = await res.json();
+        setSampleDecks(data);
+        const count = data.reduce((acc: number, d: any) => acc + (d.items?.length || 0), 0);
+        setSampleDecksCount(count);
+      }
+    } catch (err) {
+      console.error("Error fetching sample decks:", err);
+    } finally {
+      setIsLoadingSamples(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSampleDecks();
+    const interval = setInterval(fetchSampleDecks, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && currentDeck?.id) {
@@ -1023,6 +1051,106 @@ export default function App() {
                 </button>
               )}
 
+              {/* Sample Tracker Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    const nextOpen = !isSampleDropdownOpen;
+                    setIsSampleDropdownOpen(nextOpen);
+                    if (nextOpen) {
+                      fetchSampleDecks();
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer rounded-full border border-zinc-100 relative text-zinc-600 hover:text-zinc-900"
+                  title="Sample Tracking Center"
+                >
+                  <Package size={14} className={sampleDecksCount > 0 ? "text-amber-500" : "text-zinc-400"} />
+                  <span className="text-[10px] uppercase tracking-widest font-bold hidden sm:inline">Samples</span>
+                  {sampleDecksCount > 0 && (
+                    <span className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[16px] h-4">
+                      {sampleDecksCount}
+                    </span>
+                  )}
+                </button>
+
+                {isSampleDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsSampleDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-80 bg-white border border-zinc-100 rounded-2xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto custom-scrollbar">
+                      <div className="flex items-center justify-between pb-2 mb-3 border-b border-zinc-100">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900">Active Samples</span>
+                        <span className="text-[9px] font-bold uppercase text-zinc-400">{sampleDecksCount} Items Ordered</span>
+                      </div>
+                      
+                      {isLoadingSamples ? (
+                        <div className="flex flex-col items-center justify-center py-6 text-zinc-400 gap-2">
+                          <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" />
+                          <span className="text-[10px] uppercase tracking-widest font-bold">Loading...</span>
+                        </div>
+                      ) : sampleDecks.length === 0 ? (
+                        <p className="text-xs text-zinc-400 text-center py-6 font-medium">No active samples currently ordered.</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {sampleDecks.map((d: any) => (
+                            <div key={d.id} className="space-y-1.5">
+                              <button
+                                onClick={async () => {
+                                  setIsSampleDropdownOpen(false);
+                                  const res = await fetch(`/api/decks/${d.id}`);
+                                  if (res.ok) {
+                                    const deckData = await res.json();
+                                    setCurrentDeck(deckData);
+                                    setView('deck-view');
+                                  }
+                                }}
+                                className="text-left w-full text-[10px] font-bold uppercase tracking-wider text-zinc-800 hover:text-zinc-600 flex items-center justify-between transition-colors"
+                              >
+                                <span className="truncate max-w-[200px]">{d.name}</span>
+                                <span className="text-[9px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-full shrink-0">
+                                  {d.items.length} {d.items.length === 1 ? 'item' : 'items'}
+                                </span>
+                              </button>
+                              <div className="pl-2.5 border-l border-zinc-100 space-y-1.5">
+                                {d.items.map((item: any) => {
+                                  const isOverdue = item.sample_return_by_date && new Date(item.sample_return_by_date + 'T00:00:00').getTime() < new Date().setHours(0,0,0,0);
+                                  return (
+                                    <div 
+                                      key={item.id} 
+                                      className="flex items-center justify-between text-xs py-1 hover:bg-zinc-50 rounded px-1.5 group cursor-pointer transition-colors"
+                                      onClick={async () => {
+                                        setIsSampleDropdownOpen(false);
+                                        const res = await fetch(`/api/decks/${d.id}`);
+                                        if (res.ok) {
+                                          const deckData = await res.json();
+                                          setCurrentDeck(deckData);
+                                          setView('deck-view');
+                                          setInitialEditItemId(item.id);
+                                        }
+                                      }}
+                                    >
+                                      <span className="text-zinc-500 group-hover:text-zinc-900 truncate max-w-[150px] transition-colors">
+                                        {item.garment_name}
+                                      </span>
+                                      {item.sample_return_by_date ? (
+                                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded shrink-0 transition-all ${isOverdue ? 'text-red-600 bg-red-50 font-bold animate-pulse' : 'text-zinc-400 bg-zinc-50 border border-zinc-100'}`}>
+                                          {isOverdue ? 'Overdue: ' : 'Due '}{item.sample_return_by_date}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] text-zinc-400 italic">No return date</span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
               <div className="flex items-center gap-2">
                 {isSearchOpen || globalSearchQuery ? (
                   <div className="flex items-center gap-2 border border-zinc-200 rounded-full px-4 py-2 bg-white flex-1 max-w-[200px] md:max-w-xs transition-all duration-300">
@@ -1244,6 +1372,8 @@ export default function App() {
                 }
               }
             }}
+            initialEditItemId={initialEditItemId}
+            onClearInitialEditItemId={() => setInitialEditItemId(null)}
           />
         )}
         {view === 'presentation' && currentDeck && (
@@ -3395,7 +3525,7 @@ function EditCustomerModal({ customer, onClose, onSave }: {
   );
 }
 
-function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing, isSharedProposal = false }: {
+function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresent, onRemoveItem, showPricing, setShowPricing, isSharedProposal = false, initialEditItemId = null, onClearInitialEditItemId }: {
   deck: Deck,
   customer: Customer | null,
   onBack: () => void,
@@ -3404,7 +3534,9 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   onRemoveItem: (itemId: number) => void,
   showPricing: boolean,
   setShowPricing: (show: boolean) => void,
-  isSharedProposal?: boolean
+  isSharedProposal?: boolean,
+  initialEditItemId?: number | null,
+  onClearInitialEditItemId?: () => void
 }) {
   const [items, setItems] = useState<DeckItem[]>(deck.items || []);
 
@@ -3814,6 +3946,18 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
   useEffect(() => {
     fetchItems();
   }, [deck.id]);
+
+  useEffect(() => {
+    if (initialEditItemId && items && items.length > 0) {
+      const target = items.find(i => i.id === initialEditItemId);
+      if (target) {
+        setEditingItem(target);
+        if (onClearInitialEditItemId) {
+          onClearInitialEditItemId();
+        }
+      }
+    }
+  }, [initialEditItemId, items]);
 
   useEffect(() => {
     const cid = customer?.id || deck.customer_id;

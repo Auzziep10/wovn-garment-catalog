@@ -339,6 +339,58 @@ app.get("/api/customers/:id/decks", async (req, res) => {
   }
 });
 
+app.get("/api/samples", async (req, res) => {
+  try {
+    const q = query(collection(db, "deck_items"), where("sample_ordered", "==", true));
+    const snapshot = await getDocs(q);
+    
+    const items = await Promise.all(snapshot.docs.map(async (itemDoc) => {
+      const itemData: any = { id: itemDoc.id, ...itemDoc.data() };
+      let garmentName = itemData.custom_name || "Unknown";
+      if (!itemData.custom_name && itemData.garment_id) {
+        const garmentRef = doc(db, "garments", itemData.garment_id);
+        const garmentSnap = await getDoc(garmentRef);
+        if (garmentSnap.exists()) {
+          garmentName = garmentSnap.data().name || "Unknown";
+        }
+      }
+      return {
+        ...itemData,
+        garment_name: garmentName
+      };
+    }));
+
+    const itemsGrouped: Record<string, any[]> = {};
+    for (const item of items) {
+      if (!itemsGrouped[item.deck_id]) {
+        itemsGrouped[item.deck_id] = [];
+      }
+      itemsGrouped[item.deck_id].push(item);
+    }
+
+    const deckIds = Object.keys(itemsGrouped);
+    const decks = await Promise.all(deckIds.map(async (deckId) => {
+      const deckRef = doc(db, "decks", deckId);
+      const deckSnap = await getDoc(deckRef);
+      if (deckSnap.exists()) {
+        const deckData = deckSnap.data();
+        return {
+          id: deckId,
+          name: deckData.name,
+          customer_id: deckData.customer_id,
+          items: itemsGrouped[deckId]
+        };
+      }
+      return null;
+    }));
+
+    res.json(decks.filter(Boolean));
+  } catch (error: any) {
+    console.error("Error fetching samples:", error);
+    res.status(500).json({ error: "Failed to fetch samples", details: error.message });
+  }
+});
+
 app.get("/api/decks", async (req, res) => {
   // Pass to the same handler defined for Vercel so local dev matches prod logic
   const { default: decksVercelHandler } = await import("./api/decks.ts");
