@@ -119,15 +119,16 @@ app.use((req, res, next) => {
 app.post("/api/upload", async (req, res) => {
   try {
     const { image, folder = "uploads" } = req.body;
-    if (!image || !image.startsWith("data:image/")) {
-      return res.status(400).json({ error: "Invalid image data" });
+    if (!image || (!image.startsWith("data:image/") && !image.startsWith("data:application/pdf"))) {
+      return res.status(400).json({ error: "Invalid file data" });
     }
 
-    const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
+    const match = image.match(/^data:([^;]+);base64,(.+)$/);
     if (!match) return res.status(400).json({ error: "Invalid base64 string" });
 
-    const ext = match[1].split('/')[1] || 'png';
-    const fileName = `${folder}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const mimeType = match[1];
+    const ext = mimeType.split('/')[1] || 'png';
+    const fileName = `${folder}/file_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
     const storageRef = ref(storage, fileName);
 
     const buffer = Buffer.from(match[2], 'base64');
@@ -139,7 +140,7 @@ app.post("/api/upload", async (req, res) => {
     const fireRestRes = await fetch(uploadUrl, {
       method: "POST",
       headers: {
-        "Content-Type": `image/${ext}`,
+        "Content-Type": mimeType,
         "Content-Length": buffer.length.toString()
       },
       body: buffer

@@ -412,7 +412,7 @@ export const getDisplayPrice = (item: any) => {
 type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation' | 'shared-proposal';
 
 const uploadImageToFirebase = async (base64Str: string): Promise<string> => {
-  if (!base64Str.startsWith('data:image/')) return base64Str;
+  if (!base64Str.startsWith('data:image/') && !base64Str.startsWith('data:application/pdf')) return base64Str;
 
   // Now that Firebase Storage proxying completely bypasses Vercel and goes direct to Cloud Storage
   // from the client via REST, we no longer need to destructively downscale the image on the client side. 
@@ -7066,16 +7066,20 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                             </div>
                           )}
                           <div>
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt Image</label>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt File</label>
                             {sampleReceipt ? (
                               <div className="flex items-center gap-2 border border-zinc-200 rounded-lg p-1.5 bg-zinc-50 h-[38px] w-full">
                                 <div className="w-6 h-6 border border-zinc-200 rounded overflow-hidden bg-white shrink-0 flex items-center justify-center">
-                                  <img 
-                                    src={sampleReceipt} 
-                                    className="w-full h-full object-contain cursor-zoom-in" 
-                                    onClick={() => onZoomImage && onZoomImage(sampleReceipt)} 
-                                    title="Click to Zoom"
-                                  />
+                                  {sampleReceipt.toLowerCase().includes('.pdf') || sampleReceipt.startsWith('data:application/pdf') ? (
+                                    <FileText size={14} className="text-zinc-500" />
+                                  ) : (
+                                    <img 
+                                      src={sampleReceipt} 
+                                      className="w-full h-full object-contain cursor-zoom-in" 
+                                      onClick={() => onZoomImage && onZoomImage(sampleReceipt)} 
+                                      title="Click to Zoom"
+                                    />
+                                  )}
                                 </div>
                                 <a 
                                   href={sampleReceipt} 
@@ -7083,7 +7087,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                   rel="noopener noreferrer" 
                                   className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate flex-1"
                                 >
-                                  View Full
+                                  {sampleReceipt.toLowerCase().includes('.pdf') || sampleReceipt.startsWith('data:application/pdf') ? 'PDF Receipt' : 'View Full'}
                                 </a>
                                 <button 
                                   type="button" 
@@ -7103,13 +7107,13 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                 ) : (
                                   <>
                                     <Upload size={12} />
-                                    <span>Upload Image</span>
+                                    <span>Upload File</span>
                                   </>
                                 )}
                                 <input 
                                   type="file" 
                                   className="hidden" 
-                                  accept="image/*" 
+                                  accept="image/*,application/pdf" 
                                   onChange={handleReceiptUpload} 
                                   disabled={isUploadingReceipt}
                                 />
