@@ -4953,6 +4953,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             pendingMockupImage={undefined}
             onClose={() => setEditingItem(null)}
             onSave={(details) => handleSaveDetails(editingItem.id, details)}
+            onZoomImage={setZoomedImage}
           />
         )}
         {erasingBgItem && (
@@ -6184,12 +6185,13 @@ function ImageAdjustModal({ imageUrl, onClose, onSave }: { imageUrl: string, onC
   );
 }
 
-function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: {
+function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, onZoomImage }: {
   item: DeckItem,
   customer?: Customer | null,
   pendingMockupImage?: string | null,
   onClose: () => void,
-  onSave: (details: any) => void
+  onSave: (details: any) => void,
+  onZoomImage?: (url: string) => void
 }) {
   const [name, setName] = useState(item.custom_name || item.garment_name || '');
   const [description, setDescription] = useState(item.custom_description || item.garment_description || item.fabric_details || '');
@@ -7003,17 +7005,24 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: 
                             />
                           </div>
                           <div>
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt File</label>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt Image</label>
                             {sampleReceipt ? (
-                              <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-lg p-2 h-[38px]">
+                              <div className="flex items-center gap-2 border border-zinc-200 rounded-lg p-1.5 bg-zinc-50 h-[38px] w-full">
+                                <div className="w-6 h-6 border border-zinc-200 rounded overflow-hidden bg-white shrink-0 flex items-center justify-center">
+                                  <img 
+                                    src={sampleReceipt} 
+                                    className="w-full h-full object-contain cursor-zoom-in" 
+                                    onClick={() => onZoomImage && onZoomImage(sampleReceipt)} 
+                                    title="Click to Zoom"
+                                  />
+                                </div>
                                 <a 
                                   href={sampleReceipt} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate max-w-[130px] flex items-center gap-1.5"
+                                  className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate flex-1"
                                 >
-                                  <FileText size={14} className="text-zinc-400 shrink-0" />
-                                  <span>View Receipt</span>
+                                  View Full
                                 </a>
                                 <button 
                                   type="button" 
@@ -7033,13 +7042,13 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: 
                                 ) : (
                                   <>
                                     <Upload size={12} />
-                                    <span>Upload Receipt</span>
+                                    <span>Upload Image</span>
                                   </>
                                 )}
                                 <input 
                                   type="file" 
                                   className="hidden" 
-                                  accept="image/*,application/pdf" 
+                                  accept="image/*" 
                                   onChange={handleReceiptUpload} 
                                   disabled={isUploadingReceipt}
                                 />
