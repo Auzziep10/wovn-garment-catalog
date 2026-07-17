@@ -5,7 +5,7 @@ import {
   Users, Layout, Presentation, Trash2, Save, Wand2, ArrowLeft, ArrowRight,
   Search, ShoppingBag, Maximize2, Minimize2, Sparkles, RotateCw, Camera,
   Grid, List, Edit2, ArrowUp, ArrowDown, Info, GripHorizontal, Download, ChevronDown, ChevronUp, Palette, PlusCircle, MinusCircle, Eraser, Copy, Undo
-, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check, FlipHorizontal } from 'lucide-react';
+, ExternalLink, Eye, EyeOff, Crop, ZoomIn, ZoomOut, Printer, SlidersHorizontal, FileText, Lock, Unlock, Check, FlipHorizontal, Calendar, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import { generateMockup, generateModelScene, generateColorVariation, convertColorToHex, generateRotatedGarment, uploadImageToStorage, removeImageBackground , analyzeMarketPricing, analyzeMaterialsAndBuild, analyzeProductionLogistics, generateInvisibleMockup, eraseBrandingRegion } from './services/geminiService';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -351,6 +351,11 @@ export interface DeckItem {
   proposal_price?: number;
   proposal_selected?: boolean;
   proposal_thumbnail?: string | null;
+  sample_ordered?: boolean;
+  sample_receipt_url?: string | null;
+  sample_return_by_date?: string | null;
+  sample_returned?: boolean;
+  sample_return_cost?: number | null;
   garment_name?: string;
   garment_description?: string;
   garment_price?: number;
@@ -3698,6 +3703,69 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
     const date = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     setProposalExpiry(date.toISOString().substring(0, 10));
   };
+
+  const getSampleStatusBadge = (item: DeckItem) => {
+    if (!item.sample_ordered) return null;
+    if (item.sample_returned) {
+      return (
+        <span 
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingItem(item);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 shadow-sm cursor-pointer transition-colors"
+          title={item.sample_receipt_url ? "View details & receipt" : "View details"}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span>Returned</span>
+          {item.sample_return_cost !== undefined && item.sample_return_cost !== null && (
+            <span className="opacity-75 font-semibold">(${item.sample_return_cost})</span>
+          )}
+        </span>
+      );
+    }
+    
+    let isOverdue = false;
+    if (item.sample_return_by_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const returnDate = new Date(item.sample_return_by_date + 'T00:00:00');
+      if (returnDate < today) {
+        isOverdue = true;
+      }
+    }
+
+    if (isOverdue) {
+      return (
+        <span 
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingItem(item);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/60 shadow-sm cursor-pointer transition-colors animate-pulse"
+          title="Return date is overdue!"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+          <span>Overdue: {item.sample_return_by_date}</span>
+        </span>
+      );
+    }
+
+    return (
+      <span 
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditingItem(item);
+        }}
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 shadow-sm cursor-pointer transition-colors"
+        title="Sample is currently ordered and active."
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+        <span>Ordered {item.sample_return_by_date ? `(Due ${item.sample_return_by_date})` : ''}</span>
+      </span>
+    );
+  };
+
   const [customerAssets, setCustomerAssets] = useState<CustomerAsset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<CustomerAsset | null>(null);
   const [displayMode, setDisplayMode] = useState<'presentation' | 'grid'>('grid');
@@ -4385,6 +4453,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                         <Check size={14} className="stroke-[3]" />
                       </div>
                     )}
+                    {!isSharedProposal && item.sample_ordered && (
+                      <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10">
+                        {getSampleStatusBadge(item)}
+                      </div>
+                    )}
                     <img
                       src={activeVariations[item.id] || item.mock_image}
                       alt={item.garment_name}
@@ -4618,6 +4691,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                           {item.proposal_selected === true && (
                             <div className="absolute top-3 left-3 bg-emerald-500 text-white p-1 rounded-full shadow z-10 flex items-center justify-center pointer-events-none" title="Included in Proposal Quote">
                               <Check size={10} className="stroke-[3]" />
+                            </div>
+                          )}
+                          {!isSharedProposal && item.sample_ordered && (
+                            <div className="absolute bottom-3 left-3 z-10">
+                              {getSampleStatusBadge(item)}
                             </div>
                           )}
 
@@ -5979,6 +6057,33 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: 
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
+  const [sampleOrdered, setSampleOrdered] = useState(item.sample_ordered || false);
+  const [sampleReceipt, setSampleReceipt] = useState(item.sample_receipt_url || null);
+  const [sampleReturnByDate, setSampleReturnByDate] = useState(item.sample_return_by_date || '');
+  const [sampleReturned, setSampleReturned] = useState(item.sample_returned || false);
+  const [sampleReturnCost, setSampleReturnCost] = useState(item.sample_return_cost?.toString() || '');
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      setIsUploadingReceipt(true);
+      reader.onloadend = async () => {
+        const base64Str = reader.result as string;
+        try {
+          const uploadedUrl = await uploadImageToFirebase(base64Str);
+          setSampleReceipt(uploadedUrl);
+        } catch (err) {
+          alert('Failed to upload receipt.');
+        } finally {
+          setIsUploadingReceipt(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
@@ -6691,6 +6796,151 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: 
                 </div>
               </div>
 
+              <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <div className="flex items-center justify-between mb-5 border-b border-zinc-100 pb-3">
+                  <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 m-0 leading-none flex items-center gap-2">
+                    <Calendar size={14} className="text-zinc-500" />
+                    Sample Tracking
+                  </label>
+                  {sampleOrdered && (
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${sampleReturned ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                      {sampleReturned ? 'Returned' : 'In Progress'}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-zinc-950 block">Sample Ordered</span>
+                      <span className="text-[10px] text-zinc-400 block mt-0.5">Has a sample been ordered for this garment?</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={sampleOrdered}
+                        onChange={(e) => {
+                          setSampleOrdered(e.target.checked);
+                          if (!e.target.checked) {
+                            setSampleReturned(false);
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-zinc-100 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
+                    </label>
+                  </div>
+
+                  <AnimatePresence initial={false}>
+                    {sampleOrdered && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-5 overflow-hidden pt-4 border-t border-zinc-100"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Return By Date</label>
+                            <input
+                              type="date"
+                              value={sampleReturnByDate}
+                              onChange={e => setSampleReturnByDate(e.target.value)}
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Receipt File</label>
+                            {sampleReceipt ? (
+                              <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-lg p-2 h-[38px]">
+                                <a 
+                                  href={sampleReceipt} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 underline truncate max-w-[130px] flex items-center gap-1.5"
+                                >
+                                  <FileText size={14} className="text-zinc-400 shrink-0" />
+                                  <span>View Receipt</span>
+                                </a>
+                                <button 
+                                  type="button" 
+                                  onClick={() => setSampleReceipt(null)}
+                                  className="text-[9px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wider pl-2 shrink-0 transition-colors"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700 font-bold uppercase tracking-widest text-[10px] h-[38px] border-dashed border-2">
+                                {isUploadingReceipt ? (
+                                  <>
+                                    <div className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" />
+                                    <span>Uploading...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload size={12} />
+                                    <span>Upload Receipt</span>
+                                  </>
+                                )}
+                                <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*,application/pdf" 
+                                  onChange={handleReceiptUpload} 
+                                  disabled={isUploadingReceipt}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-zinc-100 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-sm font-medium text-zinc-950 block">Sample Returned</span>
+                              <span className="text-[10px] text-zinc-400 block mt-0.5">Has the sample item been returned?</span>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                              <input 
+                                type="checkbox" 
+                                checked={sampleReturned}
+                                onChange={(e) => setSampleReturned(e.target.checked)}
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-zinc-100 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
+                            </label>
+                          </div>
+
+                          <AnimatePresence initial={false}>
+                            {sampleReturned && (
+                              <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden space-y-1.5"
+                              >
+                                <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 block">Restock / Return Shipping Cost ($)</label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={sampleReturnCost}
+                                    onChange={e => setSampleReturnCost(e.target.value)}
+                                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
               <div className="bg-white border border-zinc-100 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] hidden">
                 <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900 mb-5 block border-b border-zinc-100 pb-3">Item Description</label>
                 <textarea
@@ -6737,7 +6987,12 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave }: 
                   custom_moq: parseInt(moq, 10) || null,
                   custom_turn_time: turnTime,
                   rush_fee_percentage: parseFloat(rushFee) || null,
-                  custom_market_analysis: marketAnalysis
+                  custom_market_analysis: marketAnalysis,
+                  sample_ordered: sampleOrdered,
+                  sample_receipt_url: sampleOrdered ? sampleReceipt : null,
+                  sample_return_by_date: sampleOrdered ? (sampleReturnByDate || null) : null,
+                  sample_returned: sampleOrdered ? sampleReturned : false,
+                  sample_return_cost: (sampleOrdered && sampleReturned) ? (parseFloat(sampleReturnCost) || null) : null,
                 });
               } catch (err: any) {
                 console.error(err);

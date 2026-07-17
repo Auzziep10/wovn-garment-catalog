@@ -27,10 +27,10 @@ const ai = getAI(app);
 const storage = getStorage(app);
 
 export async function uploadImageToStorage(base64Str: string, folder: string = "uploads"): Promise<string> {
-  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith("data:image/")) return base64Str;
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith("data:")) return base64Str;
 
   try {
-    const match = base64Str.match(/^data:(image\/\w+);base64,(.+)$/);
+    const match = base64Str.match(/^data:([^;]+);base64,(.+)$/);
     if (!match) return base64Str;
 
     const ext = match[1].split('/')[1] || 'png';
