@@ -352,6 +352,7 @@ export interface DeckItem {
   proposal_selected?: boolean;
   proposal_thumbnail?: string | null;
   sample_ordered?: boolean;
+  sample_received?: boolean;
   sample_keep_item?: boolean;
   sample_receipt_url?: string | null;
   sample_return_by_date?: string | null;
@@ -3914,6 +3915,25 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
       );
     }
 
+    if (item.sample_received) {
+      return (
+        <span 
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingItem(item);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/60 shadow-sm cursor-pointer transition-colors"
+          title="Sample is received."
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+          <span>Received {item.sample_keep_item ? '(Keep)' : ''}</span>
+          {item.sample_cost !== undefined && item.sample_cost !== null && (
+            <span className="opacity-75 font-semibold">(${item.sample_cost})</span>
+          )}
+        </span>
+      );
+    }
+
     return (
       <span 
         onClick={(e) => {
@@ -4632,7 +4652,7 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                       </div>
                     )}
                     {!isSharedProposal && item.sample_ordered && !item.sample_returned && (
-                      <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-amber-500 text-white p-2 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none animate-bounce" style={{ animationDuration: '3s' }} title="Sample Ordered (Not Yet Returned)">
+                      <div className={`absolute top-4 right-4 md:top-6 md:right-6 ${item.sample_received ? 'bg-red-500' : 'bg-amber-500'} text-white p-2 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none animate-bounce`} style={{ animationDuration: '3s' }} title={item.sample_received ? "Sample Received (Not Yet Returned)" : "Sample Ordered (Not Yet Returned)"}>
                         <Package size={16} className="stroke-[2.5]" />
                       </div>
                     )}
@@ -4876,11 +4896,11 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
                               <Check size={10} className="stroke-[3]" />
                             </div>
                           )}
-                          {!isSharedProposal && item.sample_ordered && !item.sample_returned && (
-                            <div className="absolute top-3 right-3 bg-amber-500 text-white p-1.5 rounded-full shadow z-10 flex items-center justify-center pointer-events-none animate-bounce" style={{ animationDuration: '3s' }} title="Sample Ordered (Not Yet Returned)">
-                              <Package size={12} className="stroke-[2.5]" />
-                            </div>
-                          )}
+                           {!isSharedProposal && item.sample_ordered && !item.sample_returned && (
+                             <div className={`absolute top-3 right-3 ${item.sample_received ? 'bg-red-500' : 'bg-amber-500'} text-white p-1.5 rounded-full shadow z-10 flex items-center justify-center pointer-events-none animate-bounce`} style={{ animationDuration: '3s' }} title={item.sample_received ? "Sample Received (Not Yet Returned)" : "Sample Ordered (Not Yet Returned)"}>
+                               <Package size={12} className="stroke-[2.5]" />
+                             </div>
+                           )}
                           {!isSharedProposal && item.sample_ordered && (
                             <div className="absolute bottom-3 left-3 z-10">
                               {getSampleStatusBadge(item)}
@@ -6274,6 +6294,8 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
   const [generatingColor, setGeneratingColor] = useState<string | null>(null);
 
   const [sampleOrdered, setSampleOrdered] = useState(item.sample_ordered || false);
+  const [sampleReceived, setSampleReceived] = useState(item.sample_received || false);
+  const [showInvisibleModal, setShowInvisibleModal] = useState(false);
   const [sampleKeepItem, setSampleKeepItem] = useState(item.sample_keep_item || false);
   const [sampleReceipt, setSampleReceipt] = useState(item.sample_receipt_url || null);
   const [sampleReturnByDate, setSampleReturnByDate] = useState(item.sample_return_by_date || '');
@@ -6625,6 +6647,20 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                       </div>
                     </DndContext>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!mockImage) {
+                        alert("Please upload or set a base garment image first.");
+                        return;
+                      }
+                      setShowInvisibleModal(true);
+                    }}
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-zinc-900 text-white rounded-lg cursor-pointer hover:bg-zinc-800 transition-colors shadow-sm"
+                  >
+                    <Sparkles size={16} />
+                    <span className="text-xs uppercase tracking-widest font-bold">✨ Invisible Mannequin</span>
+                  </button>
                 </div>
               </div>
 
@@ -7022,8 +7058,14 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                     Sample Tracking
                   </label>
                   {sampleOrdered && (
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${sampleReturned ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {sampleReturned ? 'Returned' : 'In Progress'}
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                      sampleReturned 
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : sampleReceived 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {sampleReturned ? 'Returned' : sampleReceived ? 'Received' : 'In Progress'}
                     </span>
                   )}
                 </div>
@@ -7161,6 +7203,22 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                           </div>
                         </div>
 
+                        <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+                          <div>
+                            <span className="text-sm font-medium text-zinc-950 block">Sample Received</span>
+                            <span className="text-[10px] text-zinc-400 block mt-0.5">Has the sample item been received?</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={sampleReceived}
+                              onChange={(e) => setSampleReceived(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-zinc-100 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-900 border border-zinc-200"></div>
+                          </label>
+                        </div>
+
                         {!sampleKeepItem && (
                           <div className="pt-4 border-t border-zinc-100 space-y-4">
                             <div className="flex items-center justify-between">
@@ -7274,6 +7332,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                   rush_fee_percentage: parseFloat(rushFee) || null,
                   custom_market_analysis: marketAnalysis,
                   sample_ordered: sampleOrdered,
+                  sample_received: sampleOrdered ? sampleReceived : false,
                   sample_keep_item: sampleOrdered ? sampleKeepItem : false,
                   sample_receipt_url: sampleOrdered ? sampleReceipt : null,
                   sample_return_by_date: sampleOrdered ? (sampleReturnByDate || null) : null,
@@ -7294,6 +7353,16 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
         </div>
       </motion.div>
       <AnimatePresence>
+        {showInvisibleModal && (
+          <InvisibleMockupGeneratorModal 
+            baseImage={mockImage}
+            onClose={() => setShowInvisibleModal(false)}
+            onSave={(img) => {
+              setVariations(prev => [...prev, img]);
+              setShowInvisibleModal(false);
+            }}
+          />
+        )}
         {isCropModalOpen && (
           <ImageCropModal
             imageUrl={mockImage}
