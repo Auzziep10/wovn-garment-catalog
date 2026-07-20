@@ -2163,6 +2163,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
             <option value="Swim">Swim</option>
             <option value="Quarter Zip">Quarter Zip</option>
             <option value="Long Sleeve">Long Sleeve</option>
+            <option value="Skirt">Skirt</option>
           </select>
           <select
             value={librarySortBy}
@@ -2607,7 +2608,7 @@ function AdminView({ onGarmentAdded, initialEditingGarment, onClearEdit }: { onG
                               <div>
                                 <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-2 block">Garment Type</label>
                                 <div className="flex flex-wrap gap-2">
-                                  {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip', 'Long Sleeve'].map(t => (
+                                  {['Tops', 'Bottom', 'Headwear', 'Bags', 'Tumblers', 'Other', 'T-Shirt', 'Hoodie', 'Polo', 'Pants', 'Outerwear', 'Swim', 'Quarter Zip', 'Long Sleeve', 'Skirt'].map(t => (
                                     <label key={t} className="relative cursor-pointer">
                                       <input type="checkbox" name="types" value={t} defaultChecked={editingGarment?.types?.includes(t as any) || (!editingGarment?.types?.length && editingGarment?.type === t)} className="peer sr-only" />
                                       <span className="inline-block px-3 py-1.5 text-[10px] font-bold uppercase text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full transition-all hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
@@ -8375,6 +8376,7 @@ function InvisibleMockupGeneratorModal({ baseImage, onClose, onSave }: {
                     <option value="Quarter Zip">Quarter Zip</option>
                     <option value="Long Sleeve">Long Sleeve</option>
                     <option value="Tank Top">Tank Top</option>
+                    <option value="Skirt">Skirt</option>
                   </select>
                 </div>
 
