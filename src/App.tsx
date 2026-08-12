@@ -358,6 +358,7 @@ export interface DeckItem {
   sample_return_by_date?: string | null;
   sample_returned?: boolean;
   sample_return_cost?: number | null;
+  sample_return_tracking_number?: string | null;
   sample_cost?: number | null;
   sample_refund_amount?: number | null;
   garment_name?: string;
@@ -3857,11 +3858,13 @@ function DeckPresentationView({ deck, customer, onBack, onGarmentClick, onPresen
             setEditingItem(item);
           }}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 shadow-sm cursor-pointer transition-colors"
-          title={item.sample_receipt_url ? "View details & receipt" : "View details"}
+          title={item.sample_return_tracking_number ? `Return Tracking #: ${item.sample_return_tracking_number}` : (item.sample_receipt_url ? "View details & receipt" : "View details")}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
           <span>Returned</span>
-          {item.sample_refund_amount !== undefined && item.sample_refund_amount !== null ? (
+          {item.sample_return_tracking_number ? (
+            <span className="opacity-80 font-mono text-[9px] tracking-normal">({item.sample_return_tracking_number})</span>
+          ) : item.sample_refund_amount !== undefined && item.sample_refund_amount !== null ? (
             <span className="opacity-75 font-semibold">(Refunded ${item.sample_refund_amount})</span>
           ) : item.sample_return_cost !== undefined && item.sample_return_cost !== null ? (
             <span className="opacity-75 font-semibold">(Cost ${item.sample_return_cost})</span>
@@ -6304,6 +6307,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
   const [sampleReturnByDate, setSampleReturnByDate] = useState(item.sample_return_by_date || '');
   const [sampleReturned, setSampleReturned] = useState(item.sample_returned || false);
   const [sampleReturnCost, setSampleReturnCost] = useState(item.sample_return_cost?.toString() || '');
+  const [sampleReturnTrackingNumber, setSampleReturnTrackingNumber] = useState(item.sample_return_tracking_number || '');
   const [sampleCost, setSampleCost] = useState(item.sample_cost?.toString() || '');
   const [sampleRefundAmount, setSampleRefundAmount] = useState(item.sample_refund_amount?.toString() || '');
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
@@ -7246,33 +7250,48 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
-                                  className="overflow-hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1"
+                                  className="overflow-hidden space-y-4 pt-1"
                                 >
-                                  <div>
-                                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Restock / Return Shipping Cost ($)</label>
-                                    <div className="relative">
-                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        value={sampleReturnCost}
-                                        onChange={e => setSampleReturnCost(e.target.value)}
-                                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
-                                        placeholder="0.00"
-                                      />
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Restock / Return Shipping Cost ($)</label>
+                                      <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          value={sampleReturnCost}
+                                          onChange={e => setSampleReturnCost(e.target.value)}
+                                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                          placeholder="0.00"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Refund Amount ($)</label>
+                                      <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          value={sampleRefundAmount}
+                                          onChange={e => setSampleRefundAmount(e.target.value)}
+                                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                          placeholder="0.00"
+                                        />
+                                      </div>
                                     </div>
                                   </div>
+
                                   <div>
-                                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Refund Amount ($)</label>
+                                    <label className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 mb-1.5 block">Return Tracking Number</label>
                                     <div className="relative">
-                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">$</span>
                                       <input
-                                        type="number"
-                                        step="0.01"
-                                        value={sampleRefundAmount}
-                                        onChange={e => setSampleRefundAmount(e.target.value)}
-                                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
-                                        placeholder="0.00"
+                                        type="text"
+                                        value={sampleReturnTrackingNumber}
+                                        onChange={e => setSampleReturnTrackingNumber(e.target.value)}
+                                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-400 outline-none transition-all text-zinc-800 font-semibold"
+                                        placeholder="e.g. 1Z9999999999999999 or tracking link"
                                       />
                                     </div>
                                   </div>
@@ -7341,6 +7360,7 @@ function EditItemModal({ item, customer, pendingMockupImage, onClose, onSave, on
                   sample_return_by_date: sampleOrdered ? (sampleReturnByDate || null) : null,
                   sample_returned: sampleOrdered ? sampleReturned : false,
                   sample_return_cost: (sampleOrdered && sampleReturned) ? (parseFloat(sampleReturnCost) || null) : null,
+                  sample_return_tracking_number: (sampleOrdered && sampleReturned) ? (sampleReturnTrackingNumber || null) : null,
                   sample_cost: sampleOrdered ? (parseFloat(sampleCost) || null) : null,
                   sample_refund_amount: (sampleOrdered && sampleReturned) ? (parseFloat(sampleRefundAmount) || null) : null,
                 });
