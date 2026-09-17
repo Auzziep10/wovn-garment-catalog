@@ -1038,18 +1038,6 @@ export default function App() {
                     <img src="/print-shop-icon.png" alt="Print Shop OS" className="w-4 h-4 object-contain mix-blend-multiply opacity-40 hover:opacity-100 transition-opacity" />
                   </a>
                 </div>
-                <button
-                  onClick={() => setView('samples')}
-                  className={`nav-link flex items-center gap-1.5 ${view === 'samples' ? 'text-zinc-900' : ''}`}
-                  title="View Sample Orders & Returns Dashboard"
-                >
-                  <span>Samples</span>
-                  {sampleDecksCount > 0 && (
-                    <span className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none flex items-center justify-center min-w-[15px] h-3.5">
-                      {sampleDecksCount}
-                    </span>
-                  )}
-                </button>
               </div>
             </div>
 
@@ -1079,13 +1067,12 @@ export default function App() {
                       fetchSampleDecks();
                     }
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer rounded-full border border-zinc-100 relative text-zinc-600 hover:text-zinc-900"
-                  title="Sample Tracking Center"
+                  className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer rounded-full border ${view === 'samples' ? 'border-zinc-900 bg-zinc-100 text-zinc-900 ring-1 ring-zinc-900' : 'border-zinc-100 text-zinc-600 hover:text-zinc-900'} relative`}
+                  title="Sample Orders & Returns Center"
                 >
-                  <Package size={14} className={sampleDecksCount > 0 ? "text-amber-500" : "text-zinc-400"} />
-                  <span className="text-[10px] uppercase tracking-widest font-bold hidden sm:inline">Samples</span>
+                  <Package size={16} className={sampleDecksCount > 0 ? "text-amber-500" : "text-zinc-400"} />
                   {sampleDecksCount > 0 && (
-                    <span className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[16px] h-4">
+                    <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 h-4 min-w-[16px] rounded-full flex items-center justify-center ring-2 ring-white shadow-sm leading-none">
                       {sampleDecksCount}
                     </span>
                   )}
