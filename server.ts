@@ -345,19 +345,37 @@ app.get("/api/samples", async (req, res) => {
     const q = query(collection(db, "deck_items"), where("sample_ordered", "==", true));
     const snapshot = await getDocs(q);
     
+    // Cache for garments and customers to avoid duplicate lookups
+    const garmentCache = new Map<string, any>();
+    const customerCache = new Map<string, any>();
+
     const items = await Promise.all(snapshot.docs.map(async (itemDoc) => {
       const itemData: any = { id: itemDoc.id, ...itemDoc.data() };
-      let garmentName = itemData.custom_name || "Unknown";
-      if (!itemData.custom_name && itemData.garment_id) {
-        const garmentRef = doc(db, "garments", itemData.garment_id);
-        const garmentSnap = await getDoc(garmentRef);
-        if (garmentSnap.exists()) {
-          garmentName = garmentSnap.data().name || "Unknown";
+      let garmentData: any = null;
+
+      if (itemData.garment_id) {
+        if (garmentCache.has(itemData.garment_id)) {
+          garmentData = garmentCache.get(itemData.garment_id);
+        } else {
+          const garmentRef = doc(db, "garments", itemData.garment_id);
+          const garmentSnap = await getDoc(garmentRef);
+          if (garmentSnap.exists()) {
+            garmentData = garmentSnap.data();
+            garmentCache.set(itemData.garment_id, garmentData);
+          }
         }
       }
+
+      const garmentName = itemData.custom_name || garmentData?.name || "Unknown Garment";
+
       return {
         ...itemData,
-        garment_name: garmentName
+        garment_name: garmentName,
+        garment_image: itemData.mock_image || garmentData?.image || null,
+        supplier_link: itemData.supplier_link || garmentData?.supplier_link || null,
+        category: itemData.category || garmentData?.category || null,
+        gender: itemData.gender || garmentData?.gender || null,
+        type: itemData.type || garmentData?.type || null
       };
     }));
 
@@ -375,10 +393,25 @@ app.get("/api/samples", async (req, res) => {
       const deckSnap = await getDoc(deckRef);
       if (deckSnap.exists()) {
         const deckData = deckSnap.data();
+        let customerName = deckData.customer_name || "";
+        if (!customerName && deckData.customer_id) {
+          if (customerCache.has(deckData.customer_id)) {
+            customerName = customerCache.get(deckData.customer_id);
+          } else {
+            const custRef = doc(db, "customers", deckData.customer_id);
+            const custSnap = await getDoc(custRef);
+            if (custSnap.exists()) {
+              const cData = custSnap.data();
+              customerName = cData.company || cData.name || "Unknown Customer";
+              customerCache.set(deckData.customer_id, customerName);
+            }
+          }
+        }
         return {
           id: deckId,
           name: deckData.name,
           customer_id: deckData.customer_id,
+          customer_name: customerName,
           items: itemsGrouped[deckId]
         };
       }

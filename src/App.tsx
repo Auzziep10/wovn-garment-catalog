@@ -11,6 +11,7 @@ import { generateMockup, generateModelScene, generateColorVariation, convertColo
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import SamplesView from './SamplesView';
 
 export function SortableDeckItem({ id, disabled, children }: { key?: React.Key | null, id: number | string, disabled: boolean, children: (dragProps: any) => React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
@@ -411,7 +412,7 @@ export const getDisplayPrice = (item: any) => {
   return base;
 };
 
-type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation' | 'shared-proposal';
+type View = 'catalog' | 'admin' | 'customers' | 'deck-view' | 'mockup-studio' | 'presentation' | 'shared-presentation' | 'shared-proposal' | 'samples';
 
 const uploadImageToFirebase = async (base64Str: string): Promise<string> => {
   if (!base64Str.startsWith('data:image/') && !base64Str.startsWith('data:application/pdf')) return base64Str;
@@ -1037,6 +1038,18 @@ export default function App() {
                     <img src="/print-shop-icon.png" alt="Print Shop OS" className="w-4 h-4 object-contain mix-blend-multiply opacity-40 hover:opacity-100 transition-opacity" />
                   </a>
                 </div>
+                <button
+                  onClick={() => setView('samples')}
+                  className={`nav-link flex items-center gap-1.5 ${view === 'samples' ? 'text-zinc-900' : ''}`}
+                  title="View Sample Orders & Returns Dashboard"
+                >
+                  <span>Samples</span>
+                  {sampleDecksCount > 0 && (
+                    <span className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none flex items-center justify-center min-w-[15px] h-3.5">
+                      {sampleDecksCount}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -1082,10 +1095,22 @@ export default function App() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsSampleDropdownOpen(false)} />
                     <div className="absolute right-0 mt-2 w-80 bg-white border border-zinc-100 rounded-2xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto custom-scrollbar">
-                      <div className="flex items-center justify-between pb-2 mb-3 border-b border-zinc-100">
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-900">Active Samples</span>
                         <span className="text-[9px] font-bold uppercase text-zinc-400">{sampleDecksCount} Items Ordered</span>
                       </div>
+
+                      <button
+                        onClick={() => {
+                          setIsSampleDropdownOpen(false);
+                          setView('samples');
+                        }}
+                        className="w-full mb-3 text-center py-2 px-3 text-[10px] uppercase tracking-widest font-bold text-zinc-900 bg-zinc-50 hover:bg-zinc-100 rounded-xl transition-colors border border-zinc-200/80 flex items-center justify-between group cursor-pointer"
+                        title="Open Full Sample Orders & Returns Dashboard"
+                      >
+                        <span>View All Orders & Returns</span>
+                        <ArrowRight size={12} className="text-zinc-400 group-hover:translate-x-0.5 group-hover:text-zinc-900 transition-all" />
+                      </button>
                       
                       {isLoadingSamples ? (
                         <div className="flex flex-col items-center justify-center py-6 text-zinc-400 gap-2">
@@ -1236,6 +1261,17 @@ export default function App() {
                     >
                       Garment Library
                     </button>
+                    <button
+                      onClick={() => { setView('samples'); setIsMenuOpen(false); }}
+                      className={`text-left text-lg font-serif ${view === 'samples' ? 'italic underline underline-offset-8' : 'opacity-60 hover:opacity-100 transition-opacity'} flex items-center justify-between`}
+                    >
+                      <span>Samples & Returns</span>
+                      {sampleDecksCount > 0 && (
+                        <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-sans font-bold">
+                          {sampleDecksCount}
+                        </span>
+                      )}
+                    </button>
                     <a 
                       href="https://print-shop-os-beta.vercel.app" 
                       target="_blank" 
@@ -1336,6 +1372,22 @@ export default function App() {
           />
         )}
         {view === 'admin' && <AdminView onGarmentAdded={fetchGarments} initialEditingGarment={garmentToEdit} onClearEdit={() => setGarmentToEdit(null)} />}
+        {view === 'samples' && (
+          <SamplesView
+            sampleDecks={sampleDecks}
+            isLoading={isLoadingSamples}
+            onRefresh={fetchSampleDecks}
+            onOpenDeckItem={async (deckId, itemId) => {
+              const res = await fetch(`/api/decks/${deckId}`);
+              if (res.ok) {
+                const deckData = await res.json();
+                setCurrentDeck(deckData);
+                setView('deck-view');
+                setInitialEditItemId(typeof itemId === 'number' ? itemId : parseInt(itemId as string) || null);
+              }
+            }}
+          />
+        )}
         {view === 'customers' && (
           <CustomersView
             customers={customers}
